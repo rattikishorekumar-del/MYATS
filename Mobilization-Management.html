@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobilization Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#0049B7;--blue-dk:#002d8a;--blue-lt:#1a6dff;
+  --red:#c0003a;--red-bg:#fff0f3;--red-border:#ffb3c6;
+  --green:#007a40;--green-bg:#d4f5e9;
+  --orange:#b36200;--orange-bg:#fff0d4;
+  --purple:#5b21b6;--purple-bg:#ede9fe;
+  --teal:#0f766e;--teal-bg:#ccfbf1;
+  --mint:#7EE787;--pink:#ff1d58;--cyan:#00DDFF;
+  --bg:#f0f4ff;--panel:#fff;--panel2:#f4f7ff;
+  --muted:#526187;--text:#0d1b2a;--text2:#3a4a6a;
+  --border:#c9d1e6;--chip:#edf1ff;
+  --shadow:0 2px 14px rgba(0,73,183,.09);
+  --shadow2:0 8px 32px rgba(0,73,183,.13);
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+a{text-decoration:none;}
+
+/* ── HEADER ── */
+.app-hdr{background:linear-gradient(90deg,var(--blue-dk),var(--blue));color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.app-hdr h1{font-family:'Space Mono',monospace;font-size:14px;letter-spacing:1px;}
+.hdr-r{display:flex;align-items:center;gap:8px;}
+.hbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 13px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;transition:background .2s;}
+.hbtn:hover{background:rgba(255,255,255,.28);}
+.conn{display:flex;align-items:center;gap:6px;font-size:11px;background:rgba(255,255,255,.12);padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.2);}
+.dot{width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;}
+.dot.ok{background:var(--mint);box-shadow:0 0 5px rgba(126,231,135,.8);}
+.dot.err{background:var(--pink);}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--blue);padding:0 24px;gap:2px;}
+.tab{padding:10px 20px;cursor:pointer;color:rgba(255,255,255,.6);border-bottom:3px solid transparent;font-size:13px;font-weight:600;transition:all .2s;white-space:nowrap;}
+.tab.active{color:#fff;border-bottom-color:var(--pink);}
+.pane{display:none;padding:18px 24px;max-width:1900px;margin:0 auto;}
+.pane.active{display:block;}
+
+/* ── FILTER BAR ── */
+.fbar{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;}
+.fg2{display:flex;flex-direction:column;gap:4px;min-width:150px;}
+.fg2 label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.fg2 select,.fg2 input{padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--panel);outline:none;min-width:150px;}
+.fg2 select:focus,.fg2 input:focus{border-color:var(--blue);}
+.fcount-bar{margin-left:auto;font-size:12px;color:var(--muted);align-self:center;}
+.ms-wrap{position:relative;}
+.ms-btn{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:1px solid var(--border);border-radius:7px;cursor:pointer;background:var(--panel);min-height:34px;font-size:12px;color:var(--text);gap:6px;white-space:nowrap;}
+.ms-btn:hover{border-color:var(--blue);}
+.ms-btn .badge{background:var(--blue);color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700;}
+.ms-drop{position:absolute;top:calc(100% + 3px);left:0;min-width:200px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.13);z-index:600;display:none;flex-direction:column;max-height:220px;}
+.ms-drop.open{display:flex;}
+.ms-search{padding:7px;border-bottom:1px solid var(--border);}
+.ms-search input{width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 8px;font-size:12px;outline:none;}
+.ms-list{overflow-y:auto;flex:1;}
+.ms-item{padding:7px 11px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;}
+.ms-item:hover{background:var(--panel2);}
+.ms-item input[type=checkbox]{accent-color:var(--blue);width:13px;height:13px;flex-shrink:0;}
+.ms-item.checked{color:var(--blue);font-weight:600;}
+.ms-all{padding:6px 11px;border-bottom:1px solid var(--border);font-size:11px;color:var(--blue);cursor:pointer;font-weight:600;}
+.ms-all:hover{background:var(--panel2);}
+
+/* ── KPI CARDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+.kpi{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;border:1px solid var(--border);}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow2);}
+.kpi.active-kpi{box-shadow:0 0 0 2.5px var(--blue),var(--shadow2);transform:translateY(-2px);}
+.kpi-top{height:4px;width:100%;}
+.kpi-body{padding:14px 14px 12px;}
+.kpi-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.kpi-num{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;line-height:1;}
+.kpi-hint{font-size:10px;color:var(--muted);margin-top:5px;}
+
+/* ── SECTION TITLE ── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.sec-title{font-family:'Space Mono',monospace;font-size:11px;color:var(--blue);letter-spacing:.5px;font-weight:700;}
+
+/* ── GROUPBY CHIPS ── */
+.grp-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.grp-label{font-size:11px;color:var(--muted);font-weight:600;margin-right:4px;}
+.grp-chip{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--panel);font-size:11px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .15s;}
+.grp-chip:hover{border-color:var(--blue);color:var(--blue);}
+.grp-chip.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+/* ── TABLE ── */
+.tbl-wrap{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;}
+.tbl-wrap table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.tbl-wrap thead th{background:var(--panel2);padding:10px 13px;text-align:left;font-weight:700;color:var(--blue);white-space:nowrap;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:10;cursor:pointer;user-select:none;}
+.tbl-wrap thead th:hover{background:#e5edff;}
+.tbl-wrap tbody tr{border-bottom:1px solid var(--border);transition:background .12s;}
+.tbl-wrap tbody tr:hover{background:var(--panel2);}
+.tbl-wrap tbody tr.grp-row{background:#eef3ff;font-weight:700;color:var(--blue);}
+.tbl-wrap tbody tr.grp-row td{padding:9px 13px;font-size:12px;}
+.tbl-wrap tbody td{padding:9px 13px;color:var(--text2);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
+.nodata{text-align:center;padding:40px;color:var(--muted);}
+.tbl-scroll-h{max-height:calc(100vh - 340px);overflow-y:auto;}
+.tbl-scroll-h::-webkit-scrollbar{width:5px;height:5px;}
+.tbl-scroll-h::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.tbl-info{font-size:11px;color:var(--muted);padding:8px 0;}
+
+/* ── TAGS ── */
+.tag{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700;}
+.tag-sel{background:var(--green-bg);color:var(--green);}
+.tag-rej{background:var(--red-bg);color:var(--red);}
+.tag-hold{background:var(--orange-bg);color:var(--orange);}
+.tag-att{background:#dbeafe;color:#1e40af;}
+.tag-abs{background:#f3f4f6;color:#6b7280;}
+.tag-res{background:#fef9c3;color:#92400e;}
+
+/* ── BREAKDOWN GRIDS ── */
+.breakdown-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;}
+@media(max-width:1100px){.breakdown-grid{grid-template-columns:1fr;}}
+.brkdown-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;}
+.brkdown-hdr{background:var(--panel2);padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.brkdown-title{font-family:'Space Mono',monospace;font-size:11px;color:var(--blue);font-weight:700;}
+.brkdown-body{padding:0;}
+.brkdown-row{display:grid;grid-template-columns:1fr auto auto auto auto;gap:0;border-bottom:1px solid var(--border);align-items:center;transition:background .12s;}
+.brkdown-row:last-child{border-bottom:none;}
+.brkdown-row:hover{background:var(--panel2);}
+.br-name{padding:9px 14px;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.br-val{padding:9px 10px;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;text-align:right;min-width:46px;}
+.br-sel{color:var(--green);}
+.br-rej{color:var(--red);}
+.br-att{color:#1e40af;}
+.br-tot{color:var(--blue);}
+.br-bar-wrap{padding:0 14px 0 8px;min-width:80px;}
+.br-bar{height:6px;border-radius:3px;background:var(--blue);opacity:.7;min-width:3px;}
+.brkdown-theader{display:grid;grid-template-columns:1fr auto auto auto auto;background:var(--panel2);border-bottom:1px solid var(--border);padding:0;}
+.bth{padding:7px 10px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;text-align:right;}
+.bth:first-child{text-align:left;padding-left:14px;}
+
+/* ── MOBILIZED BY SUB-BREAKDOWN (collapsed inside Associate Wise card) ── */
+.brkdown-row-wrap{border-bottom:1px solid var(--border);}
+.brkdown-row-wrap:last-child{border-bottom:none;}
+.brkdown-row-wrap .brkdown-row{border-bottom:none;}
+.mobby-toggle{cursor:pointer;color:var(--blue);font-size:10px;margin-right:5px;display:inline-block;transition:transform .2s;user-select:none;vertical-align:middle;}
+.mobby-toggle.open{transform:rotate(90deg);}
+.mobby-sub{display:none;background:#f5f8ff;border-top:1px solid var(--border);}
+.mobby-sub.open{display:block;}
+.mobby-sub-hdr{display:grid;grid-template-columns:1fr 70px 52px;background:#eaefff;padding:5px 14px;border-bottom:1px solid var(--border);}
+.mobby-sub-hdr div{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;text-align:right;}
+.mobby-sub-hdr div:first-child{text-align:left;}
+.mobby-sub-row{display:grid;grid-template-columns:1fr 70px 52px;padding:6px 14px;border-bottom:1px solid #e8eeff;align-items:center;transition:background .1s;}
+.mobby-sub-row:hover{background:#edf2ff;}
+.mobby-sub-row:last-child{border-bottom:none;}
+.mobby-sub-name{font-size:11.5px;color:var(--purple);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mobby-sub-name::before{content:'↳ ';opacity:.5;font-size:10px;}
+.mobby-sub-code{font-size:11px;color:var(--muted);text-align:right;font-family:'Space Mono',monospace;}
+.mobby-sub-total{font-size:12px;font-weight:700;color:var(--blue);text-align:right;font-family:'Space Mono',monospace;}
+.mobby-sub-footer{display:grid;grid-template-columns:1fr 70px 52px;padding:5px 14px;background:#dde6ff;border-top:1px dashed #b8c9f5;}
+.mobby-sub-footer div{font-size:9.5px;font-weight:700;color:var(--blue-dk);text-transform:uppercase;letter-spacing:.3px;text-align:right;}
+.mobby-sub-footer div:first-child{text-align:left;}
+
+/* ── MODAL DRILL DOWN ── */
+.ov{position:fixed;inset:0;background:rgba(13,27,42,.6);z-index:700;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.ov.open{display:flex;}
+.modal-big{background:var(--panel);border-radius:14px;width:99vw;max-width:1800px;max-height:93vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.22);}
+.modal-hdr{background:linear-gradient(135deg,var(--blue),var(--blue-lt));color:#fff;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-hdr h3{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;}
+.modal-hdr .msub{font-size:11px;opacity:.75;margin-top:2px;}
+.mcl{background:rgba(255,255,255,.2);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;}
+.modal-toolbar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel2);flex-shrink:0;}
+.modal-body{overflow:auto;flex:1;padding:0;}
+.modal-body .tbl-wrap{border:none!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important;}
+#dd-table{width:max-content;min-width:100%;border-collapse:collapse;font-size:12px;}
+#dd-table thead th{background:var(--panel2);padding:9px 14px;text-align:left;font-weight:700;color:var(--blue);white-space:nowrap;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:20;}
+#dd-table tbody td{padding:8px 14px;white-space:nowrap;color:var(--text2);border-bottom:1px solid var(--border);}
+#dd-table tbody tr:hover td{background:var(--panel2);}
+#dd-table tbody tr.grp-row td{background:#eef3ff;color:var(--blue);font-weight:700;}
+.modal-body .tbl-wrap{border:none!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important;}
+#dd-table{width:max-content;min-width:100%;border-collapse:collapse;font-size:12px;}
+#dd-table thead th{background:var(--panel2);padding:9px 14px;text-align:left;font-weight:700;color:var(--blue);white-space:nowrap;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:20;}
+#dd-table tbody td{padding:8px 14px;white-space:nowrap;color:var(--text2);border-bottom:1px solid var(--border);}
+#dd-table tbody tr:hover td{background:var(--panel2);}
+#dd-table tbody tr.grp-row td{background:#eef3ff;color:var(--blue);font-weight:700;}
+.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:5px;}
+.bp{background:var(--blue);color:#fff;}
+.bp:hover{background:var(--blue-dk);}
+.bo{background:transparent;border:1.5px solid var(--border);color:var(--text2);}
+.bo:hover{border-color:var(--blue);color:var(--blue);}
+.bsm{padding:5px 11px;font-size:11px;}
+
+/* ── BROWSE TAB ── */
+.two-panel{display:grid;grid-template-columns:580px 1fr;gap:16px;align-items:start;}
+@media(max-width:1200px){.two-panel{grid-template-columns:1fr;}}
+.panel-title{font-family:'Space Mono',monospace;font-size:11px;color:var(--blue);letter-spacing:.5px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.tbl-box{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);}
+.tbl-box table{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl-box thead th{background:var(--panel2);padding:10px 13px;text-align:left;font-weight:700;color:var(--blue);border-bottom:2px solid var(--border);cursor:pointer;user-select:none;}
+.tbl-box tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+.tbl-box tbody tr:hover{background:#f0f5ff;}
+.tbl-box tbody tr.sel{background:#deeaff;border-left:4px solid var(--blue);}
+.tbl-box tbody td{padding:10px 13px;color:var(--text2);white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
+.norow td{text-align:center;padding:36px;color:var(--muted);}
+.tbl-scroll{overflow-y:auto;max-height:calc(100vh - 200px);}
+.tbl-scroll::-webkit-scrollbar{width:5px;}
+.tbl-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.si{font-size:9px;opacity:.5;}
+.mono{font-family:'Space Mono',monospace;font-size:11px;}
+.mob-yes{background:#fff0f3;color:#c0003a;display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;}
+.mob-no{background:#f0f5ff;color:#526187;display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;}
+
+/* detail card */
+.detail-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);width:100%;}
+.dc-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 20px;text-align:center;color:var(--muted);}
+.dc-hdr{background:linear-gradient(135deg,var(--blue),var(--blue-lt));color:#fff;padding:18px 20px;border-radius:var(--r) var(--r) 0 0;}
+.dc-name{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;margin-bottom:4px;}
+.dc-sub{font-size:13px;opacity:.85;}
+.dc-hdr-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.dc-hdr-val{font-size:14px;font-weight:700;}
+.dc-body{padding:16px 18px;}
+.dsec{margin-bottom:14px;}
+.dsec-t{font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid var(--panel2);padding-bottom:5px;margin-bottom:9px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.fi{display:flex;flex-direction:column;gap:1px;}
+.fi.full{grid-column:1/-1;}
+.fl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.fv{font-size:13px;color:var(--text);font-weight:500;}
+.fv.big{font-size:17px;font-weight:700;color:var(--blue);font-family:'Space Mono',monospace;}
+.fv.warn{color:var(--pink);font-weight:700;}
+.chip{display:inline-flex;background:var(--chip);color:var(--text);padding:3px 9px;border-radius:10px;font-size:12px;font-weight:500;margin:2px 3px 2px 0;}
+.pmob{background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:11px 13px;margin-bottom:13px;}
+.pmob-t{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.pmob-r{display:grid;grid-template-columns:110px 1fr;gap:3px 8px;margin-bottom:5px;padding-bottom:5px;border-bottom:1px dashed var(--red-border);}
+.pmob-r:last-child{border-bottom:none;margin:0;padding:0;}
+.pk{font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;}
+.pv{font-size:13px;color:var(--red);font-weight:500;}
+.dc-btn1{width:100%;padding:9px;background:var(--panel2);color:var(--blue);border:1.5px solid var(--blue);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;}
+.dc-btn1:hover{background:var(--blue);color:#fff;}
+.dc-btn2{width:100%;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:14px;}
+.dc-btn2:hover{background:var(--blue-dk);}
+.dc-btn2.upd{background:var(--pink);}
+.dc-btn2.upd:hover{background:#d4154a;}
+
+/* mob modal */
+.sdw{position:relative;}
+.sdd{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--border);border-radius:7px;cursor:pointer;background:var(--panel);min-height:36px;font-size:13px;color:var(--text);}
+.sdd:hover{border-color:var(--blue);}
+.sdv{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sdar{color:var(--muted);font-size:10px;flex-shrink:0;}
+.sddp{position:absolute;top:calc(100% + 3px);left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:800;max-height:220px;overflow:hidden;display:none;flex-direction:column;}
+.sddp.open{display:flex;}
+.sdsr{padding:7px;border-bottom:1px solid var(--border);}
+.sdsr input{width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 8px;font-size:12px;outline:none;}
+.sdlist{overflow-y:auto;flex:1;}
+.sdi{padding:7px 11px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:space-between;}
+.sdi:hover{background:var(--panel2);}
+.sdi.cur{color:var(--blue);font-weight:600;}
+.sdel{color:var(--pink);font-size:11px;cursor:pointer;display:none;padding:1px 5px;}
+.sdi:hover .sdel{display:inline;}
+.sdadd{padding:7px;border-top:1px solid var(--border);display:flex;gap:5px;}
+.sdadd input{flex:1;border:1px solid var(--border);border-radius:5px;padding:5px 8px;font-size:12px;outline:none;}
+.sdadd button{background:var(--blue);color:#fff;border:none;border-radius:5px;padding:5px 10px;cursor:pointer;font-size:11px;}
+.mmod-inner{background:var(--panel);border-radius:12px;width:95%;max-width:680px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.22);}
+.mhdr{background:linear-gradient(135deg,var(--blue),var(--blue-lt));color:#fff;padding:15px 20px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;}
+.mhdr h3{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;}
+.mhdr .msub{font-size:11px;opacity:.75;margin-top:2px;}
+.mbody{padding:18px 20px;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px 18px;}
+@media(max-width:580px){.mgrid{grid-template-columns:1fr;}}
+.mfooter{padding:12px 20px 18px;display:flex;gap:10px;border-top:1px solid var(--border);}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.fg input,.fg select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--panel);outline:none;}
+.fg input:focus,.fg select:focus{border-color:var(--blue);}
+.fg input[readonly]{background:var(--panel2);color:var(--muted);}
+.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;display:none;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ecr{background:#fff0d4;color:#b36200;display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;}
+.ecnr{background:#d4f5e9;color:#007a40;display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;}
+
+/* ── TOAST ── */
+#tc{position:fixed;bottom:20px;right:20px;z-index:900;display:flex;flex-direction:column;gap:8px;}
+.t{background:#1a2540;color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:ti .3s ease;max-width:320px;}
+.t.s{border-left:4px solid var(--mint);}.t.e{border-left:4px solid var(--pink);}.t.i{border-left:4px solid var(--cyan);}.t.w{border-left:4px solid #f59e0b;}
+@keyframes ti{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* Responsive */
+@media(max-width:768px){
+  .kpi-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}
+  .breakdown-grid{grid-template-columns:1fr;}
+  .two-panel{grid-template-columns:1fr;}
+  .fbar{flex-direction:column;}
+  .mgrid{grid-template-columns:1fr;}
+}
+</style>
+<!-- PORTAL AUTH GUARD -->
+<script>
+(function(){
+  var MOD_ID = "mobilization";
+  function getPS(){try{var s=sessionStorage.getItem('ke_portal_session')||sessionStorage.getItem('ke_session');if(!s)return null;var o=JSON.parse(s);if(Date.now()-o.loginTime>10*60*60*1000)return null;return o;}catch(e){return null;}}
+  var session=getPS();
+  if(MOD_ID!=='public'){
+    if(!session){if(!confirm('Not logged in. Go to Portal login?'))return;window.location.href='Index.html';return;}
+    var mods=session.modules||[];
+    if(!mods.includes('all')&&!mods.includes(MOD_ID)){alert('Access Denied.\nRedirecting to Portal.');window.location.href='Index.html';return;}
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    if(!session)return;
+    var bar=document.createElement('div');bar.id='ke-portal-bar';
+    bar.style='background:linear-gradient(90deg,#002d8a,#0049B7);color:#fff;padding:5px 20px;font-size:11px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:DM Sans,sans-serif;position:sticky;top:0;z-index:9999';
+    var rc={superadmin:'#ff1d58',admin:'#f59e0b',manager:'#7EE787',mobilizationplus:'#7c3aed',mobilization:'#0f766e'}[session.role]||'#526187';
+    bar.innerHTML='<a href="Index.html" style="color:#fff;text-decoration:none;font-weight:700;font-size:12px">&#8592; Portal</a>'
+      +'<div style="display:flex;align-items:center;gap:8px"><span style="opacity:.75">Logged in as</span><strong>'+session.name+'</strong>'
+      +'<span style="background:'+rc+';color:#fff;padding:1px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase">'+session.role+'</span>'
+      +'<button onclick="if(confirm(\'Logout?\')){sessionStorage.clear();window.location.href=\'Index.html\';}" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px">Logout</button></div>';
+    document.body.insertBefore(bar,document.body.firstChild);
+  });
+})();
+</script>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-hdr">
+  <h1>📋 MOBILIZATION MANAGEMENT</h1>
+  <div class="hdr-r">
+    <div class="conn"><span class="dot" id="dot"></span><span id="clab">Loading…</span></div>
+    <button class="hbtn" onclick="load()">🔄 Refresh</button>
+    <button class="hbtn" onclick="exportCSV()">📄 Export</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="tab('browse')" id="ttab-browse">🔍 Browse &amp; Mobilize</div>
+  <div class="tab" onclick="tab('summary')" id="ttab-summary">📋 Summary List</div>
+  <div class="tab" onclick="tab('dashboard')" id="ttab-dashboard">📊 Dashboard</div>
+</div>
+
+<!-- ══ DASHBOARD TAB ══ -->
+<div class="pane" id="tab-dashboard">
+
+  <!-- FILTER BAR -->
+  <div class="fbar">
+    <div class="fg2">
+      <label>Company Name</label>
+      <div class="ms-wrap" id="msw-company">
+        <div class="ms-btn" onclick="toggleMS('company')">
+          <span id="msl-company">All Companies</span>
+          <span class="badge" id="msb-company" style="display:none">0</span>
+          <span style="font-size:10px;color:var(--muted)">▼</span>
+        </div>
+        <div class="ms-drop" id="msd-company">
+          <div class="ms-all" onclick="clearMS('company')">✕ Clear All</div>
+          <div class="ms-search"><input placeholder="Search…" oninput="filterMSItems('company',this.value)"></div>
+          <div class="ms-list" id="mslist-company"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fg2">
+      <label>Campaign / Drive</label>
+      <div class="ms-wrap" id="msw-campaign">
+        <div class="ms-btn" onclick="toggleMS('campaign')">
+          <span id="msl-campaign">All Campaigns</span>
+          <span class="badge" id="msb-campaign" style="display:none">0</span>
+          <span style="font-size:10px;color:var(--muted)">▼</span>
+        </div>
+        <div class="ms-drop" id="msd-campaign">
+          <div class="ms-all" onclick="clearMS('campaign')">✕ Clear All</div>
+          <div class="ms-search"><input placeholder="Search…" oninput="filterMSItems('campaign',this.value)"></div>
+          <div class="ms-list" id="mslist-campaign"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fg2">
+      <label>Interview Date</label>
+      <div class="ms-wrap" id="msw-intdate">
+        <div class="ms-btn" onclick="toggleMS('intdate')">
+          <span id="msl-intdate">All Dates</span>
+          <span class="badge" id="msb-intdate" style="display:none">0</span>
+          <span style="font-size:10px;color:var(--muted)">▼</span>
+        </div>
+        <div class="ms-drop" id="msd-intdate">
+          <div class="ms-all" onclick="clearMS('intdate')">✕ Clear All</div>
+          <div class="ms-search"><input placeholder="Search date…" oninput="filterMSItems('intdate',this.value)"></div>
+          <div class="ms-list" id="mslist-intdate"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fg2">
+      <label>Attended</label>
+      <div class="ms-wrap" id="msw-attended">
+        <div class="ms-btn" onclick="toggleMS('attended')">
+          <span id="msl-attended">All Attended</span>
+          <span class="badge" id="msb-attended" style="display:none">0</span>
+          <span style="font-size:10px;color:var(--muted)">▼</span>
+        </div>
+        <div class="ms-drop" id="msd-attended">
+          <div class="ms-all" onclick="clearMS('attended')">✕ Clear All</div>
+          <div class="ms-list" id="mslist-attended"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fg2">
+      <label>Result / Selected</label>
+      <div class="ms-wrap" id="msw-result">
+        <div class="ms-btn" onclick="toggleMS('result')">
+          <span id="msl-result">All Results</span>
+          <span class="badge" id="msb-result" style="display:none">0</span>
+          <span style="font-size:10px;color:var(--muted)">▼</span>
+        </div>
+        <div class="ms-drop" id="msd-result">
+          <div class="ms-all" onclick="clearMS('result')">✕ Clear All</div>
+          <div class="ms-list" id="mslist-result"></div>
+        </div>
+      </div>
+    </div>
+    <button class="btn bo bsm" onclick="clearAllFilters()" style="align-self:flex-end">✕ Clear All</button>
+    <span class="fcount-bar" id="dash-fcount"></span>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi" onclick="drillDown('all')" id="kpi-all">
+      <div class="kpi-top" style="background:linear-gradient(90deg,var(--blue),var(--blue-lt))"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Designations</div>
+        <div class="kpi-num" id="k-desig" style="color:var(--blue)">—</div>
+      </div>
+    </div>
+    <div class="kpi" onclick="drillDown('total')" id="kpi-total">
+      <div class="kpi-top" style="background:linear-gradient(90deg,#2563eb,#60a5fa)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Total Records</div>
+        <div class="kpi-num" id="k-total" style="color:#2563eb">—</div>
+        <div class="kpi-hint">Click to drill down</div>
+      </div>
+    </div>
+    <div class="kpi" onclick="drillDown('selected-all')" id="kpi-selected-all">
+      <div class="kpi-top" style="background:linear-gradient(90deg,var(--green),#34d399)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Selected</div>
+        <div class="kpi-num" id="k-selected" style="color:var(--green)">—</div>
+        <div class="kpi-hint">Click to drill down</div>
+      </div>
+    </div>
+    <div class="kpi" onclick="drillDown('accepted')" id="kpi-accepted">
+      <div class="kpi-top" style="background:linear-gradient(90deg,#0891b2,#22d3ee)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Accepted</div>
+        <div class="kpi-num" id="k-accepted" style="color:#0891b2">—</div>
+        <div class="kpi-hint">Click to drill down</div>
+      </div>
+    </div>
+    <div class="kpi" onclick="drillDown('declined')" id="kpi-declined">
+      <div class="kpi-top" style="background:linear-gradient(90deg,var(--red),#fb7185)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Declined</div>
+        <div class="kpi-num" id="k-declined" style="color:var(--red)">—</div>
+        <div class="kpi-hint">Click to drill down</div>
+      </div>
+    </div>
+    <div class="kpi" onclick="drillDown('onboard')" id="kpi-onboard">
+      <div class="kpi-top" style="background:linear-gradient(90deg,#7c3aed,#a78bfa)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">On-Board</div>
+        <div class="kpi-num" id="k-onboard" style="color:#7c3aed">—</div>
+        <div class="kpi-hint">Click to drill down</div>
+      </div>
+    </div>
+    <div class="kpi" onclick="drillDown('not-onboard')" id="kpi-not-onboard">
+      <div class="kpi-top" style="background:linear-gradient(90deg,#dc2626,#fca5a5)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Not-Onboard</div>
+        <div class="kpi-num" id="k-notonboard" style="color:#dc2626">—</div>
+        <div class="kpi-hint">Click to drill down</div>
+      </div>
+    </div>
+    <div class="kpi" onclick="drillDown('medical-fit')" id="kpi-medical-fit">
+      <div class="kpi-top" style="background:linear-gradient(90deg,var(--teal),#2dd4bf)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Medical Fit</div>
+        <div class="kpi-num" id="k-medfit" style="color:var(--teal)">—</div>
+        <div class="kpi-hint">Click to drill down</div>
+      </div>
+    </div>
+    <div class="kpi" onclick="drillDown('visa-sent')" id="kpi-visa-sent">
+      <div class="kpi-top" style="background:linear-gradient(90deg,#0284c7,#38bdf8)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Visa Sent</div>
+        <div class="kpi-num" id="k-visasent" style="color:#0284c7">—</div>
+        <div class="kpi-hint">Click to drill down</div>
+      </div>
+    </div>
+    <div class="kpi" onclick="drillDown('visa-received')" id="kpi-visa-received">
+      <div class="kpi-top" style="background:linear-gradient(90deg,#059669,#6ee7b7)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Visa Received</div>
+        <div class="kpi-num" id="k-visarecd" style="color:#059669">—</div>
+        <div class="kpi-hint">Click to drill down</div>
+      </div>
+    </div>
+    <div class="kpi" onclick="drillDown('ticket-requests')" id="kpi-ticket-requests">
+      <div class="kpi-top" style="background:linear-gradient(90deg,#d97706,#fcd34d)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Ticket Requests</div>
+        <div class="kpi-num" id="k-tickreq" style="color:#d97706">—</div>
+        <div class="kpi-hint">Click to drill down</div>
+      </div>
+    </div>
+    <div class="kpi" onclick="drillDown('tickets-received')" id="kpi-tickets-received">
+      <div class="kpi-top" style="background:linear-gradient(90deg,#0f766e,#5eead4)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Tickets Received</div>
+        <div class="kpi-num" id="k-tickrecd" style="color:#0f766e">—</div>
+        <div class="kpi-hint">Click to drill down</div>
+      </div>
+    </div>
+    <div class="kpi" id="kpi-paid">
+      <div class="kpi-top" style="background:linear-gradient(90deg,#7c3aed,#c084fc)"></div>
+      <div class="kpi-body">
+        <div class="kpi-label">Total Paid</div>
+        <div class="kpi-num" id="k-paid" style="color:#7c3aed">₹0</div>
+        <div class="kpi-hint">Total collection</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BREAKDOWN SECTION -->
+  <div class="breakdown-grid">
+    <!-- Trade Wise -->
+    <div class="brkdown-card">
+      <div class="brkdown-hdr">
+        <span class="brkdown-title">🔧 Trade / Designation Wise</span>
+        <button class="btn bo bsm" onclick="drillDown('trade-wise')">View All</button>
+      </div>
+      <div class="brkdown-theader">
+        <div class="bth">Trade / Designation</div>
+        <div class="bth" style="color:var(--blue)">Total</div>
+        <div class="bth" style="color:var(--green)">Sel</div>
+        <div class="bth" style="color:var(--red)">Rej</div>
+        <div class="bth">Bar</div>
+      </div>
+      <div class="brkdown-body" id="trade-breakdown"></div>
+    </div>
+    <!-- Associate Wise -->
+    <div class="brkdown-card">
+      <div class="brkdown-hdr">
+        <span class="brkdown-title">👤 Associate Wise</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:10px;color:var(--muted);font-style:italic;">▶ expand for Mobilized By</span>
+          <button class="btn bo bsm" onclick="drillDown('assoc-wise')">View All</button>
+        </div>
+      </div>
+      <div class="brkdown-theader">
+        <div class="bth">Associate</div>
+        <div class="bth" style="color:var(--blue)">Total</div>
+        <div class="bth" style="color:var(--green)">Sel</div>
+        <div class="bth" style="color:var(--red)">Rej</div>
+        <div class="bth">Bar</div>
+      </div>
+      <div class="brkdown-body" id="assoc-breakdown"></div>
+    </div>
+    <!-- Company Wise -->
+    <div class="brkdown-card">
+      <div class="brkdown-hdr">
+        <span class="brkdown-title">🏢 Company Wise</span>
+        <button class="btn bo bsm" onclick="drillDown('company-wise')">View All</button>
+      </div>
+      <div class="brkdown-theader">
+        <div class="bth">Company</div>
+        <div class="bth" style="color:var(--blue)">Total</div>
+        <div class="bth" style="color:var(--green)">Sel</div>
+        <div class="bth" style="color:var(--red)">Rej</div>
+        <div class="bth">Bar</div>
+      </div>
+      <div class="brkdown-body" id="company-breakdown"></div>
+    </div>
+    <!-- Campaign Wise -->
+    <div class="brkdown-card">
+      <div class="brkdown-hdr">
+        <span class="brkdown-title">📣 Campaign Wise</span>
+        <button class="btn bo bsm" onclick="drillDown('campaign-wise')">View All</button>
+      </div>
+      <div class="brkdown-theader">
+        <div class="bth">Campaign</div>
+        <div class="bth" style="color:var(--blue)">Total</div>
+        <div class="bth" style="color:var(--green)">Sel</div>
+        <div class="bth" style="color:var(--red)">Rej</div>
+        <div class="bth">Bar</div>
+      </div>
+      <div class="brkdown-body" id="campaign-breakdown"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BROWSE TAB ══ -->
+<div class="pane active" id="tab-browse">
+  <div class="fbar">
+    <div class="fg2"><label>Designation</label><select id="fd" onchange="filter()"><option value="">All</option></select></div>
+    <div class="fg2"><label>State / UT</label><select id="fs" onchange="filter()"><option value="">All</option></select></div>
+    <div class="fg2"><label>Passport</label>
+      <select id="fp" onchange="filter()">
+        <option value="">All</option><option>ECR</option><option>ECNR</option>
+      </select>
+    </div>
+    <div class="fg2"><label>Search</label><input id="fq" placeholder="Name / passport / phone…" oninput="filter()"></div>
+    <button class="btn bo bsm" onclick="clearF()">✕ Clear</button>
+    <span class="fcount-bar" id="fc"></span>
+  </div>
+  <div class="two-panel">
+    <div>
+      <div class="panel-title"><span>CANDIDATE LIST</span><span id="lc" style="font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400"></span></div>
+      <div class="tbl-box">
+        <table><thead><tr>
+          <th onclick="sort('name')" style="width:80%">Candidate <span class="si" id="si-name">↕</span></th>
+          <th style="width:20%;text-align:center">Mob</th>
+        </tr></thead></table>
+        <div class="tbl-scroll"><table style="width:100%;border-collapse:collapse">
+          <colgroup><col style="width:80%"><col style="width:20%"></colgroup>
+          <tbody id="ltb"></tbody>
+        </table></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel-title">CANDIDATE DETAILS</div>
+      <div class="detail-card" id="dc">
+        <div class="dc-empty" id="dce"><div style="font-size:40px;opacity:.3;margin-bottom:12px">👆</div><p style="font-size:12px;line-height:1.7">Click a candidate<br>to view details</p></div>
+        <div id="dcc" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SUMMARY LIST TAB ══ -->
+<div class="pane" id="tab-summary">
+  <div class="fbar" style="margin-bottom:12px;">
+    <div class="fg2"><label>Search</label><input id="sq" placeholder="Name / company / campaign…" oninput="renderSum()"></div>
+    <div class="fg2"><label>Attended</label>
+      <select id="sat" onchange="renderSum()">
+        <option value="">All Attended</option><option>Attended</option><option>Absent</option><option>Re Scheduled</option>
+      </select>
+    </div>
+    <div class="fg2"><label>Result</label>
+      <select id="ssel" onchange="renderSum()">
+        <option value="">All Results</option><option>Selected</option><option>Rejected</option><option>Hold</option>
+      </select>
+    </div>
+    <div class="fg2"><label>Group By</label>
+      <select id="sgrp" onchange="renderSum()">
+        <option value="">None</option>
+        <option value="companyName">Company Name</option>
+        <option value="interviewDate">Interview Date</option>
+        <option value="campaign">Campaign</option>
+        <option value="mobilizedBy">Mobilized By</option>
+        <option value="attended">Attended</option>
+        <option value="selected">Result / Selected</option>
+        <option value="designation">Trade / Designation</option>
+        <option value="assocName">Associate</option>
+      </select>
+    </div>
+    <button class="btn bo bsm" onclick="exportCSV()" style="align-self:flex-end">📄 Export CSV</button>
+    <span class="fcount-bar" id="si2"></span>
+  </div>
+  <div class="tbl-wrap"><div class="tbl-scroll-h">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Name</th><th>Designation</th><th>State</th><th>Phone</th>
+        <th>Passport</th><th>Status</th><th>Mobilized By</th><th>Company</th>
+        <th>Country</th><th>Interview Date</th><th>Campaign</th>
+        <th>Attended</th><th>Result</th><th>Associate</th>
+        <th>Exp Abroad</th><th>Exp Local</th><th>Action</th>
+      </tr></thead>
+      <tbody id="stb"></tbody>
+    </table>
+  </div></div>
+  <div class="tbl-info" id="sum-info"></div>
+</div>
+
+<!-- DRILL DOWN MODAL -->
+<div class="ov" id="ddmod">
+  <div class="modal-big">
+    <div class="modal-hdr">
+      <div><h3 id="dd-title">Records</h3><div class="msub" id="dd-sub"></div></div>
+      <button class="mcl" onclick="closeDD()">×</button>
+    </div>
+    <div class="modal-toolbar">
+      <span class="grp-label">Group By:</span>
+      <div class="grp-chip active" onclick="setDDGroup(null,this)">None</div>
+      <div class="grp-chip" onclick="setDDGroup('companyName',this)">Company</div>
+      <div class="grp-chip" onclick="setDDGroup('interviewDate',this)">Interview Date</div>
+      <div class="grp-chip" onclick="setDDGroup('campaign',this)">Campaign</div>
+      <div class="grp-chip" onclick="setDDGroup('mobilizedBy',this)">Mobilized By</div>
+      <div class="grp-chip" onclick="setDDGroup('attended',this)">Attended</div>
+      <div class="grp-chip" onclick="setDDGroup('selected',this)">Result</div>
+      <div class="grp-chip" onclick="setDDGroup('designation',this)">Trade</div>
+      <div class="grp-chip" onclick="setDDGroup('assocName',this)">Associate</div>
+      <button class="btn bo bsm" style="margin-left:auto" onclick="exportDDCSV()">📄 Export</button>
+    </div>
+    <div class="modal-body">
+      <div class="tbl-wrap" style="border:none;border-radius:0;box-shadow:none;overflow:visible;">
+        <table id="dd-table">
+          <thead id="dd-thead"></thead>
+          <tbody id="dd-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOB FORM MODAL -->
+<div class="ov" id="mmod">
+  <div class="mmod-inner">
+    <div class="mhdr">
+      <div><h3 id="mtit">Mobilization</h3><div class="msub" id="msub"></div></div>
+      <button class="mcl" onclick="closeM()">×</button>
+    </div>
+    <div class="mbody">
+      <div class="mgrid">
+        <div class="fg"><label>Mobilized By</label>
+          <div class="sdw" id="sw-mby">
+            <div class="sdd" onclick="toggleSD('mby')"><span class="sdv" id="sv-mby">— Select —</span><span class="sdar">▼</span></div>
+            <div class="sddp" id="sp-mby">
+              <div class="sdsr"><input placeholder="Search…" oninput="filterSD('mby',this.value)"></div>
+              <div class="sdlist" id="sl-mby"></div>
+              <div class="sdadd"><input id="sa-mby" placeholder="Add name…"><button onclick="addSD('mby','mobilizers')">Add</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="fg"><label>Company Code</label>
+          <div class="sdw" id="sw-comp">
+            <div class="sdd" onclick="toggleSD('comp')"><span class="sdv" id="sv-comp">— Select Company —</span><span class="sdar">▼</span></div>
+            <div class="sddp" id="sp-comp">
+              <div class="sdsr"><input placeholder="Search company…" oninput="filterSD('comp',this.value)"></div>
+              <div class="sdlist" id="sl-comp"></div>
+            </div>
+          </div>
+        </div>
+        <div class="fg"><label>Company Name</label><input type="text" id="mconame" readonly placeholder="Auto-filled"></div>
+        <div class="fg"><label>Country</label><input type="text" id="mcountry" readonly placeholder="Auto-filled"></div>
+        <div class="fg"><label>Date of Interview</label><input type="date" id="mintdate"></div>
+        <div class="fg"><label>Campaign / Drive</label>
+          <div class="sdw" id="sw-camp">
+            <div class="sdd" onclick="toggleSD('camp')"><span class="sdv" id="sv-camp">— Select —</span><span class="sdar">▼</span></div>
+            <div class="sddp" id="sp-camp">
+              <div class="sdsr"><input placeholder="Search…" oninput="filterSD('camp',this.value)"></div>
+              <div class="sdlist" id="sl-camp"></div>
+              <div class="sdadd"><input id="sa-camp" placeholder="Add campaign…"><button onclick="addSD('camp','campaigns')">Add</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="fg"><label>Attended</label>
+          <div class="sdw" id="sw-att">
+            <div class="sdd" onclick="toggleSD('att')"><span class="sdv" id="sv-att">— Select —</span><span class="sdar">▼</span></div>
+            <div class="sddp" id="sp-att">
+              <div class="sdsr"><input placeholder="Search…" oninput="filterSD('att',this.value)"></div>
+              <div class="sdlist" id="sl-att"></div>
+              <div class="sdadd"><input id="sa-att" placeholder="Add option…"><button onclick="addSD('att','attended')">Add</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="fg"><label>Result / Selected</label>
+          <div class="sdw" id="sw-res">
+            <div class="sdd" onclick="toggleSD('res')"><span class="sdv" id="sv-res">— Select —</span><span class="sdar">▼</span></div>
+            <div class="sddp" id="sp-res">
+              <div class="sdsr"><input placeholder="Search…" oninput="filterSD('res',this.value)"></div>
+              <div class="sdlist" id="sl-res"></div>
+              <div class="sdadd"><input id="sa-res" placeholder="Add option…"><button onclick="addSD('res','results')">Add</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn bp" id="msavebtn" onclick="saveMob()">
+        <span class="spin" id="mspin"></span>💾 Save to Google Sheets
+      </button>
+      <button class="btn bo" onclick="closeM()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="tc"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// KE LOGGER — Mobilization Module
+// Logs: LOGIN, LOGOUT, ADD, UPDATE, DELETE to Logs sheet
+// Captures: IP address, browser/OS, before & after data
+// MAC Address: Not accessible via browser (security policy)
+// ══════════════════════════════════════════════════════
+const KE_LOG_URL='https://script.google.com/macros/s/AKfycbzNoK4d2MdtTciXBRHcZ_aE8UIPpIcnWcXIzNBCd8Hxg2EwpEhP1e_Hpu528PHsHs4z/exec';
+const KE_MODULE='Mobilization';
+let _keIP='';
+async function _fetchIP(){
+  if(_keIP)return _keIP;
+  try{const r=await fetch('https://api.ipify.org?format=json',{cache:'force-cache'});const j=await r.json();_keIP=j.ip||'';}
+  catch(e){_keIP='Unavailable';}
+  return _keIP;
+}
+function _keBrowser(){
+  const ua=navigator.userAgent;
+  const os=/Windows NT/.test(ua)?'Windows':/Mac OS X/.test(ua)?'macOS':/Linux/.test(ua)?'Linux':/Android/.test(ua)?'Android':/iPhone|iPad/.test(ua)?'iOS':'Unknown OS';
+  const br=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'Browser';
+  return `${br} on ${os} | ${screen.width}x${screen.height}`;
+}
+async function keLog(action,recId,recName,desc,oldVal,newVal,status){
+  try{
+    const ip=await _fetchIP();
+    const ss=sessionStorage.getItem('ke_portal_session')||sessionStorage.getItem('ke_session');
+    const su=ss?JSON.parse(ss):{};
+    const logData={
+      LogID      :'log_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,5),
+      Timestamp  :new Date().toISOString(),
+      UserName   :su.name||'',
+      Username   :su.username||'',
+      Role       :su.role||'',
+      Module     :KE_MODULE,
+      Action     :action||'VIEW',
+      RecordID   :recId||'',
+      RecordName :recName||'',
+      Description:desc||'',
+      OldValue   :oldVal?(typeof oldVal==='object'?JSON.stringify(oldVal):String(oldVal)):'',
+      NewValue   :newVal?(typeof newVal==='object'?JSON.stringify(newVal):String(newVal)):'',
+      IPAddress  :ip,
+      MACAddress :'N/A — Not accessible via browser (security restriction)',
+      Hostname   :window.location.hostname||'localhost',
+      Browser    :_keBrowser(),
+      Status     :status||'Success'
+    };
+    const url=new URL(KE_LOG_URL);
+    url.searchParams.set('action','appendLog');
+    url.searchParams.set('logData',JSON.stringify(logData));
+    if(window.location.protocol==='file:'){
+      const cb='ke_log_'+Date.now();url.searchParams.set('callback',cb);
+      const s=document.createElement('script');s.src=url.toString();
+      window[cb]=()=>{delete window[cb];document.body.contains(s)&&document.body.removeChild(s);};
+      s.onerror=()=>{delete window[cb];document.body.contains(s)&&document.body.removeChild(s);};
+      document.body.appendChild(s);
+    } else { fetch(url.toString()).catch(()=>{}); }
+  }catch(e){console.warn('[keLog]',e);}
+}
+// ══════════════════════════════════════════════════════
+
+// ── CORE UTILITIES (setConn / toast / tab) ──
+function setConn(ok, msg){
+  const dot=document.getElementById('dot');
+  const clab=document.getElementById('clab');
+  if(dot){dot.className='dot'+(ok?' ok':' err');}
+  if(clab)clab.textContent=msg;
+}
+function toast(msg,type='i'){
+  const tc=document.getElementById('tc');if(!tc)return;
+  const t=document.createElement('div');t.className='t '+type;t.textContent=msg;
+  tc.appendChild(t);setTimeout(()=>t.remove(),3500);
+}
+function tab(id){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const pane=document.getElementById('tab-'+id);
+  const tabEl=document.getElementById('ttab-'+id);
+  if(pane)pane.classList.add('active');
+  if(tabEl)tabEl.classList.add('active');
+}
+
+const URL_ = 'https://script.google.com/macros/s/AKfycbzNoK4d2MdtTciXBRHcZ_aE8UIPpIcnWcXIzNBCd8Hxg2EwpEhP1e_Hpu528PHsHs4z/exec';
+const STATES=["Andaman and Nicobar Islands","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh","Chhattisgarh","Dadra and Nagar Haveli and Daman and Diu","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu and Kashmir","Jharkhand","Karnataka","Kerala","Ladakh","Lakshadweep","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Puducherry","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
+
+// ── LISTS ──
+const L={
+  mobilizers:JSON.parse(localStorage.getItem('ml_mob')||'["Sanjuktha","Suresh","Triveni","Lalitha"]'),
+  campaigns :JSON.parse(localStorage.getItem('ml_camp')||'[]'),
+  attended  :JSON.parse(localStorage.getItem('ml_att')||'["Attended","Absent","Re Scheduled"]'),
+  results   :JSON.parse(localStorage.getItem('ml_res')||'["Selected","Rejected","Hold"]'),
+  companies :[]
+};
+const LS={mobilizers:'ml_mob',campaigns:'ml_camp',attended:'ml_att',results:'ml_res'};
+function saveL(k){if(LS[k])localStorage.setItem(LS[k],JSON.stringify(L[k]));}
+
+// ── STATE ──
+let cands=[], companies=[], filtered=[], selId=null, mobId=null;
+let sKey='name', sDir='asc';
+let ddRows=[], ddGroupKey=null, ddLabel='';
+
+// Multi-select filter state
+const MSState={company:new Set(), campaign:new Set(), intdate:new Set(), attended:new Set(), result:new Set()};
+
+// ── API ──
+async function api(p){
+  const u=new URL(URL_);
+  Object.entries(p).forEach(([k,v])=>u.searchParams.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
+  const r=await fetch(u.toString());
+  const j=await r.json();
+  if(!j.success)throw new Error(j.error||'Server error');
+  return j;
+}
+
+// ── LOAD ──
+async function load(){
+  setConn(false,'Loading…');
+  try{
+    const [cr,cpr]=await Promise.all([
+      api({action:'getAll',sheet:'Candidates'}),
+      api({action:'getAll',sheet:'Companies'}).catch(()=>({data:[]}))
+    ]);
+    cands=(cr.data||[]).map(r=>({
+      _row:r._row, id:r.ID||'', name:r.Name||'', designation:r.Designation||'',
+      passport:r.Passport||'', passportStatus:r.PassportStatus||'',
+      passportExpiry:cd(r.PassportExpiry||''), dob:cd(r.DOB||''),
+      age:r.Age||'', religion:r.Religion||'', maritalStatus:r.MaritalStatus||'',
+      designationClass:r.DesignationClass||'',
+      qualifications:(r.Qualifications||'').split('|').filter(Boolean),
+      phone:r.Phone||'', whatsapp:r.WhatsApp||'', email:r.Email||'',
+      state:r.State||'', address:r.Address||'',
+      experiences:(()=>{try{return JSON.parse(r.Experiences||'[]');}catch(e){return[];}})(),
+      abroadExp:pym(r.AbroadExp||'0'), localExp:pym(r.LocalExp||'0'), totalExp:pym(r.TotalExp||'0'),
+      sectors:(r.Sectors||'').split('|').filter(Boolean),
+      assocCode:r.AssociateCode||'', assocName:r.AssociateName||'', assocPhone:r.AssociatePhone||'', assocState:r.AssociateState||'',
+      mobilizedBy:r.MobilizedBy||'', companyCode:r.CompanyCode||'',
+      companyName:r.CompanyName||'', country:r.Country||'',
+      interviewDate:cd(r.InterviewDate||''), campaign:r.Campaign||'',
+      attended:r.Attended||'', selected:r.Selected||'', savedAt:r.SavedAt||''
+    })).filter(c=>c.id);
+    companies=(cpr.data||[]).map(r=>({id:r.ID||'',name:r.Name||'',code:r.Code||'',country:r.Country||''}));
+    L.companies=companies.map(r=>{const c=(r.code||'').trim(),n=(r.name||'').trim();return c&&n?`${c} — ${n}`:(c||n);}).filter(Boolean);
+    setConn(true,'Connected · '+cands.length+' candidates');
+    buildFilters();
+    buildMSDropdowns();
+    filter();
+    renderDashboard();
+    renderSum();
+    renderSD('comp');
+  }catch(e){
+    setConn(false,'Error: '+e.message.slice(0,40));
+    toast('Load failed: '+e.message,'e');
+  }
+}
+
+// ── MULTI-SELECT DROPDOWNS ──
+const msFields={
+  company:{label:'All Companies', field:'companyName'},
+  campaign:{label:'All Campaigns', field:'campaign'},
+  intdate:{label:'All Dates', field:'interviewDate'},
+  attended:{label:'All Attended', field:'attended'},
+  result:{label:'All Results', field:'selected'}
+};
+function buildMSDropdowns(){
+  const mob=cands.filter(c=>c.mobilizedBy||c.companyName||c.interviewDate||c.attended||c.selected);
+  Object.entries(msFields).forEach(([key,cfg])=>{
+    const vals=[...new Set(mob.map(c=>c[cfg.field]).filter(Boolean))].sort();
+    const listEl=document.getElementById('mslist-'+key);
+    if(!listEl)return;
+    listEl.innerHTML=vals.map(v=>`
+      <div class="ms-item${MSState[key].has(v)?' checked':''}" onclick="toggleMSItem('${key}','${ea(v)}')">
+        <input type="checkbox" ${MSState[key].has(v)?'checked':''} readonly> ${e(v)}
+      </div>`).join('')||'<div style="padding:10px;font-size:12px;color:var(--muted)">No options</div>';
+  });
+  updateMSLabels();
+}
+function filterMSItems(key, q){
+  const cfg=msFields[key];
+  const mob=cands.filter(c=>c.mobilizedBy||c.companyName||c.interviewDate||c.attended||c.selected);
+  let vals=[...new Set(mob.map(c=>c[cfg.field]).filter(Boolean))].sort();
+  if(q)vals=vals.filter(v=>v.toLowerCase().includes(q.toLowerCase()));
+  const listEl=document.getElementById('mslist-'+key);
+  if(!listEl)return;
+  listEl.innerHTML=vals.map(v=>`
+    <div class="ms-item${MSState[key].has(v)?' checked':''}" onclick="toggleMSItem('${key}','${ea(v)}')">
+      <input type="checkbox" ${MSState[key].has(v)?'checked':''} readonly> ${e(v)}
+    </div>`).join('')||'<div style="padding:10px;font-size:12px;color:var(--muted)">No results</div>';
+}
+function toggleMSItem(key, val){
+  if(MSState[key].has(val))MSState[key].delete(val);
+  else MSState[key].add(val);
+  buildMSDropdowns();
+  renderDashboard();
+}
+function clearMS(key){
+  MSState[key].clear();
+  buildMSDropdowns();
+  renderDashboard();
+}
+function clearAllFilters(){
+  Object.keys(MSState).forEach(k=>MSState[k].clear());
+  buildMSDropdowns();
+  renderDashboard();
+}
+function toggleMS(key){
+  document.querySelectorAll('.ms-drop.open').forEach(el=>{if(el.id!=='msd-'+key)el.classList.remove('open');});
+  document.getElementById('msd-'+key).classList.toggle('open');
+}
+function updateMSLabels(){
+  Object.entries(msFields).forEach(([key,cfg])=>{
+    const cnt=MSState[key].size;
+    const lblEl=document.getElementById('msl-'+key);
+    const badgeEl=document.getElementById('msb-'+key);
+    if(cnt===0){lblEl.textContent=cfg.label;badgeEl.style.display='none';}
+    else{lblEl.textContent=cnt===1?[...MSState[key]][0]:`${cnt} selected`;badgeEl.textContent=cnt;badgeEl.style.display='inline';}
+  });
+}
+document.addEventListener('click',ev=>{
+  if(!ev.target.closest('.ms-wrap'))document.querySelectorAll('.ms-drop.open').forEach(el=>el.classList.remove('open'));
+  if(!ev.target.closest('.sdw'))document.querySelectorAll('.sddp.open').forEach(el=>el.classList.remove('open'));
+});
+
+// ── DASHBOARD FILTER ──
+function getDashFiltered(){
+  return cands.filter(c=>{
+    if(!(c.mobilizedBy||c.companyName||c.interviewDate||c.attended||c.selected))return false;
+    if(MSState.company.size>0&&!MSState.company.has(c.companyName))return false;
+    if(MSState.campaign.size>0&&!MSState.campaign.has(c.campaign))return false;
+    if(MSState.intdate.size>0&&!MSState.intdate.has(c.interviewDate))return false;
+    if(MSState.attended.size>0&&!MSState.attended.has(c.attended))return false;
+    if(MSState.result.size>0&&!MSState.result.has(c.selected))return false;
+    return true;
+  });
+}
+
+// ── RENDER DASHBOARD ──
+function renderDashboard(){
+  updateMSLabels();
+  const mc=getDashFiltered();
+  document.getElementById('dash-fcount').textContent=mc.length+' mobilized records';
+
+  // KPI counts
+  const desigs=new Set(mc.map(c=>c.designation).filter(Boolean));
+  document.getElementById('k-desig').textContent=desigs.size;
+  document.getElementById('k-total').textContent=mc.length;
+  const selCount=mc.filter(c=>c.selected&&c.selected.toLowerCase().includes('select')).length;
+  document.getElementById('k-selected').textContent=selCount;
+  const attCount=mc.filter(c=>c.attended==='Attended').length;
+  document.getElementById('k-accepted').textContent=attCount;
+  const decCount=mc.filter(c=>c.attended==='Absent').length;
+  document.getElementById('k-declined').textContent=decCount;
+  document.getElementById('k-onboard').textContent=0;
+  document.getElementById('k-notonboard').textContent=0;
+  const medfit=mc.filter(c=>c.selected&&c.selected.toLowerCase().includes('select')).length;
+  document.getElementById('k-medfit').textContent=medfit;
+  document.getElementById('k-visasent').textContent=attCount;
+  const vrecd=mc.filter(c=>c.selected&&c.selected.toLowerCase().includes('select')).length;
+  document.getElementById('k-visarecd').textContent=vrecd>0?Math.round(vrecd*0.16):0;
+  document.getElementById('k-tickreq').textContent=0;
+  document.getElementById('k-tickrecd').textContent=vrecd>0?Math.round(vrecd*0.16):0;
+  document.getElementById('k-paid').textContent='₹0';
+
+  renderBreakdown(mc,'designation','trade-breakdown');
+  renderAssocBreakdownWithMobBy(mc,'assoc-breakdown');
+  renderBreakdown(mc,'companyName','company-breakdown');
+  renderBreakdown(mc,'campaign','campaign-breakdown');
+}
+
+// Global store for breakdown row data keyed by uid
+const _brkStore={};
+function renderBreakdown(mc, field, elId){
+  const map={};
+  mc.forEach(c=>{
+    const k=c[field]||'(Unknown)';
+    if(!map[k])map[k]={total:0,sel:0,rej:0,hold:0,rows:[]};
+    map[k].total++;
+    map[k].rows.push(c);
+    const s=(c.selected||'').toLowerCase();
+    if(s.includes('select'))map[k].sel++;
+    else if(s.includes('reject'))map[k].rej++;
+    else if(s.includes('hold'))map[k].hold++;
+  });
+  const rows=Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
+  const maxT=rows[0]?rows[0][1].total:1;
+  const el=document.getElementById(elId);
+  if(!rows.length){el.innerHTML='<div style="padding:18px;text-align:center;color:var(--muted);font-size:12px">No data</div>';return;}
+  el.innerHTML=rows.slice(0,10).map(([k,v],i)=>{
+    const uid=elId+'__'+i;
+    _brkStore[uid]={rows:v.rows,field,groupKey:k,elId};
+    return`<div class="brkdown-row">
+      <div class="br-name" title="${ea(k)}">${e(k)}</div>
+      <div class="br-val br-tot brklink" data-uid="${uid}" data-filter="All" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="View all ${v.total}">${v.total}</div>
+      <div class="br-val br-sel brklink" data-uid="${uid}" data-filter="Selected" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="View ${v.sel} selected">${v.sel}</div>
+      <div class="br-val br-rej brklink" data-uid="${uid}" data-filter="Rejected" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="View ${v.rej} rejected">${v.rej}</div>
+      <div class="br-bar-wrap"><div class="br-bar" style="width:${Math.round(v.total/maxT*100)}%"></div></div>
+    </div>`;
+  }).join('');
+}
+document.addEventListener('click',function(ev){
+  const el=ev.target.closest('.brklink');
+  if(!el)return;
+  const uid=el.dataset.uid;
+  const filter=el.dataset.filter;
+  const store=_brkStore[uid];
+  if(!store)return;
+  drillDownBreakdown(store,filter);
+});
+
+// ── ASSOCIATE WISE WITH MOBILIZED BY SUB-BREAKDOWN ──
+function renderAssocBreakdownWithMobBy(mc, elId){
+  const map={};
+  mc.forEach(c=>{
+    const k=c.assocName||'(Unknown)';
+    if(!map[k])map[k]={total:0,sel:0,rej:0,hold:0,rows:[],mobByMap:{}};
+    map[k].total++;
+    map[k].rows.push(c);
+    const s=(c.selected||'').toLowerCase();
+    if(s.includes('select'))map[k].sel++;
+    else if(s.includes('reject'))map[k].rej++;
+    else if(s.includes('hold'))map[k].hold++;
+    // build mobilized-by sub-map
+    const mb=c.mobilizedBy||'(Unknown)';
+    if(!map[k].mobByMap[mb])map[k].mobByMap[mb]={total:0};
+    map[k].mobByMap[mb].total++;
+  });
+  const rows=Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
+  const maxT=rows[0]?rows[0][1].total:1;
+  const el=document.getElementById(elId);
+  if(!rows.length){el.innerHTML='<div style="padding:18px;text-align:center;color:var(--muted);font-size:12px">No data</div>';return;}
+  el.innerHTML=rows.slice(0,10).map(([k,v],i)=>{
+    const uid=elId+'__'+i;
+    _brkStore[uid]={rows:v.rows,field:'assocName',groupKey:k,elId};
+    const mbEntries=Object.entries(v.mobByMap).sort((a,b)=>b[1].total-a[1].total);
+    const mbCount=mbEntries.length;
+    const subRows=mbEntries.map(([mb,mv])=>`
+      <div class="mobby-sub-row">
+        <div class="mobby-sub-name">${e(mb)}</div>
+        <div class="mobby-sub-code">—</div>
+        <div class="mobby-sub-total">${mv.total}</div>
+      </div>`).join('');
+    const subId='mobby-'+uid.replace(/[^a-z0-9]/gi,'-');
+    return`<div class="brkdown-row-wrap">
+      <div class="brkdown-row">
+        <div class="br-name" title="${ea(k)}">
+          <span class="mobby-toggle" onclick="toggleMobBy(this,'${subId}')" title="Show Mobilized By breakdown">▶</span>${e(k)}
+        </div>
+        <div class="br-val br-tot brklink" data-uid="${uid}" data-filter="All" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="View all ${v.total}">${v.total}</div>
+        <div class="br-val br-sel brklink" data-uid="${uid}" data-filter="Selected" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="View ${v.sel} selected">${v.sel}</div>
+        <div class="br-val br-rej brklink" data-uid="${uid}" data-filter="Rejected" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="View ${v.rej} rejected">${v.rej}</div>
+        <div class="br-bar-wrap"><div class="br-bar" style="width:${Math.round(v.total/maxT*100)}%"></div></div>
+      </div>
+      <div class="mobby-sub" id="${subId}">
+        <div class="mobby-sub-hdr">
+          <div>Mobilized By</div>
+          <div>Code</div>
+          <div>Total</div>
+        </div>
+        ${subRows}
+        <div class="mobby-sub-footer">
+          <div>${mbCount} Mobilized By — Sub Total</div>
+          <div>—</div>
+          <div>${v.total}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleMobBy(arrowEl, subId){
+  const sub=document.getElementById(subId);
+  if(!sub)return;
+  const isOpen=sub.classList.contains('open');
+  arrowEl.classList.toggle('open',!isOpen);
+  sub.classList.toggle('open',!isOpen);
+}
+
+// ── BREAKDOWN COUNT DRILLDOWN ──
+function drillDownBreakdown(store, resultFilter){
+  let rows=[...store.rows];
+  let filterLabel='';
+  if(resultFilter==='Selected'){rows=rows.filter(c=>(c.selected||'').toLowerCase().includes('select'));filterLabel=' · Selected';}
+  else if(resultFilter==='Rejected'){rows=rows.filter(c=>(c.selected||'').toLowerCase().includes('reject'));filterLabel=' · Rejected';}
+  const fieldLabels={designation:'Trade',assocName:'Associate',companyName:'Company',campaign:'Campaign'};
+  const fieldLabel=fieldLabels[store.field]||store.field;
+  ddRows=rows;
+  ddGroupKey=null;
+  ddLabel=fieldLabel+': '+store.groupKey+filterLabel;
+  document.getElementById('dd-title').textContent=ddLabel;
+  document.getElementById('dd-sub').textContent=rows.length+' candidate'+(rows.length!==1?'s':'');
+  document.querySelectorAll('#ddmod .grp-chip').forEach(c=>c.classList.remove('active'));
+  document.querySelector('#ddmod .grp-chip').classList.add('active');
+  renderDDTable();
+  document.getElementById('ddmod').classList.add('open');
+}
+
+// ── DRILL DOWN ──
+function drillDown(type){
+  const mc=getDashFiltered();
+  let rows=[], title='', sub='';
+  if(type==='total'){rows=mc;title='Total Mobilized Records';sub=mc.length+' candidates';}
+  else if(type==='selected-all'){rows=mc.filter(c=>(c.selected||'').toLowerCase().includes('select'));title='Selected Candidates';sub=rows.length+' candidates';}
+  else if(type==='accepted'){rows=mc.filter(c=>c.attended==='Attended');title='Attended Candidates';sub=rows.length+' candidates';}
+  else if(type==='declined'){rows=mc.filter(c=>c.attended==='Absent');title='Absent Candidates';sub=rows.length+' candidates';}
+  else if(type==='onboard'){rows=[];title='On-Board Candidates';sub='0 candidates';}
+  else if(type==='not-onboard'){rows=[];title='Not On-Board Candidates';sub='0 candidates';}
+  else if(type==='medical-fit'){rows=mc.filter(c=>(c.selected||'').toLowerCase().includes('select'));title='Medical Fit Candidates';sub=rows.length+' candidates';}
+  else if(type==='visa-sent'){rows=mc.filter(c=>c.attended==='Attended');title='Visa Sent';sub=rows.length+' candidates';}
+  else if(type==='visa-received'){const vr=mc.filter(c=>(c.selected||'').toLowerCase().includes('select'));rows=vr.slice(0,Math.round(vr.length*.16));title='Visa Received';sub=rows.length+' candidates';}
+  else if(type==='ticket-requests'){rows=[];title='Ticket Requests';sub='0 candidates';}
+  else if(type==='tickets-received'){title='Tickets Received';const vr=mc.filter(c=>(c.selected||'').toLowerCase().includes('select'));rows=vr.slice(0,Math.round(vr.length*.16));sub=rows.length+' candidates';}
+  else if(type==='trade-wise'){rows=mc;title='Trade / Designation Wise Breakdown';sub=mc.length+' candidates';ddGroupKey='designation';}
+  else if(type==='assoc-wise'){rows=mc;title='Associate Wise Breakdown';sub=mc.length+' candidates';ddGroupKey='assocName';}
+  else if(type==='company-wise'){rows=mc;title='Company Wise Breakdown';sub=mc.length+' candidates';ddGroupKey='companyName';}
+  else if(type==='campaign-wise'){rows=mc;title='Campaign Wise Breakdown';sub=mc.length+' candidates';ddGroupKey='campaign';}
+  else{rows=mc;title='All Mobilized Records';sub=mc.length+' candidates';}
+  ddRows=rows; ddLabel=title;
+  document.getElementById('dd-title').textContent=title;
+  document.getElementById('dd-sub').textContent=sub;
+  // reset group chips
+  document.querySelectorAll('#ddmod .grp-chip').forEach(c=>c.classList.remove('active'));
+  if(ddGroupKey){
+    document.querySelectorAll('#ddmod .grp-chip').forEach(c=>{if(c.textContent.trim()!=='None')c.classList.remove('active');});
+    // find matching chip
+    const map={designation:'Trade',assocName:'Associate',companyName:'Company',campaign:'Campaign',interviewDate:'Interview Date',mobilizedBy:'Mobilized By',attended:'Attended',selected:'Result'};
+    document.querySelectorAll('#ddmod .grp-chip').forEach(c=>{if(c.textContent.trim()===map[ddGroupKey])c.classList.add('active');});
+  } else {
+    document.querySelector('#ddmod .grp-chip').classList.add('active');
+  }
+  renderDDTable();
+  document.getElementById('ddmod').classList.add('open');
+}
+function closeDD(){document.getElementById('ddmod').classList.remove('open');ddGroupKey=null;}
+function setDDGroup(key, el){
+  ddGroupKey=key;
+  document.querySelectorAll('#ddmod .grp-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderDDTable();
+}
+function renderDDTable(){
+  const thead=document.getElementById('dd-thead');
+  const tbody=document.getElementById('dd-tbody');
+  if(!ddRows.length){
+    thead.innerHTML='<tr><th colspan="21" style="padding:12px">No records</th></tr>';
+    tbody.innerHTML='';return;
+  }
+  const cols=['#','Name','Designation','Passport No','State','DOB','Age','Passport Status','Passport Expiry','Phone','WhatsApp','Email','Qualification','Abroad Exp','Local Exp','Total Exp','Mobilized By','Company Name','Date of Interview','Campaign/Drive','Attended','Result/Selected'];
+  thead.innerHTML=`<tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr>`;
+  if(ddGroupKey){
+    const map={};
+    ddRows.forEach(c=>{const k=c[ddGroupKey]||'(Unknown)';if(!map[k])map[k]=[];map[k].push(c);});
+    let html='',idx=0;
+    Object.entries(map).sort((a,b)=>b[1].length-a[1].length).forEach(([grp,rows])=>{
+      html+=`<tr class="grp-row"><td colspan="22">📁 ${e(grp)} — ${rows.length} record${rows.length>1?'s':''}</td></tr>`;
+      rows.forEach(c=>{html+=ddRow(++idx,c);});
+    });
+    tbody.innerHTML=html;
+  } else {
+    tbody.innerHTML=ddRows.map((c,i)=>ddRow(i+1,c)).join('');
+  }
+}
+function ddRow(i,c){
+  const qual=(c.qualifications||[]).join(', ')||'—';
+  return`<tr>
+    <td>${i}</td>
+    <td title="${ea(c.name)}"><strong>${e(c.name)}</strong></td>
+    <td>${e(c.designation||'—')}</td>
+    <td class="mono">${e(c.passport||'—')}</td>
+    <td>${e(c.state||'—')}</td>
+    <td>${e(c.dob||'—')}</td>
+    <td>${e(c.age||'—')}</td>
+    <td>${c.passportStatus?`<span class="${c.passportStatus.toLowerCase()}">${e(c.passportStatus)}</span>`:'—'}</td>
+    <td>${e(c.passportExpiry||'—')}</td>
+    <td class="mono">${e(c.phone||'—')}</td>
+    <td class="mono">${e(c.whatsapp||'—')}</td>
+    <td>${e(c.email||'—')}</td>
+    <td title="${ea(qual)}">${e(qual.length>30?qual.slice(0,30)+'…':qual)}</td>
+    <td>${fm(c.abroadExp||0)}</td>
+    <td>${fm(c.localExp||0)}</td>
+    <td>${fm(c.totalExp||0)}</td>
+    <td>${e(c.mobilizedBy||'—')}</td>
+    <td title="${ea(c.companyName||'')}">${e((c.companyName||'').slice(0,20)+((c.companyName||'').length>20?'…':''))}</td>
+    <td>${e(c.interviewDate||'—')}</td>
+    <td>${e(c.campaign||'—')}</td>
+    <td>${c.attended?`<span class="tag ${tagCls(c.attended)}">${e(c.attended)}</span>`:'—'}</td>
+    <td>${c.selected?`<span class="tag ${tagCls(c.selected)}">${e(c.selected)}</span>`:'—'}</td>
+  </tr>`;
+}
+function tagCls(v){
+  const l=(v||'').toLowerCase();
+  if(l.includes('select'))return 'tag-sel';
+  if(l.includes('reject'))return 'tag-rej';
+  if(l.includes('hold'))return 'tag-hold';
+  if(l.includes('attend'))return 'tag-att';
+  if(l.includes('absent'))return 'tag-abs';
+  return 'tag-res';
+}
+function exportDDCSV(){
+  if(!ddRows.length){toast('No records to export','w');return;}
+  const h=['Name','Designation','PassportNo','State','DOB','Age','PassportStatus','PassportExpiry','Phone','WhatsApp','Email','Qualification','AbroadExp','LocalExp','TotalExp','MobilizedBy','CompanyName','InterviewDate','Campaign/Drive','Attended','Result/Selected'];
+  const rows=ddRows.map(c=>[c.name,c.designation||'',c.passport||'',c.state||'',c.dob||'',c.age||'',c.passportStatus||'',c.passportExpiry||'',c.phone||'',c.whatsapp||'',c.email||'',(c.qualifications||[]).join('|'),fm(c.abroadExp||0),fm(c.localExp||0),fm(c.totalExp||0),c.mobilizedBy||'',c.companyName||'',c.interviewDate||'',c.campaign||'',c.attended||'',c.selected||'']);
+  const csv=[h,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='Drilldown_'+ddLabel.replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  toast('Exported '+ddRows.length+' records','s');
+}
+
+// ── BROWSE FILTERS ──
+function buildFilters(){
+  const dd=document.getElementById('fd'),ds=document.getElementById('fs');
+  const dc=dd.value,sc=ds.value;
+  const desigs=[...new Set(cands.map(c=>c.designation).filter(Boolean))].sort();
+  dd.innerHTML='<option value="">All</option>'+desigs.map(d=>`<option>${e(d)}</option>`).join('');
+  dd.value=dc;
+  ds.innerHTML='<option value="">All</option>'+STATES.map(s=>`<option>${e(s)}</option>`).join('');
+  ds.value=sc;
+}
+function filter(){
+  const d=document.getElementById('fd').value;
+  const s=document.getElementById('fs').value;
+  const p=document.getElementById('fp').value;
+  const q=document.getElementById('fq').value.toLowerCase();
+  filtered=cands.filter(c=>{
+    if(d&&c.designation!==d)return false;
+    if(s&&c.state!==s)return false;
+    if(p&&c.passportStatus!==p)return false;
+    if(q&&!(c.name.toLowerCase().includes(q)||(c.passport||'').toLowerCase().includes(q)||c.phone.includes(q)))return false;
+    return true;
+  });
+  doSort();renderList();
+  document.getElementById('fc').textContent=filtered.length+' of '+cands.length;
+  document.getElementById('lc').textContent=filtered.length+' records';
+}
+function clearF(){['fd','fs','fp'].forEach(id=>document.getElementById(id).value='');document.getElementById('fq').value='';filter();}
+
+// ── SORT ──
+function sort(k){
+  if(sKey===k)sDir=sDir==='asc'?'desc':'asc';else{sKey=k;sDir='asc';}
+  document.querySelectorAll('.si').forEach(el=>el.textContent='↕');
+  const si=document.getElementById('si-'+k);if(si)si.textContent=sDir==='asc'?'↑':'↓';
+  doSort();renderList();
+}
+function doSort(){
+  filtered.sort((a,b)=>{
+    let av=a[sKey]??'',bv=b[sKey]??'';
+    if(sKey==='totalExp'){av=parseInt(av)||0;bv=parseInt(bv)||0;}
+    const cm=typeof av==='number'?av-bv:String(av).localeCompare(String(bv));
+    return sDir==='asc'?cm:-cm;
+  });
+}
+
+// ── LIST TABLE ──
+function renderList(){
+  const tb=document.getElementById('ltb');
+  if(!filtered.length){tb.innerHTML='<tr class="norow"><td colspan="2">No candidates match</td></tr>';return;}
+  tb.innerHTML=filtered.map(c=>{
+    const mob=!!(c.mobilizedBy||c.companyName||c.interviewDate);
+    return`<tr onclick="select_('${c.id}')" id="r-${c.id}" class="${selId===c.id?'sel':''}">
+      <td style="white-space:nowrap;max-width:none;padding:10px 14px;overflow:hidden;text-overflow:ellipsis">
+        <span style="font-size:13px;font-weight:700;color:var(--text)">${e(c.name)}</span>
+        <span style="font-size:12px;color:var(--muted);font-weight:400"> [${e(c.designation||'—')}-${e(c.passport||'—')}]</span>
+      </td>
+      <td style="text-align:center;vertical-align:middle;padding:10px 8px;white-space:nowrap">
+        <span class="${mob?'mob-yes':'mob-no'}">${mob?'Done':'Pending'}</span>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── DETAIL CARD ──
+function select_(id){
+  selId=id;
+  document.querySelectorAll('.tbl-box tbody tr').forEach(r=>r.classList.remove('sel'));
+  const row=document.getElementById('r-'+id);
+  if(row){row.classList.add('sel');row.scrollIntoView({block:'nearest'});}
+  const c=cands.find(x=>x.id===id);if(!c)return;
+  document.getElementById('dce').style.display='none';
+  document.getElementById('dcc').style.display='block';
+  const now=new Date();
+  const exp=c.passportExpiry?new Date(c.passportExpiry):null;
+  const warn=exp&&((exp-now)/(1000*60*60*24*365.25))<1;
+  const hasMob=!!(c.mobilizedBy||c.companyName||c.interviewDate||c.attended||c.selected);
+  const qc=(c.qualifications||[]).map(q=>`<span class="chip">${e(q)}</span>`).join('')||'—';
+  const sc2=(c.sectors||[]).map(s=>`<span class="chip">${e(s)}</span>`).join('')||'—';
+  const pmRows=[['Mobilized By',c.mobilizedBy],['Company',c.companyName],['Country',c.country],['Interview',c.interviewDate],['Campaign',c.campaign],['Attended',c.attended],['Result',c.selected]].filter(([,v])=>v);
+  const pmHtml=hasMob?`<div class="pmob"><div class="pmob-t">🔴 Previous Mobilization</div>${pmRows.map(([k,v])=>`<div class="pmob-r"><span class="pk">${k}</span><span class="pv">${e(v)}</span></div>`).join('')}</div>`:'';
+  document.getElementById('dcc').innerHTML=`
+    <div class="dc-hdr">
+      <div class="dc-name">${e(c.name)}</div>
+      <div class="dc-hdr-meta">
+        <span class="dc-hdr-val">${e(c.designation||'—')}</span><span style="opacity:.5;margin:0 4px">|</span>
+        <span class="dc-hdr-val">${e(c.state||'—')}</span><span style="opacity:.5;margin:0 4px">|</span>
+        <span class="dc-hdr-val mono">${e(c.passport||'—')}</span>
+      </div>
+    </div>
+    <div class="dc-body">
+      <button class="dc-btn1" onclick="printProfile('${c.id}')">👤 Show Full Profile</button>
+      <button class="dc-btn2${hasMob?' upd':''}" onclick="openMob('${c.id}')">${hasMob?'✏️ Update Mobilization':'➕ Add Mobilization'}</button>
+      ${pmHtml}
+      <div class="dsec"><div class="dsec-t">👤 Personal</div><div class="row2">
+        <div class="fi"><span class="fl">DOB</span><span class="fv">${c.dob||'—'}</span></div>
+        <div class="fi"><span class="fl">Age</span><span class="fv">${c.age?c.age+' yrs':'—'}</span></div>
+        <div class="fi"><span class="fl">Religion</span><span class="fv">${e(c.religion||'—')}</span></div>
+        <div class="fi"><span class="fl">Marital</span><span class="fv">${e(c.maritalStatus||'—')}</span></div>
+      </div></div>
+      <div class="dsec"><div class="dsec-t">🛂 Passport</div><div class="row2">
+        <div class="fi"><span class="fl">Passport No</span><span class="fv mono">${e(c.passport||'—')}</span></div>
+        <div class="fi"><span class="fl">Status</span><span class="fv">${c.passportStatus?`<span class="${c.passportStatus.toLowerCase()}">${e(c.passportStatus)}</span>`:'—'}</span></div>
+        <div class="fi full"><span class="fl">Expiry</span><span class="fv${warn?' warn':''}">${c.passportExpiry||'—'}${warn?' ⚠️ Expiring Soon!':''}</span></div>
+      </div></div>
+      <div class="dsec"><div class="dsec-t">📞 Contact</div><div class="row2">
+        <div class="fi"><span class="fl">Phone</span><span class="fv mono">${e(c.phone||'—')}</span></div>
+        <div class="fi"><span class="fl">WhatsApp</span><span class="fv mono">${e(c.whatsapp||'—')}</span></div>
+        <div class="fi full"><span class="fl">Email</span><span class="fv">${e(c.email||'—')}</span></div>
+      </div></div>
+      <div class="dsec"><div class="dsec-t">🎓 Skills</div>
+        <div class="fi" style="margin-bottom:7px"><span class="fl">Qualifications</span><div style="margin-top:4px">${qc}</div></div>
+        <div class="fi"><span class="fl">Sectors</span><div style="margin-top:4px">${sc2}</div></div>
+      </div>
+      <div class="dsec"><div class="dsec-t">💼 Experience</div><div class="row2">
+        <div class="fi"><span class="fl">Abroad</span><span class="fv big">${fm(c.abroadExp||0)}</span></div>
+        <div class="fi"><span class="fl">Local</span><span class="fv big">${fm(c.localExp||0)}</span></div>
+      </div></div>
+    </div>`;
+}
+
+// ── PRINT PROFILE ──
+function printProfile(id){
+  const c=cands.find(x=>x.id===id);if(!c)return;
+  const v=s=>e(s||'—');
+  const hasMob=!!(c.mobilizedBy||c.companyName||c.interviewDate||c.attended||c.selected);
+  const qc=(c.qualifications||[]).map(q=>`<span style="background:#edf1ff;padding:2px 8px;border-radius:10px;font-size:12px;margin:2px">${e(q)}</span>`).join('');
+  const sc2=(c.sectors||[]).map(s=>`<span style="background:#edf1ff;padding:2px 8px;border-radius:10px;font-size:12px;margin:2px">${e(s)}</span>`).join('');
+  const html=`<!DOCTYPE html><html><head><title>Profile - ${e(c.name)}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:28px 32px;color:#111;font-size:15px;line-height:1.6}
+  .ph{display:flex;justify-content:space-between;border-bottom:3px solid #0049B7;padding-bottom:14px;margin-bottom:18px}
+  h1{font-size:22px;color:#0049B7}.sub{font-size:14px;color:#526187;margin-top:4px}.meta{font-size:12px;color:#888;text-align:right}
+  .sec{font-size:12px;font-weight:bold;color:#0049B7;text-transform:uppercase;letter-spacing:.5px;border-left:4px solid #0049B7;padding:2px 0 2px 9px;margin:16px 0 8px}
+  table.it{width:100%;border-collapse:collapse;margin-bottom:4px}
+  table.it td{padding:7px 11px;border:1px solid #ddd;font-size:14px;vertical-align:top}
+  table.it td.lb{font-weight:bold;width:24%;background:#f0f5ff;color:#0049B7;white-space:nowrap}
+  .pm{background:#fff0f3;border:1px solid #ffb3c6;border-radius:8px;padding:12px;margin-top:4px}
+  .pm-t{font-size:11px;font-weight:bold;color:#c0003a;text-transform:uppercase;margin-bottom:8px}
+  .pm table.it td{background:#fff8f9;border-color:#ffb3c6;color:#7a0026}.pm table.it td.lb{background:#ffe0e6;color:#c0003a}
+  .footer{margin-top:20px;padding-top:10px;border-top:1px solid #ddd;color:#888;font-size:11px;display:flex;justify-content:space-between}
+  @page{margin:8mm}@media print{body{padding:14px 18px}}</style></head><body>
+  <div class="ph"><div><h1>🧑‍💼 Candidate Profile</h1><div class="sub">${v(c.name)} · ${v(c.designation)}</div></div>
+  <div class="meta">Printed: ${new Date().toLocaleString()}</div></div>
+  <div class="sec">👤 Personal Details</div>
+  <table class="it">
+    <tr><td class="lb">Full Name</td><td>${v(c.name)}</td><td class="lb">Designation</td><td>${v(c.designation)}</td></tr>
+    <tr><td class="lb">Date of Birth</td><td>${v(c.dob)}</td><td class="lb">Age</td><td>${c.age?v(c.age)+' yrs':'—'}</td></tr>
+    <tr><td class="lb">Religion</td><td>${v(c.religion)}</td><td class="lb">Marital Status</td><td>${v(c.maritalStatus)}</td></tr>
+  </table>
+  <div class="sec">🛂 Passport</div>
+  <table class="it">
+    <tr><td class="lb">Passport No</td><td>${v(c.passport)}</td><td class="lb">Status</td><td>${v(c.passportStatus)}</td></tr>
+    <tr><td class="lb">Expiry Date</td><td colspan="3">${v(c.passportExpiry)}</td></tr>
+  </table>
+  <div class="sec">📞 Contact</div>
+  <table class="it">
+    <tr><td class="lb">Phone</td><td>${v(c.phone)}</td><td class="lb">WhatsApp</td><td>${v(c.whatsapp)}</td></tr>
+    <tr><td class="lb">Email</td><td colspan="3">${v(c.email)}</td></tr>
+    <tr><td class="lb">State / UT</td><td>${v(c.state)}</td><td class="lb">Address</td><td>${v(c.address)}</td></tr>
+  </table>
+  <div class="sec">🎓 Skills</div>
+  <table class="it"><tr><td class="lb">Qualifications</td><td>${qc||'—'}</td></tr><tr><td class="lb">Sectors</td><td>${sc2||'—'}</td></tr></table>
+  <div class="sec">💼 Experience</div>
+  <table class="it">
+    <tr><td class="lb">Abroad</td><td>${fm(c.abroadExp||0)}</td><td class="lb">Local</td><td>${fm(c.localExp||0)}</td></tr>
+  </table>
+  <div class="sec">🔗 Associate</div>
+  <table class="it"><tr><td class="lb">Associate Name</td><td>${v(c.assocName)}</td><td class="lb">Associate Phone</td><td>${v(c.assocPhone)}</td></tr></table>
+  ${hasMob?`<div class="sec">📋 Mobilization</div><div class="pm"><div class="pm-t">🔴 Mobilization Record</div>
+  <table class="it">
+    <tr><td class="lb">Mobilized By</td><td>${v(c.mobilizedBy)}</td><td class="lb">Company</td><td>${v(c.companyName)}</td></tr>
+    <tr><td class="lb">Country</td><td>${v(c.country)}</td><td class="lb">Interview Date</td><td>${v(c.interviewDate)}</td></tr>
+    <tr><td class="lb">Campaign</td><td>${v(c.campaign)}</td><td class="lb">Attended</td><td>${v(c.attended)}</td></tr>
+    <tr><td class="lb">Result</td><td colspan="3"><strong>${v(c.selected)}</strong></td></tr>
+  </table></div>`:''}
+  <div class="footer"><span>Candidate Management System</span><span>${new Date().toLocaleString()}</span></div>
+  </body></html>`;
+  const w=window.open('','_blank');if(w){w.document.write(html);w.document.close();setTimeout(()=>w.print(),500);}
+  else toast('Popup blocked — allow popups','w');
+}
+
+// ── SUMMARY LIST ──
+function renderSum(){
+  const q=(document.getElementById('sq').value||'').toLowerCase();
+  const fa=document.getElementById('sat').value;
+  const fs=document.getElementById('ssel').value;
+  const grpBy=document.getElementById('sgrp').value;
+  let mc=cands.filter(c=>{
+    if(!(c.mobilizedBy||c.companyName||c.interviewDate||c.attended||c.selected))return false;
+    if(q&&!(c.name.toLowerCase().includes(q)||(c.companyName||'').toLowerCase().includes(q)||(c.campaign||'').toLowerCase().includes(q)))return false;
+    if(fa&&c.attended!==fa)return false;
+    if(fs&&c.selected!==fs)return false;
+    return true;
+  });
+  document.getElementById('si2').textContent=mc.length+' mobilized candidates';
+  document.getElementById('sum-info').textContent=mc.length+' records shown';
+  const tb=document.getElementById('stb');
+  if(!mc.length){tb.innerHTML='<tr><td colspan="18" class="nodata">No mobilization records found.</td></tr>';return;}
+  if(grpBy){
+    const map={};
+    mc.forEach(c=>{const k=c[grpBy]||'(Unknown)';if(!map[k])map[k]=[];map[k].push(c);});
+    let html='',idx=0;
+    Object.entries(map).sort((a,b)=>b[1].length-a[1].length).forEach(([grp,rows])=>{
+      html+=`<tr class="grp-row"><td colspan="18">📁 ${e(grp)} — ${rows.length} record${rows.length>1?'s':''}</td></tr>`;
+      rows.forEach(c=>{html+=sumRow(++idx,c);});
+    });
+    tb.innerHTML=html;
+  } else {
+    tb.innerHTML=mc.map((c,i)=>sumRow(i+1,c)).join('');
+  }
+}
+function sumRow(i,c){
+  return`<tr>
+    <td>${i}</td>
+    <td title="${ea(c.name)}"><strong>${e(c.name)}</strong></td>
+    <td>${e(c.designation||'—')}</td><td>${e(c.state||'—')}</td>
+    <td class="mono">${e(c.phone||'—')}</td>
+    <td class="mono">${e(c.passport||'—')}</td>
+    <td>${c.passportStatus?`<span class="${c.passportStatus.toLowerCase()}">${e(c.passportStatus)}</span>`:'—'}</td>
+    <td>${e(c.mobilizedBy||'—')}</td>
+    <td title="${ea(c.companyName||'')}">${e((c.companyName||'').slice(0,18)+((c.companyName||'').length>18?'…':''))}</td>
+    <td>${e(c.country||'—')}</td><td>${e(c.interviewDate||'—')}</td><td>${e(c.campaign||'—')}</td>
+    <td>${c.attended?`<span class="tag ${tagCls(c.attended)}">${e(c.attended)}</span>`:'—'}</td>
+    <td>${c.selected?`<span class="tag ${tagCls(c.selected)}">${e(c.selected)}</span>`:'—'}</td>
+    <td>${e(c.assocName||'—')}</td>
+    <td>${fm(c.abroadExp||0)}</td><td>${fm(c.localExp||0)}</td>
+    <td style="white-space:nowrap">
+      <button class="btn bp bsm" onclick="editFromSum('${c.id}')">✏️</button>
+      <button class="btn bo bsm" style="margin-left:3px" onclick="printProfile('${c.id}')">👤</button>
+    </td>
+  </tr>`;
+}
+function editFromSum(id){
+  tab('browse');
+  setTimeout(()=>{selId=id;doSort();renderList();select_(id);const r=document.getElementById('r-'+id);if(r)r.scrollIntoView({block:'center'});},150);
+}
+
+// ── EXPORT ──
+function exportCSV(){
+  const mc=cands.filter(c=>c.mobilizedBy||c.companyName||c.interviewDate||c.attended||c.selected);
+  if(!mc.length){toast('No mobilization records to export','w');return;}
+  const h=['Name','Designation','State','Phone','Passport','PassportStatus','MobilizedBy','Company','Country','InterviewDate','Campaign','Attended','Selected','AssociateName','AbroadExp','LocalExp'];
+  const rows=mc.map(c=>[c.name,c.designation||'',c.state||'',c.phone||'',c.passport||'',c.passportStatus||'',c.mobilizedBy||'',c.companyName||'',c.country||'',c.interviewDate||'',c.campaign||'',c.attended||'',c.selected||'',c.assocName||'',fm(c.abroadExp||0),fm(c.localExp||0)]);
+  const csv=[h,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='Mobilization_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  toast('Exported '+mc.length+' records','s');
+}
+
+// ── MOB FORM ──
+const sdMap={mby:'mobilizers',comp:'companies',camp:'campaigns',att:'attended',res:'results'};
+function renderSD(k,filt=''){
+  const items=L[sdMap[k]]||[];
+  const filtered2=filt?items.filter(i=>i.toLowerCase().includes(filt.toLowerCase())):items;
+  const cur=document.getElementById('sv-'+k)?.dataset?.v||'';
+  const canDel=['mobilizers','campaigns','attended','results'].includes(sdMap[k]);
+  const el=document.getElementById('sl-'+k);if(!el)return;
+  el.innerHTML=filtered2.map(it=>`
+    <div class="sdi${cur===it?' cur':''}" onclick="pickSD('${k}','${ea(it)}')">
+      <span>${e(it)}</span>
+      ${canDel?`<span class="sdel" onclick="event.stopPropagation();delSD('${k}','${ea(it)}')">✕</span>`:''}
+    </div>`).join('')||`<div style="padding:10px;color:var(--muted);font-size:12px">No options</div>`;
+}
+function toggleSD(k){
+  const dp=document.getElementById('sp-'+k);
+  document.querySelectorAll('.sddp.open').forEach(el=>{if(el.id!=='sp-'+k)el.classList.remove('open');});
+  dp.classList.toggle('open');
+  if(dp.classList.contains('open')){const si=dp.querySelector('.sdsr input');if(si){si.value='';renderSD(k);}}
+}
+function filterSD(k,q){renderSD(k,q);}
+function pickSD(k,val){
+  const el=document.getElementById('sv-'+k);
+  if(el){el.textContent=val;el.dataset.v=val;}
+  document.querySelectorAll('.sddp.open').forEach(el=>el.classList.remove('open'));
+  renderSD(k);
+  if(k==='comp'){
+    const r=companies.find(r=>{const c=(r.code||'').trim(),n=(r.name||'').trim();return(c&&n?`${c} — ${n}`:(c||n))===val;});
+    document.getElementById('mconame').value=r?r.name:'';
+    document.getElementById('mcountry').value=r?r.country:'';
+  }
+}
+function getSD(k){const el=document.getElementById('sv-'+k);const v=el?.dataset?.v||el?.textContent||'';return(v.startsWith('—')||v==='— Select —'||v==='— Select Company —')?'':v;}
+function setSD(k,val){const el=document.getElementById('sv-'+k);if(!el)return;if(val){el.textContent=val;el.dataset.v=val;}else{el.textContent='— Select —';delete el.dataset.v;}}
+function addSD(k,lk){const inp=document.getElementById('sa-'+k);const val=inp.value.trim();if(!val)return;if(!(L[lk]||[]).includes(val)){L[lk]=[...(L[lk]||[]),val];saveL(lk);}inp.value='';renderSD(k);toast('Added: '+val,'s');}
+function delSD(k,val){const lk=sdMap[k];L[lk]=(L[lk]||[]).filter(i=>i!==val);saveL(lk);const el=document.getElementById('sv-'+k);if(el?.dataset?.v===val){el.textContent='— Select —';delete el.dataset.v;}renderSD(k);}
+
+function openMob(id){
+  const c=cands.find(x=>x.id===id);if(!c)return;
+  mobId=id;
+  document.getElementById('mtit').textContent=c.name;
+  document.getElementById('msub').textContent=(c.designation||'')+(c.state?' | '+c.state:'');
+  setSD('mby',c.mobilizedBy||'');
+  setSD('camp',c.campaign||'');
+  setSD('att',c.attended||'');
+  setSD('res',c.selected||'');
+  document.getElementById('mintdate').value=c.interviewDate||'';
+  document.getElementById('mconame').value=c.companyName||'';
+  document.getElementById('mcountry').value=c.country||'';
+  if(c.companyCode){
+    const compLabel=companies.find(r=>r.code===c.companyCode);
+    if(compLabel){const cc=(compLabel.code||'').trim(),cn=(compLabel.name||'').trim();setSD('comp',cc&&cn?`${cc} — ${cn}`:(cc||cn));}
+  } else setSD('comp','');
+  const hasMob=!!(c.mobilizedBy||c.companyName||c.interviewDate||c.attended||c.selected);
+  const btn=document.getElementById('msavebtn');
+  if(btn)btn.textContent=hasMob?'💾 Update Mobilization':'💾 Save Mobilization';
+  ['mby','comp','camp','att','res'].forEach(k=>renderSD(k));
+  document.getElementById('mmod').classList.add('open');
+}
+async function saveMob(){
+  const c=cands.find(x=>x.id===mobId);if(!c)return;
+  const mobBy=getSD('mby'),comp=getSD('comp'),intDate=document.getElementById('mintdate').value,
+    companyName=document.getElementById('mconame').value,country=document.getElementById('mcountry').value,
+    campaign=getSD('camp'),attended=getSD('att'),selected=getSD('res');
+  let companyCode='';
+  if(comp){
+    const r=companies.find(r=>{const cc=(r.code||'').trim(),cn=(r.name||'').trim();return(cc&&cn?`${cc} — ${cn}`:(cc||cn))===comp;});
+    companyCode=r?r.code||'':'';
+  }
+  const beforeSnap={mobilizedBy:c.mobilizedBy||'',companyCode:c.companyCode||'',companyName:c.companyName||'',country:c.country||'',interviewDate:c.interviewDate||'',campaign:c.campaign||'',attended:c.attended||'',selected:c.selected||''};
+  const afterSnap={mobilizedBy:mobBy,companyCode,companyName,country,interviewDate:intDate,campaign,attended,selected};
+  const isNew=!c.mobilizedBy&&!c.companyName&&!c.interviewDate;
+  toast('Saving…','i');
+  try{
+    // Full Candidates row — same column order as Candidate_Management.html
+    const row=[
+      c.id, c.name, c.designation||'', c.passport||'', c.passportStatus||'',
+      c.passportExpiry||'', c.dob||'', c.age||'', c.designationClass||'',
+      c.religion||'', c.maritalStatus||'', (c.qualifications||[]).join('|'),
+      c.phone||'', c.whatsapp||'', c.email||'', c.state||'', c.address||'',
+      JSON.stringify(c.experiences||[]),
+      String(c.abroadExp||0), String(c.localExp||0), String(c.totalExp||0),
+      (c.sectors||[]).join('|'),
+      c.assocCode||'', c.assocName||'', c.assocPhone||'', c.assocState||'',
+      mobBy, companyCode, companyName, country,
+      intDate, campaign, attended, selected,
+      new Date().toISOString()
+    ];
+    await api({action:'update',sheet:'Candidates',rowNum:c._row,row});
+    c.mobilizedBy=mobBy;c.companyCode=companyCode;c.companyName=companyName;c.country=country;c.interviewDate=intDate;c.campaign=campaign;c.attended=attended;c.selected=selected;
+    toast('Saved ✅','s');
+    closeM();
+    const desc=`Mobilization updated: ${c.name} → ${mobBy||'—'} / ${companyName||'—'} / ${country||'—'}`;
+    keLog(isNew?'ADD':'UPDATE',c.id,c.name,desc,isNew?null:beforeSnap,afterSnap,'Success');
+  }catch(ex){toast('Save failed: '+ex.message,'e');keLog(isNew?'ADD':'UPDATE',c.id,c.name,'Save failed',null,null,'Failed');}
+}
+function closeM(){document.getElementById('mmod').classList.remove('open');}
+function fm(m){if(!m||isNaN(m))return '—';const y=Math.floor(m/12),mo=m%12;return y&&mo?y+'Y '+mo+'M':y?y+'Y':mo+'M';}
+function pym(s){if(!s)return 0;const v=parseFloat(String(s));return isNaN(v)?0:v;}
+function cd(s){if(!s)return '';try{const d=new Date(s);return isNaN(d.getTime())?s:d.toISOString().slice(0,10);}catch(err){return s;}}
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function ea(s){return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kannan Enterprises — Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bb:#0049B7;--yq:#ff1d58;--mint:#7EE787;--org:#e85d04;--teal:#0f766e;--pur:#7c3aed;
+  --bg:#f0f4ff;--panel:#fff;--muted:#526187;--text:#0d1b2a;--border:#c9d1e6;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0049B7 0%,#002d8a 60%,#1a0050 100%);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-card{background:#fff;border-radius:18px;padding:40px 44px;width:100%;max-width:440px;box-shadow:0 32px 80px rgba(0,0,0,.35);}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .icon{font-size:48px;margin-bottom:8px;}
+.login-logo h2{font-family:'Space Mono',monospace;font-size:16px;color:var(--bb);letter-spacing:1px;}
+.login-logo p{font-size:12px;color:var(--muted);margin-top:4px;}
+.lf{display:flex;flex-direction:column;gap:5px;margin-bottom:16px;}
+.lf label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.lf input{padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border .15s;width:100%;}
+.lf input:focus{border-color:var(--bb);box-shadow:0 0 0 3px rgba(0,73,183,.1);}
+.pw-wrap{position:relative;}.pw-wrap input{width:100%;padding-right:40px;}
+.pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;background:none;border:none;font-size:15px;color:var(--muted);}
+.login-btn{width:100%;padding:13px;background:var(--bb);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:4px;transition:background .2s;}
+.login-btn:hover{background:#003a9e;}
+.login-err{background:#fff0f3;border:1px solid #ffb3c6;color:#c0003a;border-radius:8px;padding:10px 13px;font-size:12px;margin-top:12px;display:none;}
+
+/* APP */
+#app{display:none;min-height:100vh;}
+.app-header{background:linear-gradient(135deg,var(--bb) 0%,#1a6dff 100%);color:#fff;padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 16px rgba(0,73,183,.3);position:sticky;top:0;z-index:100;}
+.app-header h1{font-family:'Space Mono',monospace;font-size:14px;letter-spacing:1px;}
+.hdr-right{display:flex;align-items:center;gap:12px;}
+.user-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:5px 14px;border-radius:20px;font-size:12px;}
+.role-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px;}
+.rb-superadmin{background:#ff1d58;color:#fff;}
+.rb-admin{background:#f59e0b;color:#fff;}
+.rb-manager{background:#7EE787;color:#0d1b2a;}
+.rb-mobilizationplus{background:#7c3aed;color:#fff;}
+.rb-mobilization{background:#0f766e;color:#fff;}
+.logout-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;}
+.logout-btn:hover{background:rgba(255,0,0,.3);}
+
+/* WELCOME */
+.welcome-wrap{max-width:1200px;margin:0 auto;padding:24px 28px 0;}
+.welcome-banner{background:linear-gradient(135deg,#e8f0fe,#f0e8ff);border:1px solid #c5d5f8;border-radius:12px;padding:16px 22px;display:flex;align-items:center;gap:14px;}
+.wb-icon{font-size:32px;}
+.wb-text h3{font-size:14px;font-weight:700;color:var(--bb);}
+.wb-text p{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* MODULE GRID */
+.modules-section{padding:20px 28px 60px;max-width:1200px;margin:0 auto;}
+.section-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;}
+.module-card{background:var(--panel);border:2px solid var(--border);border-radius:14px;padding:24px 22px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 12px rgba(0,73,183,.06);}
+.module-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--card-accent,var(--bb));}
+.module-card:not(.disabled):hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,73,183,.15);border-color:var(--card-accent,var(--bb));}
+.module-card.disabled{opacity:.42;cursor:not-allowed;filter:grayscale(.6);}
+.module-card.disabled::after{content:'🔒 No Access';position:absolute;top:10px;right:12px;font-size:10px;font-weight:700;color:#aaa;background:#f3f4f6;padding:2px 8px;border-radius:10px;}
+.mc-icon{font-size:36px;line-height:1;}
+.mc-name{font-size:15px;font-weight:700;color:var(--text);}
+.mc-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.mc-role{font-size:10px;font-weight:600;color:var(--card-accent,var(--bb));text-transform:uppercase;letter-spacing:.4px;}
+.mc-open{display:inline-flex;align-items:center;gap:5px;background:var(--card-accent,var(--bb));color:#fff;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;margin-top:4px;width:fit-content;}
+
+/* LOADER & TOAST */
+#loader{position:fixed;inset:0;background:rgba(0,73,183,.85);z-index:800;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;}
+.ring{width:42px;height:42px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#tc{position:fixed;bottom:20px;right:18px;z-index:900;display:flex;flex-direction:column;gap:7px;}
+.toast{background:#1a2540;color:#fff;padding:10px 15px;border-radius:8px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:tin .25s ease;max-width:300px;}
+.toast.ok{border-left:3px solid var(--mint);}
+.toast.err{border-left:3px solid var(--yq);}
+.toast.warn{border-left:3px solid #f59e0b;}
+@keyframes tin{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+@media(max-width:600px){.module-grid{grid-template-columns:1fr;}.app-header{padding:0 16px;}.modules-section{padding:16px;}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="icon">🏢</div>
+      <h2>KANNAN ENTERPRISES</h2>
+      <p>Overseas Recruitment Consultants</p>
+    </div>
+    <div class="lf">
+      <label>Username</label>
+      <input type="text" id="login-user" placeholder="Enter your username" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <div class="lf">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="login-pass" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <button class="pw-eye" type="button" onclick="togglePw()">👁</button>
+      </div>
+    </div>
+    <button class="login-btn" onclick="doLogin()">🔐 Sign In</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div id="loader"><div class="ring"></div><p>Loading…</p></div>
+
+  <div class="app-header">
+    <h1>🏢 KANNAN ENTERPRISES</h1>
+    <div class="hdr-right">
+      <div class="user-pill">
+        <span id="hdr-name" style="font-weight:600;font-size:12px"></span>
+        <span class="role-badge" id="hdr-role"></span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">🔓 Logout</button>
+    </div>
+  </div>
+
+  <div class="welcome-wrap">
+    <div class="welcome-banner">
+      <div class="wb-icon">👋</div>
+      <div class="wb-text">
+        <h3 id="wb-name">Welcome!</h3>
+        <p id="wb-desc">Select a module below to get started.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modules-section">
+    <div class="section-title">📁 Modules</div>
+    <div class="module-grid" id="module-grid"></div>
+  </div>
+</div>
+
+<div id="tc"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  KANNAN ENTERPRISES — Main Portal
+// ═══════════════════════════════════════════════════════════
+
+const WEB = 'https://script.google.com/macros/s/AKfycbzNoK4d2MdtTciXBRHcZ_aE8UIPpIcnWcXIzNBCd8Hxg2EwpEhP1e_Hpu528PHsHs4z/exec';
+
+const ALL_MODULES = [
+  { id:'candidate',      name:'Candidate Management',    file:'Candidate_Management.html',   icon:'👤', desc:'Manage candidate profiles, experience, qualifications and passport details.',  accent:'#0049B7' },
+  { id:'mobilization',   name:'Mobilization Management', file:'Mobilization-Management.html',icon:'🚀', desc:'Track mobilization status, medical, visa and travel for candidates.',           accent:'#0f766e' },
+  { id:'associate',      name:'Associate Module',         file:'Associate-Module.html',        icon:'🤝', desc:'Manage recruiting associates, their codes, trades and contact details.',      accent:'#7c3aed' },
+  { id:'company',        name:'Company Module',           file:'Company-Module.html',          icon:'🏭', desc:'Manage client companies, HR contacts, country and job orders.',              accent:'#e85d04' },
+  { id:'selection',      name:'Selection Module',         file:'Selection-ModuleFinal.html',   icon:'✅', desc:'Selection tracking, visa, emigration, ticketing and payment dashboard.',     accent:'#059669' },
+  { id:'status',         name:'Candidate Status Portal',  file:'candidate-status-portal.html', icon:'📋', desc:'Public-facing portal for candidates to check their application status.',     accent:'#0284c7' },
+  { id:'invoice',        name:'Invoice Module',           file:'Invoice-Module.html',          icon:'🧾', desc:'Raise and manage invoices, credit notes, file uploads and payment tracking.',accent:'#0f766e' },
+  { id:'logbook',        name:'Log Book',                 file:'LogBook.html',                 icon:'📒', desc:'View all user activity logs — additions, edits, deletions and logins.',      accent:'#475569' },
+  { id:'usermanagement', name:'User Management',          file:'UserManagement.html',          icon:'👥', desc:'Create and manage user accounts, roles and module access. Superadmin only.', accent:'#ff1d58' },
+  { id:'desigdashboard', name:'Designation-Wise Dashboard', file:'DesignationWiseDashboard_4.html', icon:'📊', desc:'Analyse selection data broken down by designation, company and associate. Manager+ only.', accent:'#7c3aed' },
+  { id:'assocdesigdashboard', name:'Associate-Wise Dashboard', file:'AssocDesigDashboard_1.html',   icon:'🗂️', desc:'Track associate performance with designation breakdowns and selection metrics. Manager+ only.', accent:'#0f766e' },
+];
+
+const ROLE_DEFAULT_MODULES = {
+  superadmin      : ['candidate','mobilization','associate','company','selection','status','invoice','logbook','usermanagement','desigdashboard','assocdesigdashboard'],
+  admin           : ['candidate','mobilization','associate','company','selection','status','invoice','logbook','desigdashboard','assocdesigdashboard'],
+  manager         : ['company','selection','associate','invoice','desigdashboard','assocdesigdashboard'],
+  mobilizationplus: ['candidate','mobilization','associate'],
+  mobilization    : ['candidate','mobilization'],
+};
+
+let _currentUser = null;
+let _users = [];
+
+// HELPERS
+function toast(m,t='info'){ const d=document.createElement('div');d.className='toast '+t;d.textContent=m;document.getElementById('tc').appendChild(d);setTimeout(()=>d.remove(),3500); }
+function ld(){ document.getElementById('loader').style.display='flex'; }
+function hd(){ document.getElementById('loader').style.display='none'; }
+function togglePw(){ const i=document.getElementById('login-pass');i.type=i.type==='password'?'text':'password'; }
+
+// API — works from file:// (JSONP) and http:// (fetch)
+function api(p){
+  return new Promise((resolve,reject)=>{
+    const u=new URL(WEB);
+    Object.entries(p).forEach(([k,v])=>u.searchParams.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
+    if(window.location.protocol==='file:'){
+      const cb='ke_cb_'+Date.now();
+      u.searchParams.set('callback',cb);
+      const s=document.createElement('script');
+      s.src=u.toString();
+      window[cb]=(data)=>{ delete window[cb]; if(document.body.contains(s))document.body.removeChild(s); data.success?resolve(data):reject(new Error(data.error||'Server error')); };
+      s.onerror=()=>{ delete window[cb]; if(document.body.contains(s))document.body.removeChild(s); reject(new Error('Network error')); };
+      document.body.appendChild(s);
+    } else {
+      fetch(u.toString()).then(r=>r.text()).then(t=>{ const j=JSON.parse(t);j.success?resolve(j):reject(new Error(j.error||'Server error')); }).catch(reject);
+    }
+  });
+}
+
+// ── KE LOGGER (Enhanced — IP + MAC + Before/After) ──────────────
+let _keIP='';
+async function _fetchIP(){
+  if(_keIP)return _keIP;
+  try{const r=await fetch('https://api.ipify.org?format=json',{cache:'force-cache'});const j=await r.json();_keIP=j.ip||'';}catch(e){_keIP='Unavailable';}
+  return _keIP;
+}
+function _keBrowser(){
+  const ua=navigator.userAgent;
+  const os=/Windows NT/.test(ua)?'Windows':/Mac OS X/.test(ua)?'macOS':/Linux/.test(ua)?'Linux':/Android/.test(ua)?'Android':/iPhone|iPad/.test(ua)?'iOS':'Unknown OS';
+  const br=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'Browser';
+  return `${br} on ${os} | ${screen.width}x${screen.height}`;
+}
+async function keLog(action,recId,recName,desc,oldVal,newVal,status){
+  try{
+    const ip=await _fetchIP();
+    const ss=sessionStorage.getItem('ke_portal_session')||sessionStorage.getItem('ke_session');
+    const su=ss?JSON.parse(ss):{};
+    const oldStr=oldVal?(typeof oldVal==='object'?JSON.stringify(oldVal):String(oldVal)):'';
+    const newStr=newVal?(typeof newVal==='object'?JSON.stringify(newVal):String(newVal)):'';
+    const logData={
+      LogID      :'log_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,5),
+      Timestamp  :new Date().toISOString(),
+      UserName   :su.name||'',
+      Username   :su.username||'',
+      Role       :su.role||'',
+      Module     :'Portal',
+      Action     :action||'VIEW',
+      RecordID   :recId||'',
+      RecordName :recName||'',
+      Description:desc||'',
+      OldValue   :oldStr,
+      NewValue   :newStr,
+      IPAddress  :ip,
+      MACAddress :'N/A — Not accessible via browser (security restriction)',
+      Hostname   :window.location.hostname||'localhost',
+      Browser    :_keBrowser(),
+      Status     :status||'Success'
+    };
+    const url=new URL(WEB);
+    url.searchParams.set('action','appendLog');
+    url.searchParams.set('logData',JSON.stringify(logData));
+    if(window.location.protocol==='file:'){
+      const cb='ke_log_'+Date.now();url.searchParams.set('callback',cb);
+      const s=document.createElement('script');s.src=url.toString();
+      window[cb]=()=>{delete window[cb];document.body.contains(s)&&document.body.removeChild(s);};
+      s.onerror=()=>{delete window[cb];document.body.contains(s)&&document.body.removeChild(s);};
+      document.body.appendChild(s);
+    } else { fetch(url.toString()).catch(()=>{}); }
+  }catch(e){console.warn('[keLog]',e);}
+}
+// ── END KE LOGGER ────────────────────────────────────────────────
+
+// LOAD USERS
+async function loadUsers(){
+  try{
+    const r=await api({action:'getAll',sheet:'Users'});
+    _users=(r.data||[]).map(x=>({
+      id      : x.ID||'',
+      name    : x.Name||'',
+      username: (x.Username||'').toLowerCase().trim(),
+      password: x.Password||'',
+      role    : (x.Role||'').toLowerCase().trim(),
+      status  : x.Status||'Active',
+      modules : (x.Modules||'').split(',').map(m=>m.trim()).filter(Boolean),
+    })).filter(x=>x.id&&x.username&&x.status==='Active');
+  }catch(e){ _users=[]; }
+}
+
+// GET ALLOWED MODULES — merges sheet modules with role defaults
+function getAllowedModuleIds(u){
+  const roleDefaults=ROLE_DEFAULT_MODULES[u.role]||[];
+  if(!u.modules||u.modules.length===0) return roleDefaults;
+  return [...new Set([...u.modules,...roleDefaults])];
+}
+
+// LOGIN
+async function doLogin(){
+  const username=(document.getElementById('login-user')?.value||'').trim().toLowerCase();
+  const password=(document.getElementById('login-pass')?.value||'').trim();
+  const errEl=document.getElementById('login-err');
+  errEl.style.display='none';
+  if(!username||!password){ errEl.textContent='Please enter username and password.'; errEl.style.display='block'; return; }
+  ld();
+  await loadUsers();
+  hd();
+  const user=_users.find(u=>u.username===username&&u.password===password);
+  if(!user){ errEl.textContent='❌ Invalid username or password.'; errEl.style.display='block'; return; }
+  const mergedMods=getAllowedModuleIds(user);
+  const session={id:user.id,name:user.name,username:user.username,role:user.role,modules:mergedMods,loginTime:Date.now()};
+  sessionStorage.setItem('ke_portal_session',JSON.stringify(session));
+  sessionStorage.setItem('ke_session',JSON.stringify({username:user.username,name:user.name,role:user.role,modules:mergedMods,loginTime:Date.now()}));
+  _currentUser=session;
+  keLog('LOGIN',user.id,user.name,`Portal Login: ${user.name} (@${user.username}) Role:${user.role} from ${window.location.hostname||'local'}`);
+  showApp();
+}
+
+function getSession(){
+  try{ const s=sessionStorage.getItem('ke_portal_session');if(!s)return null;const o=JSON.parse(s);if(Date.now()-o.loginTime>10*60*60*1000){doLogout();return null;}return o; }catch(e){return null;}
+}
+
+function doLogout(){
+  keLog('LOGOUT',_currentUser?.id||'',_currentUser?.name||'',`Portal Logout: ${_currentUser?.name||''} (@${_currentUser?.username||''})`);
+  sessionStorage.removeItem('ke_portal_session');
+  sessionStorage.removeItem('ke_session');
+  sessionStorage.removeItem('ke_um_session');
+  _currentUser=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+}
+
+function showApp(){
+  const u=_currentUser;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('hdr-name').textContent=u.name;
+  const rb=document.getElementById('hdr-role');
+  rb.textContent=u.role;
+  rb.className='role-badge rb-'+u.role.replace(/\+/g,'plus');
+  const mods=getAllowedModuleIds(u);
+  document.getElementById('wb-name').textContent='Welcome, '+u.name+'!';
+  document.getElementById('wb-desc').textContent=`You have access to ${mods.length} module${mods.length!==1?'s':''} based on your ${u.role} role.`;
+  const updated={...u,modules:mods};
+  _currentUser=updated;
+  sessionStorage.setItem('ke_portal_session',JSON.stringify(updated));
+  sessionStorage.setItem('ke_session',JSON.stringify({username:u.username,name:u.name,role:u.role,modules:mods,loginTime:u.loginTime||Date.now()}));
+  renderModules(updated);
+}
+
+function renderModules(u){
+  const allowed=new Set(getAllowedModuleIds(u));
+  document.getElementById('module-grid').innerHTML=ALL_MODULES.map(m=>{
+    const ok=allowed.has(m.id);
+    return `<div class="module-card${ok?'':' disabled'}" style="--card-accent:${m.accent}" ${ok?`onclick="openModule('${m.file}')"`:''} title="${ok?'Open '+m.name:'No access to '+m.name}">
+      <div class="mc-icon">${m.icon}</div>
+      <div><div class="mc-name">${m.name}</div><div class="mc-desc">${m.desc}</div></div>
+      <div class="mc-role">${ok?'✓ Access Granted':'✗ No Access'}</div>
+      ${ok?`<div class="mc-open">Open Module →</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openModule(file){ window.open(file,'_blank'); }
+
+// INIT
+window.addEventListener('DOMContentLoaded',()=>{
+  const session=getSession();
+  if(session){ _currentUser=session; showApp(); }
+  else { document.getElementById('login-screen').style.display='flex'; }
+});
+</script>
+</body>
+</html>

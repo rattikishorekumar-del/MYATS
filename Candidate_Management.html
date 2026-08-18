@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Candidate Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --yass-queen:#ff1d58;--sister-sis:#f75990;--crown-yellow:#fff685;--blue-light:#00DDFF;
+  --brutal-blue:#0049B7;--mint:#7EE787;--lavender:#B39DDB;
+  --bg:#f6f8ff;--panel:#ffffff;--panel-2:#f2f5ff;--muted:#526187;
+  --text:#0d1b2a;--text-muted:#3a4a6a;--border:#c9d1e6;--chip:#edf1ff;--chip-text:#0d1b2a;
+  --radius:10px;--shadow:0 2px 12px rgba(0,73,183,0.08);
+  --header-bg:#f0f5ff;--row-hover:#f8fbff;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+
+/* ---- HEADER ---- */
+.app-header{background:var(--brutal-blue);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;position:sticky;top:0;z-index:200;box-shadow:0 2px 10px rgba(0,73,183,0.25);}
+.app-header h1{font-family:'Space Mono',monospace;font-size:16px;letter-spacing:1px;}
+.hdr-actions{display:flex;gap:8px;align-items:center;}
+.hdr-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;transition:background .2s;}
+.hdr-btn:hover{background:rgba(255,255,255,0.25);}
+.compact-toggle{font-size:11px;}
+
+/* ---- TABS ---- */
+.tabs{display:flex;background:var(--brutal-blue);padding:0 24px;gap:2px;}
+.tab{padding:10px 20px;cursor:pointer;color:rgba(255,255,255,0.6);border-bottom:3px solid transparent;font-size:13px;font-weight:600;transition:all .2s;letter-spacing:.5px;}
+.tab.active{color:#fff;border-bottom-color:var(--yass-queen);}
+
+/* ---- MAIN LAYOUT ---- */
+.main-content{padding:20px 24px;max-width:1400px;margin:0 auto;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* ---- CARDS ---- */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:18px;box-shadow:var(--shadow);}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--header-bg);border-bottom:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;cursor:pointer;user-select:none;}
+.card-header h3{font-size:13px;font-weight:700;color:var(--brutal-blue);letter-spacing:.5px;text-transform:uppercase;}
+.card-body{padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px 20px;}
+.card-body.single-col{grid-template-columns:1fr;}
+.card-chevron{font-size:12px;color:var(--muted);transition:transform .2s;}
+.card.collapsed .card-body{display:none;}
+.card.collapsed .card-chevron{transform:rotate(-90deg);}
+
+/* ---- FORM FIELDS ---- */
+.field-group{display:flex;flex-direction:column;gap:5px;}
+.field-group.full-width{grid-column:1/-1;}
+label{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+input[type=text],input[type=date],input[type=tel],input[type=email],textarea,select{
+  width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px;
+  font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--panel);
+  transition:border .2s,box-shadow .2s;outline:none;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--brutal-blue);box-shadow:0 0 0 3px rgba(0,73,183,0.1);}
+input.err{border-color:var(--yass-queen);}
+.hint{font-size:10px;color:var(--muted);}
+.err-msg{font-size:10px;color:var(--yass-queen);display:none;}
+.expiry-warn{border-color:var(--yass-queen)!important;background:#fff0f3!important;}
+textarea{resize:vertical;min-height:70px;}
+
+/* Checkbox row */
+.chk-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);}
+.chk-row input[type=checkbox]{width:15px;height:15px;cursor:pointer;}
+
+/* ---- SEARCHABLE DROPDOWN ---- */
+.sd-wrap{position:relative;}
+.sd-display{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;border:1px solid var(--border);border-radius:7px;cursor:pointer;background:var(--panel);min-height:36px;font-size:13px;color:var(--text);transition:border .2s;}
+.sd-display:hover{border-color:var(--brutal-blue);}
+.sd-display .sd-val{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sd-display .sd-arrow{color:var(--muted);font-size:10px;flex-shrink:0;}
+.sd-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:300;max-height:220px;overflow:hidden;display:none;flex-direction:column;}
+.sd-dropdown.open{display:flex;}
+.sd-search{padding:8px;border-bottom:1px solid var(--border);}
+.sd-search input{border-radius:5px;font-size:12px;}
+.sd-list{overflow-y:auto;flex:1;}
+.sd-item{padding:8px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:space-between;}
+.sd-item:hover{background:var(--panel-2);}
+.sd-item.selected{color:var(--brutal-blue);font-weight:600;}
+.sd-item-del{color:var(--yass-queen);font-size:11px;padding:2px 6px;border-radius:4px;cursor:pointer;display:none;}
+.sd-item:hover .sd-item-del{display:inline;}
+.sd-add-row{padding:8px;border-top:1px solid var(--border);display:flex;gap:6px;}
+.sd-add-row input{flex:1;font-size:12px;}
+.sd-add-btn{background:var(--brutal-blue);color:#fff;border:none;border-radius:5px;padding:5px 10px;cursor:pointer;font-size:11px;white-space:nowrap;}
+
+/* ---- CHIPS ---- */
+.chips-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0;}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--chip);color:var(--chip-text);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;}
+.chip-del{cursor:pointer;color:var(--muted);font-size:14px;line-height:1;}
+.chip-del:hover{color:var(--yass-queen);}
+.chip-input-row{display:flex;gap:6px;margin-top:4px;}
+.chip-input-row input{flex:1;font-size:12px;}
+.chip-add-btn{background:var(--brutal-blue);color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;}
+
+/* ---- EXPERIENCE CARD ---- */
+.exp-entries{display:flex;flex-direction:column;gap:12px;padding:14px 18px;}
+.exp-entry{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:14px;position:relative;}
+.exp-entry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 14px;}
+.exp-del-btn{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--yass-queen);cursor:pointer;font-size:16px;line-height:1;}
+.exp-add-btn{margin:0 18px 14px;background:var(--brutal-blue);color:#fff;border:none;border-radius:7px;padding:8px 16px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;}
+.exp-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px 18px 14px;}
+.exp-sum-box{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;}
+.exp-sum-box .exp-sum-val{font-size:20px;font-weight:700;color:var(--brutal-blue);font-family:'Space Mono',monospace;}
+.exp-sum-box .exp-sum-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+
+/* ---- TABLE ---- */
+.table-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 0 10px;}
+.search-bar{display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:200px;}
+.search-bar input{padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;min-width:140px;}
+.search-bar select{padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;}
+.tbl-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .2s;}
+.btn-primary{background:var(--brutal-blue);color:#fff;}
+.btn-primary:hover{background:#003a9e;}
+.btn-danger{background:var(--yass-queen);color:#fff;}
+.btn-danger:hover{background:#d4154a;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-muted);}
+.btn-outline:hover{border-color:var(--brutal-blue);color:var(--brutal-blue);}
+.btn-mint{background:var(--mint);color:var(--text);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--header-bg);padding:10px 12px;text-align:left;font-weight:700;color:var(--brutal-blue);white-space:nowrap;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:10;cursor:pointer;user-select:none;}
+thead th:hover{background:#e5edff;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:hover{background:var(--row-hover);}
+tbody td{padding:9px 12px;color:var(--text-muted);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
+tbody td.actions{white-space:nowrap;}
+.tbl-chk{width:16px;height:16px;cursor:pointer;}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.badge-ecr{background:#fff0d4;color:#b36200;}
+.badge-ecnr{background:#d4f5e9;color:#007a40;}
+.expiry-red{color:var(--yass-queen);font-weight:700;}
+.no-data{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+
+/* ---- MODAL ---- */
+.modal-overlay{position:fixed;inset:0;background:rgba(13,27,42,0.5);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:28px;min-width:320px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
+.modal h3{font-size:15px;margin-bottom:8px;color:var(--text);}
+.modal p{font-size:13px;color:var(--text-muted);margin-bottom:18px;}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* ---- TOAST ---- */
+#toast-container{position:fixed;bottom:80px;right:20px;z-index:600;display:flex;flex-direction:column;gap:8px;}
+.toast{background:#1a2540;color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,0.2);animation:slideIn .3s ease;max-width:300px;}
+.toast.success{border-left:4px solid var(--mint);}
+.toast.error{border-left:4px solid var(--yass-queen);}
+.toast.info{border-left:4px solid var(--blue-light);}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ---- FLOATING DOCK ---- */
+.dock{position:fixed;bottom:20px;right:20px;z-index:400;display:flex;flex-direction:column;gap:8px;}
+.dock-btn{width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;font-size:16px;box-shadow:0 4px 14px rgba(0,0,0,0.2);transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;}
+.dock-btn:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(0,0,0,0.25);}
+.dock-btn.save-btn{background:var(--brutal-blue);color:#fff;}
+.dock-btn.clear-btn{background:var(--yass-queen);color:#fff;}
+.dock-btn.scroll-top{background:var(--mint);color:var(--text);}
+
+/* ---- DASHBOARD ---- */
+.dash-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:20px;}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);}
+.stat-card .stat-val{font-size:28px;font-weight:700;color:var(--brutal-blue);font-family:'Space Mono',monospace;}
+.stat-card .stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;}
+.chart-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+.chart-card h4{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:14px;}
+canvas{max-width:100%;}
+
+/* ---- COL TOGGLE ---- */
+.col-toggle-panel{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;display:none;flex-wrap:wrap;gap:8px;}
+.col-toggle-panel.open{display:flex;}
+.col-check-item{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;}
+
+/* ---- MOBILIZATION CARD ---- */
+.mob-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px 20px;}
+
+/* ---- COMPACT MODE ---- */
+body.compact .card-body{gap:8px 14px;}
+body.compact .card-body input,body.compact .card-body .sd-display{padding:6px 9px;}
+body.compact .card-header{padding:8px 14px;}
+
+/* ---- IMPORT DROP ZONE ---- */
+.drop-zone{border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer;transition:border .2s,background .2s;}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--brutal-blue);background:rgba(0,73,183,0.04);}
+
+/* ---- FILTER CHIPS ---- */
+.filter-chip{display:inline-flex;align-items:center;gap:4px;background:var(--chip);padding:3px 8px;border-radius:16px;font-size:11px;cursor:pointer;border:1px solid var(--border);}
+.filter-chip.active{background:var(--brutal-blue);color:#fff;border-color:var(--brutal-blue);}
+
+/* ---- CV UPLOAD IN EXPERIENCE ---- */
+.cv-upload-row{border-top:1px dashed var(--border);margin-top:12px;padding:12px 0 4px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;}
+.cv-upload-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:flex;flex-direction:column;gap:3px;min-width:130px;}
+.cv-optional{font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;font-size:10px;}
+.cv-formats{font-weight:400;color:#a0abc4;font-size:10px;text-transform:none;letter-spacing:0;}
+.cv-upload-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;}
+.cv-pick-btn{display:inline-flex;align-items:center;gap:5px;background:var(--panel-2);border:1px solid var(--border);color:var(--brutal-blue);padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s,border .2s;white-space:nowrap;}
+.cv-pick-btn:hover{background:#dce8ff;border-color:var(--brutal-blue);}
+.cv-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:5px 0;}
+.cv-status.cv-has-file{color:var(--text);}
+.cv-icon{font-size:16px;flex-shrink:0;}
+.cv-fname{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;color:var(--brutal-blue);}
+.cv-dl-btn{background:none;border:1px solid var(--border);border-radius:5px;padding:3px 7px;cursor:pointer;font-size:11px;color:var(--brutal-blue);transition:background .15s;}
+.cv-dl-btn:hover{background:var(--panel-2);}
+.cv-rm-btn{background:none;border:none;color:var(--yass-queen);cursor:pointer;font-size:15px;line-height:1;padding:0 2px;}
+.cv-rm-btn:hover{opacity:.7;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* PRINT */
+@media print{
+  .dock,.app-header .hdr-actions,.tabs,.tbl-actions,.exp-add-btn{display:none!important;}
+  .card{break-inside:avoid;}
+}
+
+/* ---- GOOGLE SHEETS CONNECTION ---- */
+.conn-badge{display:flex;align-items:center;gap:6px;font-size:11px;background:rgba(255,255,255,0.12);padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);margin-right:4px;}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;transition:background .3s;}
+.conn-dot.connected{background:#7EE787;box-shadow:0 0 6px rgba(126,231,135,0.8);}
+.conn-dot.syncing{background:#f59e0b;animation:connblink 0.8s infinite;}
+.conn-dot.error{background:#ff1d58;}
+@keyframes connblink{0%,100%{opacity:1}50%{opacity:0.3}}
+.gs-sync-bar{display:flex;align-items:center;gap:10px;background:#f2f5ff;border:1px solid #c9d1e6;border-radius:8px;padding:9px 16px;margin-bottom:16px;font-size:12px;color:#3a4a6a;flex-wrap:wrap;}
+.gs-sync-bar button{margin-left:auto;}
+#gs-loader{position:fixed;inset:0;background:rgba(0,73,183,0.85);z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;}
+#gs-loader .loader-ring{width:44px;height:44px;border:4px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;}
+#gs-loader p{font-size:14px;font-family:'DM Sans',sans-serif;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-sm{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px;}
+</style>
+<!-- PORTAL AUTH GUARD -->
+<script>
+(function(){
+  var MOD_ID = "candidate";
+  function getPS(){
+    try{
+      var s=sessionStorage.getItem('ke_portal_session')||sessionStorage.getItem('ke_session');
+      if(!s)return null;
+      var o=JSON.parse(s);
+      if(Date.now()-o.loginTime>10*60*60*1000)return null;
+      return o;
+    }catch(e){return null;}
+  }
+  var session=getPS();
+  if(MOD_ID!=='public'){
+    if(!session){
+      if(!confirm('Not logged in. Go to Portal login?')) return;
+      window.location.href='Index.html'; return;
+    }
+    var mods=session.modules||[];
+    if(!mods.includes('all')&&!mods.includes(MOD_ID)){
+      alert('Access Denied. You do not have permission for this module.\nRedirecting to Portal.');
+      window.location.href='Index.html'; return;
+    }
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    if(!session) return;
+    var bar=document.createElement('div');
+    bar.id='ke-portal-bar';
+    bar.style='background:linear-gradient(90deg,#002d8a,#0049B7);color:#fff;padding:5px 20px;font-size:11px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:DM Sans,sans-serif;position:sticky;top:0;z-index:9999';
+    var rc={superadmin:'#ff1d58',admin:'#f59e0b',manager:'#7EE787',mobilizationplus:'#7c3aed',mobilization:'#0f766e'}[session.role]||'#526187';
+    bar.innerHTML='<a href="Index.html" style="color:#fff;text-decoration:none;font-weight:700;font-size:12px">&#8592; Portal</a>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<span style="opacity:.75">Logged in as</span>'
+      +'<strong>'+session.name+'</strong>'
+      +'<span style="background:'+rc+';color:#fff;padding:1px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase">'+session.role+'</span>'
+      +'<button onclick="if(confirm('Logout?\')){sessionStorage.clear();window.location.href=\'Index.html\';}" '
+      +'style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px">Logout</button>'
+      +'</div>';
+    document.body.insertBefore(bar,document.body.firstChild);
+  });
+})();
+</script>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <h1>🧑‍💼 CANDIDATE MANAGEMENT</h1>
+  <div class="hdr-actions">
+    <div class="conn-badge"><span class="conn-dot syncing" id="gs-conn-dot"></span><span id="gs-conn-label">Connecting…</span></div>
+    <button class="hdr-btn compact-toggle" onclick="toggleCompact()">⚡ Compact</button>
+    <button class="hdr-btn" onclick="openImportModal()">📥 Import</button>
+    <button class="hdr-btn" onclick="exportData('csv','all')">📤 Export CSV</button>
+    <button class="hdr-btn" onclick="printCandidate()">🖨️ Print</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('data')">📝 Data Entry</div>
+  <div class="tab" onclick="switchTab('list')">📋 Candidates</div>
+  <div class="tab" onclick="switchTab('dashboard')">📊 Dashboard</div>
+</div>
+
+<!-- ======================== DATA ENTRY TAB ======================== -->
+<div id="tab-data" class="tab-pane active">
+<div class="main-content">
+  <div class="gs-sync-bar">
+    <span class="conn-dot connected" style="width:8px;height:8px;flex-shrink:0"></span>
+    <span>Live data from Google Sheets — Candidates tab</span>
+    <span id="gs-sync-time" style="font-size:11px;color:#526187"></span>
+    <button class="btn btn-outline btn-sm" onclick="loadCandidatesFromSheets().then(()=>showToast('Refreshed','success'))">🔄 Refresh</button>
+  </div>
+
+  <!-- SOURCE CARD -->
+  <div class="card" id="card-source">
+    <div class="card-header" onclick="toggleCard('card-source')">
+      <h3>🔗 Source — Associate</h3><span class="card-chevron">▼</span>
+    </div>
+    <div class="card-body" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">
+      <div class="field-group">
+        <label>Associate Code
+          <button type="button" onclick="loadAssociates();showToast('Reloading associates from Google Sheets…','info')" title="Reload associates from Google Sheets" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--brutal-blue);padding:0 4px;vertical-align:middle">🔄</button>
+        </label>
+        <div class="sd-wrap" id="assoc-sd">
+          <div class="sd-display" onclick="toggleSD('assoc-sd')">
+            <span class="sd-val" id="assoc-sd-val">— Select Associate —</span><span class="sd-arrow">▼</span>
+          </div>
+          <div class="sd-dropdown" id="assoc-sd-dd">
+            <div class="sd-search"><input type="text" placeholder="Search…" oninput="filterSD('assoc-sd',this.value)"/></div>
+            <div class="sd-list" id="assoc-sd-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-group"><label>Associate Name</label><input type="text" id="assoc-name" readonly placeholder="Auto-filled"/></div>
+      <div class="field-group"><label>Associate Phone</label><input type="text" id="assoc-phone" readonly placeholder="Auto-filled"/></div>
+      <div class="field-group"><label>Associate State</label><input type="text" id="assoc-state" readonly placeholder="Auto-filled"/></div>
+    </div>
+  </div>
+
+  <!-- PERSONAL DETAILS CARD -->
+  <div class="card" id="card-personal">
+    <div class="card-header" onclick="toggleCard('card-personal')">
+      <h3>👤 Personnel Details</h3><span class="card-chevron">▼</span>
+    </div>
+    <div class="card-body">
+      <div class="field-group">
+        <label>Full Name *</label>
+        <input type="text" id="p-name" placeholder="Candidate full name" oninput="validateName(this)" onlyalpha="true"/>
+        <span class="err-msg" id="err-name">Only characters allowed</span>
+      </div>
+      <div class="field-group">
+        <label>Designation *
+          <button type="button" onclick="loadDesignations();showToast('Reloading designations from Google Sheets…','info')" title="Reload designations from Google Sheets" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--brutal-blue);padding:0 4px;vertical-align:middle">🔄</button>
+        </label>
+        <div class="sd-wrap" id="desig-sd">
+          <div class="sd-display" onclick="toggleSD('desig-sd')">
+            <span class="sd-val" id="desig-sd-val">— Select Designation —</span><span class="sd-arrow">▼</span>
+          </div>
+          <div class="sd-dropdown" id="desig-sd-dd">
+            <div class="sd-search"><input type="text" placeholder="Search designation…" oninput="filterSD('desig-sd',this.value)"/></div>
+            <div class="sd-list" id="desig-sd-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Passport Number *</label>
+        <input type="text" id="p-passport" placeholder="A1234567 or AB123456" oninput="validatePassport(this)" maxlength="9"/>
+        <span class="hint">Format: A1234567 or AB123456</span>
+        <span class="err-msg" id="err-passport">Invalid passport format</span>
+      </div>
+      <div class="field-group">
+        <label>Passport Status</label>
+        <div class="sd-wrap" id="pstatus-sd">
+          <div class="sd-display" onclick="toggleSD('pstatus-sd')">
+            <span class="sd-val" id="pstatus-sd-val">— Select —</span><span class="sd-arrow">▼</span>
+          </div>
+          <div class="sd-dropdown" id="pstatus-sd-dd">
+            <div class="sd-list" id="pstatus-sd-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Passport Expiry Date</label>
+        <input type="date" id="p-expiry" onchange="checkExpiry(this)"/>
+        <span class="err-msg" id="warn-expiry" style="color:var(--yass-queen);display:none;">⚠️ Expiry within 1 year!</span>
+      </div>
+      <div class="field-group">
+        <label>Date of Birth</label>
+        <input type="date" id="p-dob" onchange="calcAge()"/>
+      </div>
+      <div class="field-group">
+        <label>Age</label>
+        <input type="text" id="p-age" readonly placeholder="Auto-calculated"/>
+      </div>
+      <div class="field-group">
+        <label>Designation Classification <span style="color:var(--muted)">(Optional)</span></label>
+        <input type="text" id="p-desig-class" placeholder="e.g. Skilled, Unskilled…"/>
+      </div>
+      <div class="field-group">
+        <label>Religion</label>
+        <div class="sd-wrap" id="religion-sd">
+          <div class="sd-display" onclick="toggleSD('religion-sd')">
+            <span class="sd-val" id="religion-sd-val">— Select Religion —</span><span class="sd-arrow">▼</span>
+          </div>
+          <div class="sd-dropdown" id="religion-sd-dd">
+            <div class="sd-search"><input type="text" placeholder="Search…" oninput="filterSD('religion-sd',this.value)"/></div>
+            <div class="sd-list" id="religion-sd-list"></div>
+            <div class="sd-add-row"><input type="text" id="religion-add-inp" placeholder="Add religion…"/><button class="sd-add-btn" onclick="addSDItem('religion-sd','religion-add-inp',religions)">Add</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Marital Status</label>
+        <div class="sd-wrap" id="marital-sd">
+          <div class="sd-display" onclick="toggleSD('marital-sd')">
+            <span class="sd-val" id="marital-sd-val">— Select —</span><span class="sd-arrow">▼</span>
+          </div>
+          <div class="sd-dropdown" id="marital-sd-dd">
+            <div class="sd-list" id="marital-sd-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Phone Number *</label>
+        <input type="tel" id="p-phone" placeholder="+91 XXXXX XXXXX" oninput="validatePhone(this)" maxlength="13"/>
+        <span class="err-msg" id="err-phone">Enter valid Indian number</span>
+      </div>
+      <div class="field-group">
+        <label>WhatsApp Number</label>
+        <div class="chk-row" style="margin-bottom:5px">
+          <input type="checkbox" id="wa-same" onchange="syncWA()"/><label for="wa-same" style="text-transform:none;font-size:12px;letter-spacing:0;">Same as Phone</label>
+        </div>
+        <input type="tel" id="p-whatsapp" placeholder="+91 XXXXX XXXXX" maxlength="13"/>
+      </div>
+      <div class="field-group">
+        <label>Email Address <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(Optional)</span></label>
+        <input type="email" id="p-email" placeholder="example@email.com" oninput="validateEmail(this)"/>
+        <span class="err-msg" id="err-email">Enter a valid email address</span>
+      </div>
+      <div class="field-group">
+        <label>State *</label>
+        <div class="sd-wrap" id="state-sd">
+          <div class="sd-display" onclick="toggleSD('state-sd')">
+            <span class="sd-val" id="state-sd-val">— Select State —</span><span class="sd-arrow">▼</span>
+          </div>
+          <div class="sd-dropdown" id="state-sd-dd">
+            <div class="sd-search"><input type="text" placeholder="Search…" oninput="filterSD('state-sd',this.value)"/></div>
+            <div class="sd-list" id="state-sd-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-group full-width">
+        <label>Address</label>
+        <textarea id="p-address" placeholder="Full address…"></textarea>
+      </div>
+      <div class="field-group full-width">
+        <label>Qualifications</label>
+        <div class="chips-wrap" id="qual-chips"></div>
+        <div class="chip-input-row">
+          <input type="text" id="qual-inp" placeholder="Add qualification…" onkeydown="if(event.key==='Enter')addChip('qual-chips','qual-inp',qualifications)"/>
+          <button class="chip-add-btn" onclick="addChip('qual-chips','qual-inp',qualifications)">+ Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPERIENCE CARD -->
+  <div class="card" id="card-exp">
+    <div class="card-header" onclick="toggleCard('card-exp')">
+      <h3>💼 Experience</h3><span class="card-chevron">▼</span>
+    </div>
+    <div class="exp-entries" id="exp-entries"></div>
+    <button class="exp-add-btn" onclick="addExpEntry()">＋ Add Experience Entry</button>
+    <div class="exp-summary">
+      <div class="exp-sum-box"><div class="exp-sum-val" id="abroad-exp">0y 0m</div><div class="exp-sum-lbl">Abroad Experience</div></div>
+      <div class="exp-sum-box"><div class="exp-sum-val" id="local-exp">0y 0m</div><div class="exp-sum-lbl">Local Experience</div></div>
+      <div class="exp-sum-box"><div class="exp-sum-val" id="total-exp">0y 0m</div><div class="exp-sum-lbl">Total Experience</div></div>
+    </div>
+    <div class="card-body single-col" style="padding-top:0">
+      <div class="field-group">
+        <label>Sectors</label>
+        <div class="chips-wrap" id="sector-chips"></div>
+        <div class="chip-input-row">
+          <input type="text" id="sector-inp" placeholder="Add sector…" onkeydown="if(event.key==='Enter')addChip('sector-chips','sector-inp',sectors)"/>
+          <button class="chip-add-btn" onclick="addChip('sector-chips','sector-inp',sectors)">+ Add</button>
+        </div>
+      </div>
+      <div class="field-group full-width">
+        <label>CV / Resume <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(Optional)</span></label>
+        <div class="cv-upload-controls" style="margin-top:4px">
+          <label class="cv-pick-btn" for="cand-cv-input">📂 Choose CV File</label>
+          <input type="file" id="cand-cv-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+            style="display:none" onchange="handleCandCV(this)"/>
+          <div class="cv-status cv-empty" id="cand-cv-status">No CV uploaded</div>
+        </div>
+        <span class="hint">Accepted: PDF, DOC, DOCX, JPG, PNG · Max 5 MB</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILIZATION CARD -->
+  <div class="card" id="card-mob">
+    <div class="card-header" onclick="toggleCard('card-mob')">
+      <h3>📋 Mobilization <span style="font-weight:400;color:var(--muted)">(Optional)</span></h3><span class="card-chevron">▼</span>
+    </div>
+    <div class="card-body mob-grid">
+      <div class="field-group">
+        <label>Mobilized By</label>
+        <div class="sd-wrap" id="mob-by-sd">
+          <div class="sd-display" onclick="toggleSD('mob-by-sd')">
+            <span class="sd-val" id="mob-by-sd-val">— Select —</span><span class="sd-arrow">▼</span>
+          </div>
+          <div class="sd-dropdown" id="mob-by-sd-dd">
+            <div class="sd-search"><input type="text" placeholder="Search…" oninput="filterSD('mob-by-sd',this.value)"/></div>
+            <div class="sd-list" id="mob-by-sd-list"></div>
+            <div class="sd-add-row"><input type="text" id="mob-by-add-inp" placeholder="Add name…"/><button class="sd-add-btn" onclick="addSDItem('mob-by-sd','mob-by-add-inp',mobilizers)">Add</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Company Code
+          <span id="company-count" style="font-weight:400;color:var(--muted);margin-left:6px;font-size:10px;text-transform:none;letter-spacing:0"></span>
+          <button type="button" onclick="loadCompanies();showToast('Reloading companies from Google Sheets…','info')" title="Reload companies from Google Sheets" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--brutal-blue);padding:0 4px;vertical-align:middle">🔄</button>
+        </label>
+        <div class="sd-wrap" id="company-sd">
+          <div class="sd-display" onclick="toggleSD('company-sd')">
+            <span class="sd-val" id="company-sd-val">— Select Company —</span><span class="sd-arrow">▼</span>
+          </div>
+          <div class="sd-dropdown" id="company-sd-dd">
+            <div class="sd-search"><input type="text" placeholder="Search…" oninput="filterSD('company-sd',this.value)"/></div>
+            <div class="sd-list" id="company-sd-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-group"><label>Company Name</label><input type="text" id="mob-company-name" readonly placeholder="Auto-filled"/></div>
+      <div class="field-group"><label>Country</label><input type="text" id="mob-country" readonly placeholder="Auto-filled"/></div>
+      <div class="field-group"><label>Date of Interview</label><input type="date" id="mob-interview-date"/></div>
+      <div class="field-group">
+        <label>Campaign / Drive</label>
+        <div class="sd-wrap" id="campaign-sd">
+          <div class="sd-display" onclick="toggleSD('campaign-sd')">
+            <span class="sd-val" id="campaign-sd-val">— Select —</span><span class="sd-arrow">▼</span>
+          </div>
+          <div class="sd-dropdown" id="campaign-sd-dd">
+            <div class="sd-search"><input type="text" placeholder="Search…" oninput="filterSD('campaign-sd',this.value)"/></div>
+            <div class="sd-list" id="campaign-sd-list"></div>
+            <div class="sd-add-row"><input type="text" id="campaign-add-inp" placeholder="Add campaign…"/><button class="sd-add-btn" onclick="addSDItem('campaign-sd','campaign-add-inp',campaigns)">Add</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Attended</label>
+        <div class="sd-wrap" id="attended-sd">
+          <div class="sd-display" onclick="toggleSD('attended-sd')">
+            <span class="sd-val" id="attended-sd-val">— Select —</span><span class="sd-arrow">▼</span>
+          </div>
+          <div class="sd-dropdown" id="attended-sd-dd">
+            <div class="sd-search"><input type="text" placeholder="Search…" oninput="filterSD('attended-sd',this.value)"/></div>
+            <div class="sd-list" id="attended-sd-list"></div>
+            <div class="sd-add-row"><input type="text" id="attended-add-inp" placeholder="Add option…"/><button class="sd-add-btn" onclick="addSDItem('attended-sd','attended-add-inp',attendedOptions)">Add</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Selected</label>
+        <div class="sd-wrap" id="selected-sd">
+          <div class="sd-display" onclick="toggleSD('selected-sd')">
+            <span class="sd-val" id="selected-sd-val">— Select —</span><span class="sd-arrow">▼</span>
+          </div>
+          <div class="sd-dropdown" id="selected-sd-dd">
+            <div class="sd-search"><input type="text" placeholder="Search…" oninput="filterSD('selected-sd',this.value)"/></div>
+            <div class="sd-list" id="selected-sd-list"></div>
+            <div class="sd-add-row"><input type="text" id="selected-add-inp" placeholder="Add option…"/><button class="sd-add-btn" onclick="addSDItem('selected-sd','selected-add-inp',selectedOptions)">Add</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM ACTIONS -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;padding-bottom:80px">
+    <button class="btn btn-primary" onclick="saveCandidate()">💾 Save Candidate</button>
+    <button class="btn btn-outline" onclick="clearForm()">🗑️ Clear Form</button>
+    <button class="btn btn-outline" onclick="printCandidate()">🖨️ Print Profile</button>
+  </div>
+
+</div><!-- /main-content data -->
+</div><!-- /tab-data -->
+
+<!-- ======================== CANDIDATES LIST TAB ======================== -->
+<div id="tab-list" class="tab-pane">
+<div class="main-content">
+  <div class="table-toolbar">
+    <div class="search-bar">
+      <input type="text" id="s-name" placeholder="Search name…" oninput="applyFilters()"/>
+      <input type="text" id="s-passport" placeholder="Passport…" oninput="applyFilters()"/>
+      <select id="s-status" onchange="applyFilters()">
+        <option value="">All Status</option>
+        <option value="ECR">ECR</option>
+        <option value="ECNR">ECNR</option>
+      </select>
+      <input type="text" id="s-desig" placeholder="Designation…" oninput="applyFilters()"/>
+      <input type="text" id="s-contact" placeholder="Phone/WA/Email…" oninput="applyFilters()"/>
+      <button class="btn btn-outline btn-sm" onclick="clearFilters()">✕ Clear</button>
+    </div>
+    <div class="tbl-actions">
+      <button class="btn btn-outline btn-sm" onclick="toggleColPanel()">⚙️ Columns</button>
+      <button class="btn btn-outline btn-sm" onclick="deleteSelected()">🗑️ Delete Selected</button>
+      <button class="btn btn-primary btn-sm" onclick="switchTab('data');clearForm()">＋ New</button>
+    </div>
+  </div>
+  <div class="col-toggle-panel" id="col-toggle-panel"></div>
+  <div class="tbl-wrap">
+    <table id="candidates-table">
+      <thead id="tbl-head"></thead>
+      <tbody id="tbl-body"></tbody>
+    </table>
+  </div>
+  <div id="tbl-info" style="font-size:11px;color:var(--muted);padding:8px 0;"></div>
+
+  <!-- Export Row -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+    <strong style="font-size:12px;color:var(--muted);align-self:center">Export:</strong>
+    <button class="btn btn-outline btn-sm" onclick="exportData('csv','all')">CSV All</button>
+    <button class="btn btn-outline btn-sm" onclick="exportData('csv','filtered')">CSV Filtered</button>
+    <button class="btn btn-outline btn-sm" onclick="exportData('csv','selected')">CSV Selected</button>
+    <button class="btn btn-outline btn-sm" onclick="exportData('xls','all')">XLS All</button>
+  </div>
+</div>
+</div>
+
+<!-- ======================== DASHBOARD TAB ======================== -->
+<div id="tab-dashboard" class="tab-pane">
+<div class="main-content">
+  <div class="dash-stats" id="dash-stats"></div>
+  <div class="charts-grid">
+    <div class="chart-card"><h4>Age Distribution</h4><canvas id="chart-age" width="380" height="220"></canvas></div>
+    <div class="chart-card"><h4>Candidates by State</h4><canvas id="chart-state" width="380" height="220"></canvas></div>
+  </div>
+</div>
+</div>
+
+<!-- DUPLICATE MODAL -->
+<div class="modal-overlay" id="dup-modal">
+  <div class="modal" style="max-width:520px">
+    <h3>⚠️ Duplicate Entry Detected</h3>
+    <p id="dup-msg" style="line-height:1.7;margin-bottom:18px"></p>
+    <div class="modal-actions" style="flex-direction:column;gap:10px">
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="dupAction('load')">
+        ✏️ Update Existing Record
+      </button>
+      <button class="btn btn-mint" style="width:100%;justify-content:center" onclick="dupAction('save')">
+        ➕ Add Anyway (Create New)
+      </button>
+      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="dupAction('cancel')">
+        ✖ Ignore / Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal">
+    <h3>📥 Import Candidates</h3>
+    <p>Accepts CSV or XLS (HTML-based). Drag & drop or click to select.</p>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('import-file').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleFileDrop(event)">
+      📂 Drop files here or click to browse<br/><span style="font-size:11px;color:var(--muted)">Supported: .csv, .xls</span>
+    </div>
+    <input type="file" id="import-file" accept=".csv,.xls" multiple style="display:none" onchange="importFiles(this.files)"/>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-outline" onclick="closeModal('import-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- FLOATING DOCK -->
+<div class="dock">
+  <button class="dock-btn save-btn" title="Save" onclick="saveCandidate()">💾</button>
+  <button class="dock-btn clear-btn" title="Clear" onclick="clearForm()">🗑️</button>
+  <button class="dock-btn scroll-top" title="Top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  GOOGLE SHEETS CONFIG
+// ══════════════════════════════════════════════
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzNoK4d2MdtTciXBRHcZ_aE8UIPpIcnWcXIzNBCd8Hxg2EwpEhP1e_Hpu528PHsHs4z/exec';
+
+async function api(params){
+  const url = new URL(WEBAPP_URL);
+  Object.entries(params).forEach(([k,v])=>{
+    url.searchParams.set(k, typeof v==='object' ? JSON.stringify(v) : String(v));
+  });
+  let res,text,json;
+  try{ res=await fetch(url.toString()); text=await res.text(); }
+  catch(e){ throw new Error('Network error: '+e.message); }
+  try{ json=JSON.parse(text); }
+  catch(e){ throw new Error('Bad response: '+text.slice(0,200)); }
+  if(!json.success) throw new Error(json.error||'Server error');
+  return json;
+}
+function showLoader(msg){ const el=document.getElementById('gs-loader'); if(el){el.style.display='flex';el.querySelector('p').textContent=msg||'Saving…';} }
+function hideLoader(){ const el=document.getElementById('gs-loader'); if(el)el.style.display='none'; }
+// ===================== DATA STORES =====================
+let candidates = []; // loaded from Google Sheets
+let designations = []; // loaded from Google Sheets — Designations tab
+let religions = JSON.parse(localStorage.getItem('cand_religions')||'["Hindu","Muslim","Christian","Jain","Sikh"]');
+let mobilizers = JSON.parse(localStorage.getItem('cand_mobilizers')||'["Sanjuktha","Lalitha","Triveni","Suresh"]');
+let campaigns = JSON.parse(localStorage.getItem('cand_campaigns')||'[]');
+let attendedOptions = JSON.parse(localStorage.getItem('cand_attended')||'["Attended","Absent","Re Scheduled"]');
+let selectedOptions = JSON.parse(localStorage.getItem('cand_selected')||'["Selected","Rejected","Hold"]');
+let qualifications = [];
+let sectors = [];
+let expEntries = [];
+let currentEditId = null;
+let filteredCandidates = [];
+let selectedRows = new Set();
+let dupPendingData = null;
+let sortConfig = [];
+
+const INDIA_STATES = ["Andaman and Nicobar Islands","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh","Chhattisgarh","Dadra and Nagar Haveli and Daman and Diu","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu and Kashmir","Jharkhand","Karnataka","Kerala","Ladakh","Lakshadweep","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Puducherry","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
+const PSTATUS = ["ECR","ECNR"];
+const MARITAL = ["Married","Single"];
+
+let allColumns = [
+  {key:'name',label:'Name',vis:true},
+  {key:'designation',label:'Designation',vis:true},
+  {key:'passport',label:'Passport No',vis:true},
+  {key:'passportStatus',label:'Status',vis:true},
+  {key:'passportExpiry',label:'Expiry',vis:true},
+  {key:'dob',label:'DOB',vis:false},
+  {key:'age',label:'Age',vis:true},
+  {key:'phone',label:'Phone',vis:true},
+  {key:'state',label:'State',vis:true},
+  {key:'totalExpMonths',label:'Experience',vis:true},
+  {key:'sectors',label:'Sectors',vis:false},
+  {key:'religion',label:'Religion',vis:false},
+  {key:'maritalStatus',label:'Marital',vis:false},
+];
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded',()=>{
+  initSD('desig-sd','desig-sd-list',designations,false,'Designation');
+  initSD('pstatus-sd','pstatus-sd-list',PSTATUS,false,'Passport Status');
+  initSD('religion-sd','religion-sd-list',religions,true,'Religion');
+  initSD('marital-sd','marital-sd-list',MARITAL,false,'Marital Status');
+  initSD('state-sd','state-sd-list',INDIA_STATES,false,'State');
+  initSD('mob-by-sd','mob-by-sd-list',mobilizers,true,'Mobilized By');
+  initSD('campaign-sd','campaign-sd-list',campaigns,true,'Campaign');
+  initSD('attended-sd','attended-sd-list',attendedOptions,true,'Attended');
+  initSD('selected-sd','selected-sd-list',selectedOptions,true,'Selected');
+  loadAssociates();
+  loadCompanies();
+  renderCompanyCount();
+  loadDesignations();
+  renderColToggle();
+  renderDashboard();
+  // Load candidates from Google Sheets on startup
+  showLoader('Connecting to Google Sheets…');
+  loadCandidatesFromSheets().finally(hideLoader);
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('.sd-wrap'))document.querySelectorAll('.sd-dropdown.open').forEach(d=>d.classList.remove('open'));
+  });
+});
+
+// ===================== COMPACT MODE =====================
+function toggleCompact(){document.body.classList.toggle('compact');localStorage.setItem('compact',document.body.classList.contains('compact')?"1":"0");}
+if(localStorage.getItem('compact')==="1")document.body.classList.add('compact');
+
+// ===================== TABS =====================
+function switchTab(t){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.querySelectorAll('.tab')[['data','list','dashboard'].indexOf(t)].classList.add('active');
+  if(t==='list'){renderTable();}
+  if(t==='dashboard'){renderDashboard();}
+}
+
+// ===================== CARD TOGGLE =====================
+function toggleCard(id){document.getElementById(id).classList.toggle('collapsed');}
+
+// ===================== SEARCHABLE DROPDOWN =====================
+const sdState={};
+function initSD(wrapId,listId,items,deletable,placeholder){
+  sdState[wrapId]={items:[...items],selected:null,placeholder};
+  renderSDList(wrapId,listId,items,deletable);
+}
+function renderSDList(wrapId,listId,items,deletable,filter=''){
+  const list=document.getElementById(listId);
+  if(!list)return;
+  const filtered=items.filter(i=>i.toLowerCase().includes(filter.toLowerCase()));
+  list.innerHTML=filtered.map(item=>`
+    <div class="sd-item${sdState[wrapId]?.selected===item?' selected':''}" onclick="selectSD('${wrapId}','${item}')">
+      <span>${item}</span>
+      ${deletable?`<span class="sd-item-del" onclick="event.stopPropagation();deleteSDItem('${wrapId}','${item}')">✕</span>`:''}
+    </div>`).join('')||'<div style="padding:10px;color:var(--muted);font-size:12px">No options</div>';
+}
+function toggleSD(wrapId){
+  document.querySelectorAll('.sd-dropdown.open').forEach(d=>{if(d.id!==wrapId+'-dd')d.classList.remove('open');});
+  document.getElementById(wrapId+'-dd').classList.toggle('open');
+}
+function filterSD(wrapId,val){
+  const st=sdState[wrapId];if(!st)return;
+  renderSDList(wrapId,wrapId+'-list',st.items,!!document.querySelector(`#${wrapId}-dd .sd-add-row`),val);
+}
+function selectSD(wrapId,val){
+  if(!sdState[wrapId])return;
+  sdState[wrapId].selected=val;
+  document.getElementById(wrapId+'-val').textContent=val;
+  document.getElementById(wrapId+'-dd').classList.remove('open');
+  renderSDList(wrapId,wrapId+'-list',sdState[wrapId].items,!!document.querySelector(`#${wrapId}-dd .sd-add-row`));
+  if(wrapId==='assoc-sd')onAssocSelect(val);
+  if(wrapId==='company-sd')onCompanySelect(val);
+}
+function addSDItem(wrapId,inputId,arr){
+  const inp=document.getElementById(inputId);
+  const val=inp.value.trim();
+  if(!val)return;
+  if(arr.includes(val)){showToast('Duplicate entry: '+val,'error');return;}
+  arr.push(val);
+  sdState[wrapId].items=[...arr];
+  saveCustomList(wrapId,arr);
+  renderSDList(wrapId,wrapId+'-list',arr,true);
+  inp.value='';
+  showToast('Added: '+val,'success');
+}
+function deleteSDItem(wrapId,val){
+  const st=sdState[wrapId];if(!st)return;
+  st.items=st.items.filter(i=>i!==val);
+  if(st.selected===val){st.selected=null;document.getElementById(wrapId+'-val').textContent=st.placeholder||'— Select —';}
+  renderSDList(wrapId,wrapId+'-list',st.items,true);
+}
+function saveCustomList(wrapId,arr){
+  const map={'religion-sd':'cand_religions','mob-by-sd':'cand_mobilizers','campaign-sd':'cand_campaigns','attended-sd':'cand_attended','selected-sd':'cand_selected'};
+  if(map[wrapId])localStorage.setItem(map[wrapId],JSON.stringify(arr));
+}
+function getSD(wrapId){return sdState[wrapId]?.selected||'';}
+function setSD(wrapId,val){if(val&&sdState[wrapId]){sdState[wrapId].selected=val;const el=document.getElementById(wrapId+'-val');if(el)el.textContent=val||sdState[wrapId].placeholder;}}
+
+// ===================== ASSOCIATE LOAD =====================
+function loadAssociates(){
+  // Load associates from Google Sheets Associates tab
+  api({action:'getAll'}).then(res=>{
+    const recs = res.data||[];
+    const items = recs.map(r=>r.Code||r.ID).filter(Boolean);
+    window._assocRecs = recs;
+    sdState['assoc-sd']={items,selected:null,placeholder:'— Select Associate —'};
+    renderSDList('assoc-sd','assoc-sd-list',items,false);
+  }).catch(()=>{
+    sdState['assoc-sd']={items:[],selected:null,placeholder:'— No associates found —'};
+    renderSDList('assoc-sd','assoc-sd-list',[],false);
+  });
+}
+function onAssocSelect(code){
+  const recs = window._assocRecs||[];
+  const r = recs.find(x=>(x.Code||x.ID)===code);
+  if(r){
+    document.getElementById('assoc-name').value=r.Name||'';
+    document.getElementById('assoc-phone').value=r.Phone||'';
+    document.getElementById('assoc-state').value=r.State||'';
+  }
+}
+// ===================== COMPANY LOAD — from Google Sheets (Companies tab) =====================
+let _companyRecs = [];   // cached for fast lookup
+
+function loadCompanies(){
+  // Load companies from Google Sheets Companies tab
+  renderCompanyCount(); // show loading state
+  api({action:'getAll', sheet:'Companies'}).then(res=>{
+    _companyRecs = (res.data||[]).map(r=>({
+      id        : r.ID||'',
+      name      : r.Name||'',
+      code      : r.Code||'',
+      phone     : r.Phone||'',
+      email     : r.Email||'',
+      address   : r.Address||'',
+      country   : r.Country||'',
+      workingSince: r.WorkingSince||'',
+      hrName    : r.HRName||'',
+      hrPhone   : r.HRPhone||'',
+      hrEmail   : r.HREmail||'',
+      remarks   : r.Remarks||''
+    }));
+
+    if(!_companyRecs.length){
+      sdState['company-sd'] = {items:[], selected:null, placeholder:'— No companies found —'};
+      renderSDList('company-sd','company-sd-list',[],false);
+      renderCompanyCount();
+      return;
+    }
+
+    // Build display labels: "CODE — Name" if code exists, else just "Name"
+    const items = _companyRecs.map(r => {
+      const code = (r.code||'').trim();
+      const name = (r.name||'').trim();
+      if(code && name) return `${code} — ${name}`;
+      if(code) return code;
+      return name || r.id;
+    }).filter(Boolean);
+
+    sdState['company-sd'] = {items, selected:null, placeholder:'— Select Company —'};
+    renderSDList('company-sd','company-sd-list', items, false);
+    renderCompanyCount();
+  }).catch(e=>{
+    sdState['company-sd'] = {items:[], selected:null, placeholder:'— Failed to load —'};
+    renderSDList('company-sd','company-sd-list',[],false);
+    showToast('Failed to load companies: '+e.message,'error');
+  });
+}
+
+function onCompanySelect(label){
+  // label format: "CODE — Name" or just code/name
+  // Match back to the record
+  const r = _companyRecs.find(rec => {
+    const code = (rec.code||'').trim();
+    const name = (rec.name||'').trim();
+    const lbl = code && name ? `${code} — ${name}` : (code || name || rec.id);
+    return lbl === label;
+  });
+
+  if(r){
+    document.getElementById('mob-company-name').value = r.name || '';
+    document.getElementById('mob-country').value       = r.country || '';
+    showToast(`Company: ${r.name}${r.country?' | '+r.country:''}`, 'info');
+  } else {
+    document.getElementById('mob-company-name').value = '';
+    document.getElementById('mob-country').value       = '';
+  }
+}
+
+function renderCompanyCount(){
+  const el = document.getElementById('company-count');
+  if(!el) return;
+  if(_companyRecs.length){
+    el.textContent = `(${_companyRecs.length} loaded from Sheets)`;
+  } else {
+    el.textContent = '(loading from Google Sheets…)';
+  }
+}
+
+// ===================== DESIGNATION LOAD — Google Sheets =====================
+function loadDesignations(){
+  api({action:'getAll', sheet:'Designations'}).then(res=>{
+    const rows = res.data||[];
+    // Extract designation names from 'Designation' column
+    designations = rows
+      .map(r => (r.Designation||'').trim())
+      .filter(Boolean);
+
+    if(!designations.length){
+      sdState['desig-sd'] = {items:[], selected:null, placeholder:'— No designations found —'};
+      renderSDList('desig-sd','desig-sd-list',[],false);
+      showToast('No designations found in Sheets. Add them to the Designations tab.','warn');
+      return;
+    }
+
+    // Re-initialise the dropdown with fresh data (keep current selection)
+    const currentSel = sdState['desig-sd']?.selected || null;
+    sdState['desig-sd'] = {items:[...designations], selected:currentSel, placeholder:'— Select Designation —'};
+    renderSDList('desig-sd','desig-sd-list', designations, false);
+
+    // Restore selection label if still valid
+    const selEl = document.getElementById('desig-sd-val');
+    if(currentSel && designations.includes(currentSel)){
+      if(selEl) selEl.textContent = currentSel;
+    } else if(!currentSel){
+      if(selEl) selEl.textContent = '— Select Designation —';
+    }
+  }).catch(e=>{
+    showToast('Failed to load designations: '+e.message,'error');
+  });
+}
+function addChip(chipsId,inputId,arr){
+  const inp=document.getElementById(inputId);
+  const val=inp.value.trim();
+  if(!val)return;
+  if(!arr.includes(val))arr.push(val);
+  renderChips(chipsId,arr);
+  inp.value='';
+}
+function renderChips(chipsId,arr){
+  document.getElementById(chipsId).innerHTML=arr.map((v,i)=>
+    `<span class="chip">${v}<span class="chip-del" onclick="removeChip('${chipsId}',${i})">×</span></span>`).join('');
+}
+function removeChip(chipsId,idx){
+  if(chipsId==='qual-chips')qualifications.splice(idx,1),renderChips(chipsId,qualifications);
+  if(chipsId==='sector-chips')sectors.splice(idx,1),renderChips(chipsId,sectors);
+}
+
+// ===================== VALIDATION =====================
+function validateName(el){
+  const valid=/^[a-zA-Z\s.'-]*$/.test(el.value);
+  el.classList.toggle('err',!valid&&el.value!=='');
+  document.getElementById('err-name').style.display=(!valid&&el.value!=='')?'block':'none';
+}
+function validatePassport(el){
+  const val=el.value.toUpperCase();el.value=val;
+  const valid=/^[A-Z]\d{7}$/.test(val)||/^[A-Z]{2}\d{6}$/.test(val);
+  el.classList.toggle('err',!valid&&val!=='');
+  document.getElementById('err-passport').style.display=(!valid&&val!=='')?'block':'none';
+}
+function validatePhone(el){
+  const val=el.value.replace(/\s/g,'');
+  const valid=/^(\+91)?[6-9]\d{9}$/.test(val);
+  el.classList.toggle('err',!valid&&val!=='');
+  document.getElementById('err-phone').style.display=(!valid&&val!=='')?'block':'none';
+}
+function validateEmail(el){
+  const val=el.value.trim();
+  const valid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+  el.classList.toggle('err',!valid&&val!=='');
+  document.getElementById('err-email').style.display=(!valid&&val!=='')?'block':'none';
+}
+function checkExpiry(el){
+  const warn=document.getElementById('warn-expiry');
+  if(!el.value){warn.style.display='none';el.classList.remove('expiry-warn');return;}
+  const d=new Date(el.value),now=new Date(),diff=(d-now)/(1000*60*60*24*365.25);
+  const bad=diff<1&&diff>0,past=diff<=0;
+  el.classList.toggle('expiry-warn',bad||past);
+  warn.style.display=(bad||past)?'block':'none';
+  warn.textContent=past?'⚠️ Passport EXPIRED!':'⚠️ Expiry within 1 year!';
+}
+function calcAge(){
+  const dob=document.getElementById('p-dob').value;
+  if(!dob){document.getElementById('p-age').value='';return;}
+  const d=new Date(dob),now=new Date();
+  let age=now.getFullYear()-d.getFullYear();
+  const m=now.getMonth()-d.getMonth();
+  if(m<0||(m===0&&now.getDate()<d.getDate()))age--;
+  document.getElementById('p-age').value=age>=0?age:'';
+}
+function syncWA(){
+  const same=document.getElementById('wa-same').checked;
+  const wa=document.getElementById('p-whatsapp');
+  if(same){wa.value=document.getElementById('p-phone').value;wa.readOnly=true;}
+  else{wa.readOnly=false;}
+}
+
+// ===================== CV UPLOAD (candidate-level) =====================
+let _candCvData=null,_candCvName=null,_candCvType=null;
+function handleCandCV(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  if(file.size>5*1024*1024){showToast('CV too large (max 5MB)','error');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    _candCvData=ev.target.result;_candCvName=file.name;_candCvType=file.type;
+    renderCandCvStatus();
+    showToast('CV uploaded: '+file.name,'success');
+  };
+  reader.readAsDataURL(file);
+}
+function renderCandCvStatus(){
+  const el=document.getElementById('cand-cv-status');
+  if(!el)return;
+  if(_candCvData){
+    el.className='cv-status cv-has-file';
+    el.innerHTML=`<span class="cv-icon">📄</span><span class="cv-fname">${_candCvName}</span>`+
+      `<button type="button" class="cv-dl-btn" onclick="downloadCandCV()" title="Download">⬇️</button>`+
+      `<button type="button" class="cv-rm-btn" onclick="removeCandCV()">✕</button>`;
+  }else{
+    el.className='cv-status cv-empty';
+    el.innerHTML='No CV uploaded';
+  }
+}
+function downloadCandCV(){
+  if(!_candCvData){showToast('No CV to download','error');return;}
+  const a=document.createElement('a');a.href=_candCvData;a.download=_candCvName||'cv';a.click();
+}
+function removeCandCV(){
+  _candCvData=null;_candCvName=null;_candCvType=null;
+  renderCandCvStatus();
+  const inp=document.getElementById('cand-cv-input');
+  if(inp)inp.value='';
+  showToast('CV removed','info');
+}
+
+// ===================== EXPERIENCE =====================
+let expCount=0;
+function addExpEntry(data={}){
+  expCount++;
+  const id=`exp-${expCount}`;
+  const div=document.createElement('div');
+  div.className='exp-entry';div.id=id;
+  div.innerHTML=`
+    <button class="exp-del-btn" onclick="removeExpEntry('${id}')">✕</button>
+    <div class="exp-entry-grid">
+      <div class="field-group"><label>Company Name</label><input type="text" class="exp-company" value="${data.company||''}" placeholder="Company name"/></div>
+      <div class="field-group"><label>Location</label>
+        <select class="exp-location" onchange="calcExpDurations()">
+          <option value="Local"${(data.location||'Local')==='Local'?' selected':''}>Local</option>
+          <option value="Abroad"${data.location==='Abroad'?' selected':''}>Abroad</option>
+        </select>
+      </div>
+      <div class="field-group"><label>Designation</label><input type="text" class="exp-desig" value="${data.designation||''}" placeholder="Role/Title"/></div>
+      <div class="field-group"><label>Worked From (MM-YYYY)</label><input type="text" class="exp-from" value="${data.from||''}" placeholder="MM-YYYY" maxlength="7" oninput="fmtMMYYYY(this);calcExpDurations()"/></div>
+      <div class="field-group"><label>Worked Till (MM-YYYY)</label><input type="text" class="exp-till" value="${data.till||''}" placeholder="MM-YYYY" maxlength="7" oninput="fmtMMYYYY(this);calcExpDurations()"/></div>
+      <div class="field-group"><label>Duration</label><input type="text" class="exp-dur" readonly placeholder="Auto-calculated"/></div>
+    </div>`;
+  document.getElementById('exp-entries').appendChild(div);
+  if(data.from&&data.till)calcExpDurations();
+}
+function fmtMMYYYY(el){
+  let v=el.value.replace(/[^0-9]/g,'');
+  if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2,6);
+  el.value=v;
+}
+function removeExpEntry(id){document.getElementById(id).remove();calcExpDurations();}
+function parseMMYYYY(s){
+  if(!s)return null;
+  const p=s.split('-');
+  if(p.length!==2)return null;
+  const m=parseInt(p[0]),y=parseInt(p[1]);
+  if(isNaN(m)||isNaN(y)||m<1||m>12)return null;
+  return new Date(y,m-1,1);
+}
+function monthDiff(a,b){return(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());}
+function fmtMonths(months){const y=Math.floor(months/12),m=months%12;return`${y}y ${m}m`;}
+// Convert any date format → YYYY-MM-DD (for <input type="date">)
+// Handles: "2034-03-02", "Thu Mar 02 2034 00:00:00 GMT+...", "03/02/2034"
+function cleanDate(s){
+  if(!s||s.trim()==='')return '';
+  // Already YYYY-MM-DD
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s.trim()))return s.trim();
+  // Try parsing as Date
+  try{
+    const d=new Date(s);
+    if(!isNaN(d.getTime())){
+      const y=d.getFullYear();
+      const m=String(d.getMonth()+1).padStart(2,'0');
+      const day=String(d.getDate()).padStart(2,'0');
+      return y+'-'+m+'-'+day;
+    }
+  }catch(e){}
+  return s; // return as-is if can't parse
+}
+
+// Parse "Xy Zm" or plain number back to total months
+function parseYrMon(s){
+  if(!s||s===''||s==='0y 0m')return 0;
+  // already a plain number
+  if(!isNaN(s))return parseInt(s)||0;
+  var total=0;
+  var ym=s.match(/(\d+)y/);var mm=s.match(/(\d+)m/);
+  if(ym)total+=parseInt(ym[1])*12;
+  if(mm)total+=parseInt(mm[1]);
+  return total;
+}
+function calcExpDurations(){
+  let abroad=0,local=0;
+  document.querySelectorAll('.exp-entry').forEach(e=>{
+    const from=parseMMYYYY(e.querySelector('.exp-from').value);
+    const till=parseMMYYYY(e.querySelector('.exp-till').value);
+    const loc=e.querySelector('.exp-location').value;
+    if(from&&till&&till>from){
+      const d=monthDiff(from,till);
+      e.querySelector('.exp-dur').value=fmtMonths(d);
+      if(loc==='Abroad')abroad+=d;else local+=d;
+    }else{e.querySelector('.exp-dur').value='';}
+  });
+  document.getElementById('abroad-exp').textContent=fmtMonths(abroad);
+  document.getElementById('local-exp').textContent=fmtMonths(local);
+  document.getElementById('total-exp').textContent=fmtMonths(abroad+local);
+  expEntries={abroad,local,total:abroad+local};
+}
+
+// ===================== SAVE / CLEAR =====================
+function saveCandidate(force=false){
+  const name=document.getElementById('p-name').value.trim();
+  const passport=document.getElementById('p-passport').value.trim();
+  if(!name){showToast('Name is required','error');return;}
+  if(passport&&!(/^[A-Z]\d{7}$/.test(passport)||/^[A-Z]{2}\d{6}$/.test(passport))){showToast('Invalid passport format','error');return;}
+
+  if(!force){
+    const phone   = document.getElementById('p-phone').value.trim().replace(/\D/g,'');
+    const whatsapp= document.getElementById('p-whatsapp').value.trim().replace(/\D/g,'');
+    const dup=candidates.find(c=>c.id!==currentEditId&&(
+      (c.name    && c.name.toLowerCase()===name.toLowerCase()) ||
+      (passport  && c.passport && c.passport.toUpperCase()===passport.toUpperCase()) ||
+      (phone     && c.phone    && c.phone.replace(/\D/g,'')===phone) ||
+      (whatsapp  && c.whatsapp && c.whatsapp.replace(/\D/g,'')===whatsapp)
+    ));
+    if(dup){
+      dupPendingData=dup;
+      // Build a clear match-reason message
+      const reasons=[];
+      if(dup.name&&dup.name.toLowerCase()===name.toLowerCase()) reasons.push('Name');
+      if(passport&&dup.passport&&dup.passport.toUpperCase()===passport.toUpperCase()) reasons.push('Passport No');
+      if(phone&&dup.phone&&dup.phone.replace(/\D/g,'')===phone) reasons.push('Phone');
+      if(whatsapp&&dup.whatsapp&&dup.whatsapp.replace(/\D/g,'')===whatsapp) reasons.push('WhatsApp');
+      document.getElementById('dup-msg').innerHTML=
+        '<strong>Matched on: '+reasons.join(', ')+'</strong><br>'+
+        'Existing record: <b>'+dup.name+'</b>'+(dup.passport?' | Passport: '+dup.passport:'')+
+        (dup.phone?' | Ph: '+dup.phone:'')+
+        '<br><br>What would you like to do?';
+      openModal('dup-modal');
+      return;
+    }
+  }
+
+  const expEls=[];
+  document.querySelectorAll('.exp-entry').forEach(e=>{
+    expEls.push({
+      company:e.querySelector('.exp-company').value,
+      location:e.querySelector('.exp-location').value,
+      designation:e.querySelector('.exp-desig').value,
+      from:e.querySelector('.exp-from').value,
+      till:e.querySelector('.exp-till').value
+    });
+  });
+
+  const obj={
+    id:currentEditId||uid(),
+    name,designation:getSD('desig-sd'),passport,passportStatus:getSD('pstatus-sd'),
+    passportExpiry:document.getElementById('p-expiry').value,
+    dob:document.getElementById('p-dob').value,age:document.getElementById('p-age').value,
+    designationClass:document.getElementById('p-desig-class').value,
+    religion:getSD('religion-sd'),maritalStatus:getSD('marital-sd'),
+    qualifications:[...qualifications],phone:document.getElementById('p-phone').value,
+    whatsapp:document.getElementById('p-whatsapp').value,
+    email:document.getElementById('p-email').value,
+    state:getSD('state-sd'),address:document.getElementById('p-address').value,
+    experiences:expEls,
+    abroadExpMonths:expEntries.abroad||0,localExpMonths:expEntries.local||0,totalExpMonths:expEntries.total||0,
+    sectors:[...sectors],
+    cvData:_candCvData||null,cvName:_candCvName||null,cvType:_candCvType||null,
+    associateCode:getSD('assoc-sd'),associateName:document.getElementById('assoc-name').value,
+    associatePhone:document.getElementById('assoc-phone').value,associateState:document.getElementById('assoc-state').value,
+    mobilizedBy:getSD('mob-by-sd'),companyCode:getSD('company-sd'),
+    companyName:document.getElementById('mob-company-name').value,country:document.getElementById('mob-country').value,
+    interviewDate:document.getElementById('mob-interview-date').value,
+    campaign:getSD('campaign-sd'),attended:getSD('attended-sd'),selected:getSD('selected-sd'),
+    savedAt:new Date().toISOString()
+  };
+
+  const isEdit = !!currentEditId;
+  showLoader(isEdit?'Updating in Google Sheets…':'Saving to Google Sheets…');
+
+  const row=[
+    obj.id, obj.name, obj.designation||'', obj.passport||'', obj.passportStatus||'',
+    cleanDate(obj.passportExpiry||''), cleanDate(obj.dob||''), obj.age||'', obj.designationClass||'',
+    obj.religion||'', obj.maritalStatus||'', (obj.qualifications||[]).join('|'),
+    obj.phone||'', obj.whatsapp||'', obj.email||'', obj.state||'', obj.address||'',
+    JSON.stringify(obj.experiences||[]),
+    fmtMonths(obj.abroadExpMonths||0), fmtMonths(obj.localExpMonths||0), fmtMonths(obj.totalExpMonths||0),
+    (obj.sectors||[]).join('|'),
+    obj.associateCode||'', obj.associateName||'', obj.associatePhone||'', obj.associateState||'',
+    obj.mobilizedBy||'', obj.companyCode||'', obj.companyName||'', obj.country||'',
+    cleanDate(obj.interviewDate||''), obj.campaign||'', obj.attended||'', obj.selected||'',
+    obj.savedAt||''
+  ];
+
+  const existing = candidates.find(c=>c.id===currentEditId);
+  const p = isEdit && existing
+    ? api({action:'update', sheet:'Candidates', rowNum:existing._row, row})
+    : api({action:'append', sheet:'Candidates', row});
+
+  p.then(()=>{
+    showToast(isEdit?'✅ Updated in Google Sheets!':'✅ Saved to Google Sheets!','success');
+    currentEditId=null;
+    clearForm();
+    return loadCandidatesFromSheets();
+  }).catch(e=>{
+    showToast('Save failed: '+e.message,'error');
+  }).finally(hideLoader);
+}
+
+function clearForm(){
+  currentEditId=null;
+  document.getElementById('p-name').value='';
+  document.getElementById('p-passport').value='';
+  document.getElementById('p-expiry').value='';
+  document.getElementById('p-dob').value='';
+  document.getElementById('p-age').value='';
+  document.getElementById('p-desig-class').value='';
+  document.getElementById('p-phone').value='';
+  document.getElementById('p-whatsapp').value='';
+  document.getElementById('p-email').value='';
+  document.getElementById('p-address').value='';
+  document.getElementById('mob-company-name').value='';
+  document.getElementById('mob-country').value='';
+  document.getElementById('mob-interview-date').value='';
+  document.getElementById('assoc-name').value='';
+  document.getElementById('assoc-phone').value='';
+  document.getElementById('assoc-state').value='';
+  qualifications=[];sectors=[];
+  renderChips('qual-chips',qualifications);renderChips('sector-chips',sectors);
+  document.getElementById('exp-entries').innerHTML='';
+  expCount=0;calcExpDurations();
+  ['desig-sd','pstatus-sd','religion-sd','marital-sd','state-sd','assoc-sd','mob-by-sd','company-sd','campaign-sd','attended-sd','selected-sd'].forEach(id=>{
+    if(sdState[id]){sdState[id].selected=null;const el=document.getElementById(id+'-val');if(el)el.textContent=sdState[id].placeholder||'— Select —';}
+  });
+  document.getElementById('warn-expiry').style.display='none';
+  document.getElementById('p-expiry').classList.remove('expiry-warn');
+  _candCvData=null;_candCvName=null;_candCvType=null;
+  renderCandCvStatus();
+  const cvInp=document.getElementById('cand-cv-input');if(cvInp)cvInp.value='';
+}
+
+function saveCandidates(){ /* data is saved directly to Google Sheets */ }
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+
+// Load all candidates from Google Sheets
+async function loadCandidatesFromSheets(){
+  try{
+    const res = await api({action:'getAll', sheet:'Candidates'});
+    candidates = (res.data||[]).map(r=>({
+      _row       : r._row,
+      id         : r.ID||'',
+      name       : r.Name||'',
+      designation: r.Designation||'',
+      passport   : r.Passport||'',
+      passportStatus : r.PassportStatus||'',
+      passportExpiry : cleanDate(r.PassportExpiry||''),
+      dob        : cleanDate(r.DOB||''),
+      age        : r.Age||'',
+      designationClass: r.DesignationClass||'',
+      religion   : r.Religion||'',
+      maritalStatus: r.MaritalStatus||'',
+      qualifications: (r.Qualifications||'').split('|').filter(Boolean),
+      phone      : r.Phone||'',
+      whatsapp   : r.WhatsApp||'',
+      email      : r.Email||'',
+      state      : r.State||'',
+      address    : r.Address||'',
+      experiences: (() => { try{ return JSON.parse(r.Experiences||'[]'); }catch(e){ return []; } })(),
+      abroadExpMonths: parseYrMon(r.AbroadExp||'0'),
+      localExpMonths : parseYrMon(r.LocalExp||'0'),
+      totalExpMonths : parseYrMon(r.TotalExp||'0'),
+      sectors    : (r.Sectors||'').split('|').filter(Boolean),
+      associateCode: r.AssociateCode||'',
+      associateName: r.AssociateName||'',
+      associatePhone: r.AssociatePhone||'',
+      associateState: r.AssociateState||'',
+      mobilizedBy: r.MobilizedBy||'',
+      companyCode: r.CompanyCode||'',
+      companyName: r.CompanyName||'',
+      country    : r.Country||'',
+      interviewDate: cleanDate(r.InterviewDate||''),
+      campaign   : r.Campaign||'',
+      attended   : r.Attended||'',
+      selected   : r.Selected||'',
+      savedAt    : r.SavedAt||''
+    }));
+    // Auto-fill associatePhone from loaded associates if missing in sheet
+    const assocRecs = window._assocRecs || [];
+    candidates.forEach(c => {
+      if (!c.associatePhone && c.associateCode && assocRecs.length) {
+        const ar = assocRecs.find(r => (r.Code||r.ID) === c.associateCode);
+        if (ar) c.associatePhone = ar.Phone || '';
+      }
+    });
+
+    renderTable();
+    renderDashboard();
+    updateConnStatus('connected', 'Connected · '+candidates.length+' candidates');
+    document.getElementById('gs-sync-time').textContent = 'Synced '+new Date().toLocaleTimeString();
+  } catch(e){
+    updateConnStatus('error','Connection error');
+    showToast('Failed to load from Sheets: '+e.message,'error');
+  }
+}
+
+function updateConnStatus(state, label){
+  const dot = document.getElementById('gs-conn-dot');
+  const lbl = document.getElementById('gs-conn-label');
+  if(dot){ dot.className='conn-dot '+state; }
+  if(lbl){ lbl.textContent=label; }
+}
+
+
+// ===================== LOAD FOR EDIT =====================
+function editCandidate(id){
+  const c=candidates.find(x=>x.id===id);if(!c)return;
+  clearForm();currentEditId=id;
+  document.getElementById('p-name').value=c.name||'';
+  document.getElementById('p-passport').value=c.passport||'';
+  document.getElementById('p-expiry').value=c.passportExpiry||'';if(c.passportExpiry)checkExpiry(document.getElementById('p-expiry'));
+  document.getElementById('p-dob').value=c.dob||'';if(c.dob)calcAge();
+  document.getElementById('p-desig-class').value=c.designationClass||'';
+  document.getElementById('p-phone').value=c.phone||'';
+  document.getElementById('p-whatsapp').value=c.whatsapp||'';
+  document.getElementById('p-email').value=c.email||'';
+  document.getElementById('p-address').value=c.address||'';
+  document.getElementById('assoc-name').value=c.associateName||'';
+  document.getElementById('assoc-phone').value=c.associatePhone||'';
+  document.getElementById('assoc-state').value=c.associateState||'';
+  document.getElementById('mob-company-name').value=c.companyName||'';
+  document.getElementById('mob-country').value=c.country||'';
+  document.getElementById('mob-interview-date').value=c.interviewDate||'';
+  qualifications=[...(c.qualifications||[])];sectors=[...(c.sectors||[])];
+  renderChips('qual-chips',qualifications);renderChips('sector-chips',sectors);
+  ['desig-sd','pstatus-sd','religion-sd','marital-sd','state-sd','assoc-sd','mob-by-sd','company-sd','campaign-sd','attended-sd','selected-sd'].forEach(id=>{
+    const field={
+      'desig-sd':'designation','pstatus-sd':'passportStatus','religion-sd':'religion',
+      'marital-sd':'maritalStatus','state-sd':'state','assoc-sd':'associateCode',
+      'mob-by-sd':'mobilizedBy','company-sd':'companyCode','campaign-sd':'campaign',
+      'attended-sd':'attended','selected-sd':'selected'
+    }[id];
+    if(field&&c[field])setSD(id,c[field]);
+  });
+  // Re-trigger company auto-fill after setting the dropdown
+  if(c.companyCode) onCompanySelect(c.companyCode);
+  _candCvData=c.cvData||null;_candCvName=c.cvName||null;_candCvType=c.cvType||null;
+  renderCandCvStatus();
+  (c.experiences||[]).forEach(e=>addExpEntry(e));calcExpDurations();
+  switchTab('data');window.scrollTo({top:0,behavior:'smooth'});
+  showToast('Loaded for editing','info');
+}
+
+// ===================== DELETE =====================
+function deleteCandidate(id){
+  if(!confirm('Delete this candidate from Google Sheets?'))return;
+  const c=candidates.find(x=>x.id===id);
+  if(!c){showToast('Not found','error');return;}
+  showLoader('Deleting…');
+  api({action:'delete', sheet:'Candidates', rowNum:c._row}).then(()=>{
+    candidates=candidates.filter(x=>x.id!==id);
+    renderTable();showToast('Deleted from Google Sheets','info');
+  }).catch(e=>showToast('Delete failed: '+e.message,'error')).finally(hideLoader);
+}
+function deleteSelected(){
+  if(!selectedRows.size){showToast('No rows selected','error');return;}
+  if(!confirm('Delete '+selectedRows.size+' selected candidates from Google Sheets?'))return;
+  const rowNums=candidates.filter(c=>selectedRows.has(c.id)).map(c=>c._row).filter(Boolean);
+  showLoader('Deleting…');
+  api({action:'deleteMultiple', sheet:'Candidates', rowNums}).then(()=>{
+    candidates=candidates.filter(c=>!selectedRows.has(c.id));
+    selectedRows.clear();renderTable();showToast('Deleted from Google Sheets','info');
+  }).catch(e=>showToast('Delete failed: '+e.message,'error')).finally(hideLoader);
+}
+
+// ===================== TABLE =====================
+let filters={name:'',passport:'',status:'',desig:'',contact:''};
+function applyFilters(){
+  filters.name=document.getElementById('s-name').value.toLowerCase();
+  filters.passport=document.getElementById('s-passport').value.toLowerCase();
+  filters.status=document.getElementById('s-status').value;
+  filters.desig=document.getElementById('s-desig').value.toLowerCase();
+  filters.contact=document.getElementById('s-contact').value.toLowerCase();
+  renderTable();
+}
+function clearFilters(){['s-name','s-passport','s-desig','s-contact'].forEach(id=>document.getElementById(id).value='');document.getElementById('s-status').value='';filters={name:'',passport:'',status:'',desig:'',contact:''};renderTable();}
+
+function renderTable(){
+  filteredCandidates=candidates.filter(c=>{
+    if(filters.name&&!(c.name||'').toLowerCase().includes(filters.name))return false;
+    if(filters.passport&&!(c.passport||'').toLowerCase().includes(filters.passport))return false;
+    if(filters.status&&c.passportStatus!==filters.status)return false;
+    if(filters.desig&&!(c.designation||'').toLowerCase().includes(filters.desig))return false;
+    if(filters.contact){const s=filters.contact;if(!((c.phone||'').includes(s)||(c.whatsapp||'').includes(s)||(c.email||'').includes(s)))return false;}
+    return true;
+  });
+
+  const visCols=allColumns.filter(c=>c.vis);
+  const head=document.getElementById('tbl-head');
+  const body=document.getElementById('tbl-body');
+  head.innerHTML=`<tr>
+    <th><input type="checkbox" class="tbl-chk" onchange="toggleAllRows(this)"/></th>
+    ${visCols.map(c=>`<th onclick="sortByCol('${c.key}')" title="Click to sort">${c.label} ${getSortIcon(c.key)}</th>`).join('')}
+    <th>Actions</th>
+  </tr>`;
+
+  if(!filteredCandidates.length){body.innerHTML=`<tr><td colspan="${visCols.length+2}" class="no-data">No candidates found</td></tr>`;document.getElementById('tbl-info').textContent='';return;}
+
+  const now=new Date();
+  body.innerHTML=filteredCandidates.map(c=>{
+    const expiry=c.passportExpiry?new Date(c.passportExpiry):null;
+    const expiryWarn=expiry&&((expiry-now)/(1000*60*60*24*365.25))<1;
+    return `<tr>
+      <td><input type="checkbox" class="tbl-chk" ${selectedRows.has(c.id)?'checked':''} onchange="toggleRow('${c.id}',this.checked)"/></td>
+      ${visCols.map(col=>{
+        let val=c[col.key]??'—';
+        if(col.key==='passportStatus')return`<td><span class="badge badge-${(val||'').toLowerCase()}">${val}</span></td>`;
+        if(col.key==='passportExpiry'){const dv=val&&val!=='—'?cleanDate(String(val)):val;return`<td class="${expiryWarn?'expiry-red':''}">${dv}</td>`;}
+        if(col.key==='totalExpMonths')return`<td>${fmtMonths(val||0)}</td>`;
+        if(col.key==='sectors')return`<td>${Array.isArray(val)?val.join(', '):val}</td>`;
+        if(col.key==='qualifications')return`<td>${Array.isArray(val)?val.join(', '):val}</td>`;
+        return`<td title="${val}">${val}</td>`;
+      }).join('')}
+      <td class="actions">
+        <button class="btn btn-outline btn-sm" onclick="editCandidate('${c.id}')">✏️</button>
+        <button class="btn btn-outline btn-sm" onclick="printOne('${c.id}')">🖨️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCandidate('${c.id}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tbl-info').textContent=`Showing ${filteredCandidates.length} of ${candidates.length} candidates`;
+}
+
+function toggleRow(id,chk){if(chk)selectedRows.add(id);else selectedRows.delete(id);}
+function toggleAllRows(el){filteredCandidates.forEach(c=>{if(el.checked)selectedRows.add(c.id);else selectedRows.delete(c.id);});renderTable();}
+
+function sortByCol(key){
+  const existing=sortConfig.find(s=>s.key===key);
+  if(existing){existing.dir=existing.dir==='asc'?'desc':'asc';}
+  else{sortConfig=[{key,dir:'asc'}];}
+  filteredCandidates.sort((a,b)=>{
+    for(const s of sortConfig){
+      const av=a[s.key]??'',bv=b[s.key]??'';
+      const cmp=typeof av==='number'?av-bv:String(av).localeCompare(String(bv));
+      if(cmp!==0)return s.dir==='asc'?cmp:-cmp;
+    }return 0;
+  });
+  renderTableBody();
+}
+function getSortIcon(key){const s=sortConfig.find(x=>x.key===key);return s?(s.dir==='asc'?'↑':'↓'):'↕';}
+function renderTableBody(){
+  const now=new Date();
+  const visCols=allColumns.filter(c=>c.vis);
+  document.getElementById('tbl-body').innerHTML=filteredCandidates.map(c=>{
+    const expiry=c.passportExpiry?new Date(c.passportExpiry):null;
+    const expiryWarn=expiry&&((expiry-now)/(1000*60*60*24*365.25))<1;
+    return`<tr>
+      <td><input type="checkbox" class="tbl-chk" ${selectedRows.has(c.id)?'checked':''} onchange="toggleRow('${c.id}',this.checked)"/></td>
+      ${visCols.map(col=>{
+        let val=c[col.key]??'—';
+        if(col.key==='passportStatus')return`<td><span class="badge badge-${(val||'').toLowerCase()}">${val}</span></td>`;
+        if(col.key==='passportExpiry'){const dv=val&&val!=='—'?cleanDate(String(val)):val;return`<td class="${expiryWarn?'expiry-red':''}">${dv}</td>`;}
+        if(col.key==='totalExpMonths')return`<td>${fmtMonths(val||0)}</td>`;
+        if(col.key==='sectors'||col.key==='qualifications')return`<td>${Array.isArray(val)?val.join(', '):val}</td>`;
+        return`<td title="${val}">${val}</td>`;
+      }).join('')}
+      <td class="actions">
+        <button class="btn btn-outline btn-sm" onclick="editCandidate('${c.id}')">✏️</button>
+        <button class="btn btn-outline btn-sm" onclick="printOne('${c.id}')">🖨️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCandidate('${c.id}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ===================== COL TOGGLE =====================
+function toggleColPanel(){document.getElementById('col-toggle-panel').classList.toggle('open');}
+function renderColToggle(){
+  document.getElementById('col-toggle-panel').innerHTML=
+    allColumns.map((c,i)=>`<label class="col-check-item"><input type="checkbox" ${c.vis?'checked':''} onchange="toggleCol(${i},this.checked)"/> ${c.label}</label>`).join('');
+}
+function toggleCol(i,v){allColumns[i].vis=v;renderTable();}
+
+// ===================== IMPORT / EXPORT =====================
+function openImportModal(){openModal('import-modal');}
+function handleFileDrop(e){e.preventDefault();e.target.classList.remove('dragover');importFiles(e.dataTransfer.files);}
+function importFiles(files){
+  let added=0,updated=0;
+  Array.from(files).forEach(f=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const text=ev.target.result;
+      const rows=parseCSV(text);
+      rows.forEach(row=>{
+        if(!row.name&&!row.Name)return;
+        const obj={id:uid(),name:row.name||row.Name||'',designation:row.designation||row.Designation||'',passport:row.passport||row['Passport No']||'',passportStatus:row.passportStatus||row['Passport Status']||'',phone:row.phone||row.Phone||'',state:row.state||row.State||'',sectors:(row.sectors||row.Sectors||'').split(',').map(s=>s.trim()).filter(Boolean),totalExpMonths:parseInt(row.totalExpMonths||0)||0};
+        const existing=candidates.find(c=>c.passport&&c.passport===obj.passport);
+        if(existing){Object.assign(existing,obj);updated++;}else{candidates.push(obj);added++;}
+      });
+      saveCandidates();renderTable();
+      showToast(`Import done: +${added} added, ${updated} updated`,'success');
+    };
+    reader.readAsText(f);
+  });
+  closeModal('import-modal');
+}
+function parseCSV(text){
+  const lines=text.split('\n').filter(l=>l.trim());
+  if(!lines.length)return[];
+  const headers=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(line=>{
+    const vals=line.match(/(".*?"|[^,]+)/g)||[];
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=(vals[i]||'').replace(/^"|"$/g,'').trim());
+    return obj;
+  });
+}
+
+function exportData(format,scope){
+  let data=scope==='all'?candidates:scope==='filtered'?filteredCandidates:candidates.filter(c=>selectedRows.has(c.id));
+  if(!data.length){showToast('No data to export','error');return;}
+  const headers=['name','designation','passport','passportStatus','passportExpiry','dob','age','phone','whatsapp','state','address','religion','maritalStatus','totalExpMonths','sectors'];
+  const rows=[headers,...data.map(c=>headers.map(h=>Array.isArray(c[h])?c[h].join('|'):c[h]||''))];
+  if(format==='csv'){
+    const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    download(csv,'text/csv',`candidates_${scope}.csv`);
+  }else{
+    const html=`<table><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr>${data.map(c=>`<tr>${headers.map(h=>`<td>${Array.isArray(c[h])?c[h].join('|'):c[h]||''}</td>`).join('')}</tr>`).join('')}</table>`;
+    download(html,'application/vnd.ms-excel',`candidates_${scope}.xls`);
+  }
+  showToast(`Exported ${data.length} records as ${format.toUpperCase()}`,'success');
+}
+function download(content,type,filename){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=filename;a.click();
+}
+
+// ===================== PRINT =====================
+function printOne(id){const c=candidates.find(x=>x.id===id);if(c)printCandidateData(c);}
+function printCandidate(){
+  if(currentEditId){const c=candidates.find(x=>x.id===currentEditId);if(c)printCandidateData(c);}
+  else{
+    const name=document.getElementById('p-name').value||'Draft';
+    // Collect live experience entries for unsaved form print
+    const liveExps=[];
+    document.querySelectorAll('.exp-entry').forEach(e=>{
+      liveExps.push({company:e.querySelector('.exp-company').value,location:e.querySelector('.exp-location').value,designation:e.querySelector('.exp-desig').value,from:e.querySelector('.exp-from').value,till:e.querySelector('.exp-till').value});
+    });
+    printCandidateData({
+      name,designation:getSD('desig-sd'),passport:document.getElementById('p-passport').value,
+      passportStatus:getSD('pstatus-sd'),passportExpiry:document.getElementById('p-expiry').value,
+      dob:document.getElementById('p-dob').value,age:document.getElementById('p-age').value,
+      designationClass:document.getElementById('p-desig-class').value,
+      religion:getSD('religion-sd'),maritalStatus:getSD('marital-sd'),
+      phone:document.getElementById('p-phone').value,whatsapp:document.getElementById('p-whatsapp').value,
+      email:document.getElementById('p-email').value,
+      state:getSD('state-sd'),address:document.getElementById('p-address').value,
+      sectors:[...sectors],qualifications:[...qualifications],
+      experiences:liveExps,
+      abroadExpMonths:expEntries.abroad||0,localExpMonths:expEntries.local||0,totalExpMonths:expEntries.total||0,
+      cvName:_candCvName||null,
+      associateCode:getSD('assoc-sd'),associateName:document.getElementById('assoc-name').value,associatePhone:document.getElementById('assoc-phone').value,associateState:document.getElementById('assoc-state').value,
+      mobilizedBy:getSD('mob-by-sd'),companyName:document.getElementById('mob-company-name').value,
+      country:document.getElementById('mob-country').value,
+      interviewDate:document.getElementById('mob-interview-date').value,
+      campaign:getSD('campaign-sd'),attended:getSD('attended-sd'),selected:getSD('selected-sd')
+    });
+  }
+}
+function printCandidateData(c){
+  const val=v=>v||'—';
+  const chip=v=>`<span class="chip">${v}</span>`;
+  const exps=c.experiences||[];
+  const expRows=exps.map((e,i)=>{
+    const from=parseMMYYYY(e.from),till=parseMMYYYY(e.till);
+    const dur=(from&&till&&till>from)?fmtMonths(monthDiff(from,till)):'—';
+    return '<tr><td>'+(i+1)+'</td><td>'+(e.company||'—')+'</td>'
+      +'<td><span class="loc-badge loc-'+(e.location||'').toLowerCase()+'">'+(e.location||'—')+'</span></td>'
+      +'<td>'+(e.designation||'—')+'</td><td>'+(e.from||'—')+'</td><td>'+(e.till||'—')+'</td><td>'+dur+'</td></tr>';
+  }).join('');
+  const expTable=exps.length
+    ?'<h2 class="sec-title">Experience Details</h2>'
+     +'<table class="exp-tbl"><thead><tr><th>#</th><th>Company</th><th>Location</th><th>Designation</th><th>From</th><th>Till</th><th>Duration</th></tr></thead><tbody>'+expRows+'</tbody></table>'
+    :'<p class="no-exp">No experience entries recorded.</p>';
+  const expiryWarn=c.passportExpiry&&(new Date(c.passportExpiry)-new Date())<365.25*24*3600*1000;
+  const qualChips=(c.qualifications||[]).map(chip).join('')||'—';
+  const secChips=(c.sectors||[]).map(chip).join('')||'—';
+  const cvBadge=c.cvName?'<span class="cv-badge">📄 '+c.cvName+'</span>':'—';
+  const html='<!DOCTYPE html><html><head><meta charset="UTF-8"/>'
+    +'<title>Profile — '+(c.name||'')+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;padding:28px 32px;color:#111;font-size:16px;line-height:1.6}'
+    +'.ph{display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid #0049B7;padding-bottom:14px;margin-bottom:20px}'
+    +'.ph h1{font-size:28px;color:#0049B7;margin:0}'
+    +'.ph .meta{font-size:14px;color:#666;text-align:right;margin-top:4px}'
+    +'.sub{font-size:17px;color:#526187;margin-top:6px}'
+    +'.sec-title{font-size:15px;font-weight:bold;color:#0049B7;text-transform:uppercase;letter-spacing:.6px;border-left:5px solid #0049B7;padding:3px 0 3px 10px;margin:20px 0 9px}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:4px}'
+    +'.it td{padding:9px 13px;border:1px solid #ddd;vertical-align:top;font-size:15px}'
+    +'.it td.lb{font-weight:bold;width:20%;background:#f0f5ff;color:#0049B7;white-space:nowrap}'
+    +'.et th{background:#0049B7;color:#fff;padding:9px 12px;text-align:left;font-size:14px}'
+    +'.et td{padding:8px 12px;border:1px solid #ddd;font-size:14px}'
+    +'.et tr:nth-child(even) td{background:#f8fbff}'
+    +'.loc-badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:13px;font-weight:bold}'
+    +'.loc-abroad{background:#fff0d4;color:#b36200}'
+    +'.loc-local{background:#d4f5e9;color:#007a40}'
+    +'.chip{display:inline-block;background:#edf1ff;color:#0d1b2a;padding:3px 10px;border-radius:12px;margin:3px 4px 3px 0;font-size:13px;border:1px solid #c9d1e6}'
+    +'.sr{display:flex;gap:12px;margin:10px 0 16px}'
+    +'.sb{flex:1;border:2px solid #c9d1e6;border-radius:8px;padding:12px 14px;text-align:center}'
+    +'.sb .sv{font-size:24px;font-weight:bold;color:#0049B7;font-family:monospace}'
+    +'.sb .sl{font-size:13px;color:#526187;text-transform:uppercase;letter-spacing:.4px;margin-top:4px}'
+    +'.no-exp{color:#888;font-style:italic;font-size:15px;margin:10px 0 16px}'
+    +'.cv-badge{display:inline-block;background:#d4f5e9;color:#007a40;padding:4px 12px;border-radius:10px;font-size:14px;font-weight:bold}'
+    +'.ew{color:#d4003a;font-weight:bold}'
+    +'.footer{margin-top:24px;padding-top:12px;border-top:1px solid #ddd;color:#888;font-size:13px;display:flex;justify-content:space-between}'
+    +'@media print{body{padding:18px 22px}@page{margin:8mm}}'
+    +'</style></head><body>'
+
+    +'<div class="ph"><div><h1>🧑‍💼 Candidate Profile</h1>'
+    +'<div class="sub">'+val(c.name)+'&nbsp;·&nbsp;'+val(c.designation)+'</div></div>'
+    +'<div class="meta">Printed: '+new Date().toLocaleString()+'<br/>'+(c.savedAt?'Saved: '+new Date(c.savedAt).toLocaleString():'Draft')+'</div></div>'
+
+    +'<h2 class="sec-title">👤 Personal Details</h2>'
+    +'<table class="it">'
+    +'<tr><td class="lb">Full Name</td><td>'+val(c.name)+'</td><td class="lb">Designation</td><td>'+val(c.designation)+'</td></tr>'
+    +'<tr><td class="lb">Date of Birth</td><td>'+val(c.dob)+'</td><td class="lb">Age</td><td>'+val(c.age)+' yrs</td></tr>'
+    +'<tr><td class="lb">Religion</td><td>'+val(c.religion)+'</td><td class="lb">Marital Status</td><td>'+val(c.maritalStatus)+'</td></tr>'
+    +'<tr><td class="lb">Desig. Classification</td><td colspan="3">'+val(c.designationClass)+'</td></tr>'
+    +'</table>'
+
+    +'<h2 class="sec-title">🛂 Passport Details</h2>'
+    +'<table class="it">'
+    +'<tr><td class="lb">Passport No</td><td>'+val(c.passport)+'</td><td class="lb">Status</td><td>'+val(c.passportStatus)+'</td></tr>'
+    +'<tr><td class="lb">Expiry Date</td><td colspan="3" class="'+(expiryWarn?'ew':'')+'">'+val(c.passportExpiry)+(expiryWarn?' ⚠️ Expiring Soon!':'')+'</td></tr>'
+    +'</table>'
+
+    +'<h2 class="sec-title">📞 Contact Information</h2>'
+    +'<table class="it">'
+    +'<tr><td class="lb">Phone</td><td>'+val(c.phone)+'</td><td class="lb">WhatsApp</td><td>'+val(c.whatsapp)+'</td></tr>'
+    +'<tr><td class="lb">Email</td><td colspan="3">'+val(c.email)+'</td></tr>'
+    +'<tr><td class="lb">State</td><td>'+val(c.state)+'</td><td class="lb">Address</td><td>'+val(c.address)+'</td></tr>'
+    +'</table>'
+
+    +'<h2 class="sec-title">🎓 Education & Skills</h2>'
+    +'<table class="it">'
+    +'<tr><td class="lb">Qualifications</td><td colspan="3">'+qualChips+'</td></tr>'
+    +'<tr><td class="lb">Sectors</td><td colspan="3">'+secChips+'</td></tr>'
+    +'<tr><td class="lb">CV / Resume</td><td colspan="3">'+cvBadge+'</td></tr>'
+    +'</table>'
+
+    +'<h2 class="sec-title">💼 Experience</h2>'
+    +'<div class="sr">'
+    +'<div class="sb"><div class="sv">'+fmtMonths(c.abroadExpMonths||0)+'</div><div class="sl">Abroad</div></div>'
+    +'<div class="sb"><div class="sv">'+fmtMonths(c.localExpMonths||0)+'</div><div class="sl">Local</div></div>'
+    +'<div class="sb"><div class="sv">'+fmtMonths(c.totalExpMonths||0)+'</div><div class="sl">Total</div></div>'
+    +'</div>'
+    +expTable
+
+    +((c.associateCode||c.associateName||c.associatePhone)
+      ?'<h2 class="sec-title">🔗 Source — Associate</h2>'
+       +'<table class="it">'
+       +'<tr><td class="lb">Associate Code</td><td>'+val(c.associateCode)+'</td><td class="lb">Associate Name</td><td>'+val(c.associateName)+'</td></tr>'
+       +'<tr><td class="lb">Associate Phone</td><td colspan="3">'+val(c.associatePhone)+'</td></tr>'
+       +'</table>'
+      :'')
+
+    +((c.mobilizedBy||c.companyName||c.interviewDate||c.attended||c.selected)
+      ?'<h2 class="sec-title">📋 Mobilization</h2>'
+       +'<table class="it">'
+       +'<tr><td class="lb">Mobilized By</td><td>'+val(c.mobilizedBy)+'</td><td class="lb">Company</td><td>'+val(c.companyName)+'</td></tr>'
+       +'<tr><td class="lb">Country</td><td>'+val(c.country)+'</td><td class="lb">Interview Date</td><td>'+val(c.interviewDate)+'</td></tr>'
+       +'<tr><td class="lb">Campaign</td><td>'+val(c.campaign)+'</td><td class="lb">Attended</td><td>'+val(c.attended)+'</td></tr>'
+       +'<tr><td class="lb">Selected</td><td colspan="3">'+val(c.selected)+'</td></tr>'
+       +'</table>'
+      :'')
+
+    +'<div class="footer"><span>Candidate Management System</span><span>'+new Date().toLocaleString()+'</span></div>'
+    +'</body></html>';
+  const w=window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();setTimeout(()=>w.print(),500);}
+  else{download(html,'text/html','candidate_profile.html');showToast('Popup blocked — downloaded as HTML','info');}
+}
+
+
+// ===================== DASHBOARD =====================
+function renderDashboard(){
+  const total=candidates.length;
+  const now=new Date();
+  const expiringSoon=candidates.filter(c=>{if(!c.passportExpiry)return false;const d=new Date(c.passportExpiry);return(d-now)/(1000*60*60*24*365.25)<1&&d>now;}).length;
+  const ages=candidates.map(c=>parseInt(c.age)).filter(a=>!isNaN(a));
+  const avgAge=ages.length?(ages.reduce((s,a)=>s+a,0)/ages.length).toFixed(1):'—';
+  const uniqDesig=new Set(candidates.map(c=>c.designation).filter(Boolean)).size;
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total Candidates</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--yass-queen)">${expiringSoon}</div><div class="stat-lbl">Passport Expiring Soon</div></div>
+    <div class="stat-card"><div class="stat-val">${avgAge}</div><div class="stat-lbl">Average Age</div></div>
+    <div class="stat-card"><div class="stat-val">${uniqDesig}</div><div class="stat-lbl">Unique Designations</div></div>`;
+  drawAgeChart();drawStateChart();
+}
+function drawAgeChart(){
+  const canvas=document.getElementById('chart-age');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const ages=candidates.map(c=>parseInt(c.age)).filter(a=>!isNaN(a)&&a>0);
+  if(!ages.length){ctx.fillStyle='#999';ctx.fillText('No data',canvas.width/2-20,canvas.height/2);return;}
+  const bins={};
+  ages.forEach(a=>{const b=Math.floor(a/5)*5;bins[b]=(bins[b]||0)+1;});
+  const keys=Object.keys(bins).map(Number).sort((a,b)=>a-b);
+  const max=Math.max(...Object.values(bins));
+  const w=canvas.width,h=canvas.height,pad=40,bw=(w-pad*2)/keys.length-4;
+  ctx.fillStyle='#f0f5ff';ctx.fillRect(0,0,w,h);
+  keys.forEach((k,i)=>{
+    const bh=((bins[k]/max)*(h-pad*2));
+    const x=pad+i*(bw+4),y=h-pad-bh;
+    ctx.fillStyle='#7EA8FF';ctx.fillRect(x,y,bw,bh);
+    ctx.fillStyle='#0b3a8e';ctx.font='10px DM Sans';ctx.textAlign='center';
+    ctx.fillText(`${k}-${k+4}`,x+bw/2,h-pad+14);
+    ctx.fillText(bins[k],x+bw/2,y-4);
+  });
+  ctx.strokeStyle='#d2daf0';ctx.beginPath();ctx.moveTo(pad,pad);ctx.lineTo(pad,h-pad);ctx.lineTo(w-pad,h-pad);ctx.stroke();
+}
+function drawStateChart(){
+  const canvas=document.getElementById('chart-state');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const stateCounts={};
+  candidates.forEach(c=>{if(c.state)stateCounts[c.state]=(stateCounts[c.state]||0)+1;});
+  const entries=Object.entries(stateCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if(!entries.length){ctx.fillStyle='#999';ctx.fillText('No data',canvas.width/2-20,canvas.height/2);return;}
+  const w=canvas.width,h=canvas.height,pad=40,labelW=100;
+  const max=entries[0][1];
+  ctx.fillStyle='#f0f5ff';ctx.fillRect(0,0,w,h);
+  const bh=(h-pad*2)/entries.length-4;
+  entries.forEach(([state,count],i)=>{
+    const bw=((count/max)*(w-pad*2-labelW));
+    const y=pad+i*(bh+4);
+    ctx.fillStyle='#7EA8FF';ctx.fillRect(pad+labelW,y,bw,bh);
+    ctx.fillStyle='#0b3a8e';ctx.font='10px DM Sans';ctx.textAlign='right';
+    ctx.fillText(state.length>14?state.slice(0,14)+'…':state,pad+labelW-4,y+bh/2+4);
+    ctx.textAlign='left';ctx.fillText(count,pad+labelW+bw+4,y+bh/2+4);
+  });
+}
+
+// ===================== MODAL / TOAST =====================
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function dupAction(action){
+  closeModal('dup-modal');
+  if(action==='load'&&dupPendingData){
+    editCandidate(dupPendingData.id);
+    showToast('Existing record loaded for editing','info');
+  } else if(action==='save'){
+    saveCandidate(true);
+  } else {
+    // 'cancel' / ignore — just close, do nothing
+    showToast('Entry cancelled','info');
+  }
+  dupPendingData=null;
+}
+function showToast(msg,type='info'){
+  const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+</script>
+</body>
+</html>
