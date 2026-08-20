@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Associate-Wise Dashboard — Selection Module</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bb:#0049B7;--yq:#ff1d58;--mint:#7EE787;--org:#e85d04;--teal:#0f766e;--pur:#7c3aed;
+  --bg:#f0f4ff;--panel:#fff;--panel2:#f2f5ff;--muted:#526187;--text:#0d1b2a;--tmuted:#3a4a6a;
+  --border:#c9d1e6;--r:10px;--sh:0 2px 12px rgba(0,73,183,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+
+/* HEADER */
+.dw-header{background:linear-gradient(135deg,#0049B7 0%,#7c3aed 100%);color:#fff;padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 3px 16px rgba(0,73,183,.3);}
+.dw-header h1{font-family:'Space Mono',monospace;font-size:14px;letter-spacing:1px;display:flex;align-items:center;gap:9px;}
+.hdr-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;}
+.hdr-right{display:flex;gap:8px;align-items:center;}
+.hbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 13px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;}
+.hbtn:hover{background:rgba(255,255,255,.28);}
+
+/* DESIGNATION BREAKUP ROW */
+.desig-expand-row td{padding:0!important;border-bottom:1px solid #e0e8ff;}
+.desig-expand-panel{display:none;background:linear-gradient(135deg,#f8fbff,#f0f4ff);border-top:2px solid var(--border);}
+.desig-expand-panel.open{display:block;}
+.desig-inner-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.desig-inner-tbl thead th{background:#e8f0fe;padding:7px 10px;text-align:left;font-weight:700;color:#0049B7;font-size:10px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1.5px solid #c7d8f8;white-space:nowrap;}
+.desig-inner-tbl thead th.c{text-align:center;}
+.desig-inner-tbl tbody tr{border-bottom:1px solid #dde8ff;transition:background .1s;}
+.desig-inner-tbl tbody tr:hover{background:#deeaff;}
+.desig-inner-tbl td{padding:6px 10px;color:var(--tmuted);white-space:nowrap;}
+.desig-inner-tbl td.c{text-align:center;}
+.desig-inner-tbl tfoot td{padding:7px 10px;font-weight:700;background:#dbeafe;border-top:1.5px solid #93c5fd;}
+.expand-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(0,73,183,.08);border:1px solid rgba(0,73,183,.2);color:#0049B7;padding:3px 9px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;}
+.expand-btn:hover{background:rgba(0,73,183,.15);}
+.expand-btn.active{background:#0049B7;color:#fff;border-color:#0049B7;}
+.expand-arrow{transition:transform .2s;display:inline-block;}
+.expand-btn.active .expand-arrow{transform:rotate(90deg);}
+
+/* FILTER BAR */
+.filter-bar{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 20px;margin:18px 24px 0;box-shadow:var(--sh);}
+.filter-title{font-size:12px;font-weight:700;color:var(--bb);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end;}
+.fg{display:flex;flex-direction:column;gap:4px;position:relative;}
+label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+select,input[type=text]{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);background:#fff;outline:none;transition:border .15s;}
+select:focus,input[type=text]:focus{border-color:var(--bb);}
+.btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .15s;}
+.btn-clear{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-clear:hover{border-color:var(--yq);color:var(--yq);}
+.filter-count{font-size:11px;color:var(--muted);margin-top:8px;}
+.active-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.atag{display:inline-flex;align-items:center;gap:4px;background:#e8f0fe;color:#0049B7;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600;}
+.atag-x{cursor:pointer;opacity:.7;font-size:13px;}
+
+/* MAIN */
+.main-content{padding:18px 24px 40px;}
+.pane{display:none;}.pane.active{display:block;}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:#fff;border-radius:11px;padding:14px 16px;box-shadow:0 2px 10px rgba(0,0,0,.07);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden;}
+.stat-card:hover{transform:translateY(-2px);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;}
+.stat-card.blue::before{background:#1d4ed8;}.stat-card.green::before{background:#059669;}
+.stat-card.teal::before{background:#0f766e;}.stat-card.red::before{background:#dc2626;}
+.stat-card.orange::before{background:#d97706;}.stat-card.purple::before{background:#7c3aed;}
+.stat-card.sky::before{background:#0284c7;}.stat-card.pink::before{background:#db2777;}
+.stat-card.indigo::before{background:#4338ca;}.stat-card.amber::before{background:#b45309;}
+.sc-val{font-size:26px;font-weight:700;font-family:'Space Mono',monospace;margin-top:4px;}
+.sc-val.blue{color:#1d4ed8;}.sc-val.green{color:#059669;}.sc-val.teal{color:#0f766e;}
+.sc-val.red{color:#dc2626;}.sc-val.orange{color:#d97706;}.sc-val.purple{color:#7c3aed;}
+.sc-val.sky{color:#0284c7;}.sc-val.pink{color:#db2777;}.sc-val.indigo{color:#4338ca;}.sc-val.amber{color:#b45309;}
+.sc-sub{font-size:10px;color:#aaa;margin-top:2px;}
+
+/* SECTION */
+.section{background:#fff;border:1px solid #e5e7eb;border-radius:11px;margin-bottom:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+.sec-hdr{color:#fff;padding:11px 16px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between;gap:9px;}
+.sec-count{font-size:11px;opacity:.8;font-weight:400;text-transform:none;letter-spacing:0;}
+.sec-body{padding:14px;}
+
+/* MASTER TABLE */
+.mtbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e5e7eb;}
+.mtbl{width:100%;border-collapse:collapse;font-size:12px;}
+.mtbl thead th{background:#f0f5ff;padding:8px 10px;text-align:left;font-weight:700;color:#0049B7;font-size:10px;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid #c7d8f8;white-space:nowrap;}
+.mtbl thead th.c{text-align:center;}.mtbl thead th.r{text-align:right;}
+.mtbl tbody tr{border-bottom:1px solid #f0f4ff;cursor:pointer;transition:background .1s;}
+.mtbl tbody tr:hover{background:#f0f7ff;}
+.mtbl td{padding:8px 10px;color:var(--tmuted);font-size:12px;white-space:nowrap;}
+.mtbl td.c{text-align:center;}.mtbl td.r{text-align:right;}
+.mtbl tfoot td{padding:8px 10px;font-weight:700;background:#f8f9ff;border-top:2px solid #c7d8f8;}
+.grp-name{font-weight:700;color:#0d1b2a;font-size:13px;}
+.prog-bar-wrap{background:#f0f4ff;border-radius:20px;height:6px;min-width:60px;}
+.prog-bar{height:6px;border-radius:20px;transition:width .3s;}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap;}
+.b-sel{background:#d1fae5;color:#065f46;}.b-rej{background:#fee2e2;color:#991b1b;}
+.b-hold{background:#fef3c7;color:#92400e;}.b-back{background:#dbeafe;color:#1e40af;}
+.b-fit{background:#d1fae5;color:#065f46;}.b-unfit{background:#fee2e2;color:#991b1b;}
+.b-pend{background:#f3f4f6;color:#374151;}.b-acc{background:#ccfbf1;color:#115e59;}
+.b-dec{background:#fee2e2;color:#991b1b;}.b-onb{background:#dbeafe;color:#1e40af;}
+.b-ecr{background:#fef3c7;color:#92400e;}.b-ecnr{background:#d1fae5;color:#065f46;}
+
+/* PILLS */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;margin:3px;cursor:pointer;transition:opacity .15s;}
+.pill:hover{opacity:.82;}
+
+/* INSIGHTS */
+.ii-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:7px;border-width:1px;border-style:solid;margin-bottom:5px;flex-wrap:wrap;}
+.ii-row-left{display:flex;align-items:flex-start;gap:7px;flex:1;min-width:100px;}
+.ii-count{cursor:pointer;padding:4px 12px;border-radius:14px;font-size:13px;font-weight:800;white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,.13);transition:transform .15s;flex-shrink:0;}
+.ii-count:hover{transform:scale(1.08);}
+
+/* MULTI-SELECT */
+.ms-btn{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:#fff;min-height:34px;font-size:12px;color:var(--text);transition:border .15s;user-select:none;}
+.ms-btn:hover{border-color:var(--bb);}.ms-btn.active{border-color:var(--bb);box-shadow:0 0 0 2px rgba(0,73,183,.08);}
+.ms-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);}
+.ms-lbl.has-sel{color:var(--bb);font-weight:600;}
+.ms-arr{font-size:10px;color:var(--muted);flex-shrink:0;margin-left:6px;transition:transform .2s;}
+.ms-btn.active .ms-arr{transform:rotate(180deg);}
+.ms-drop{display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 24px rgba(0,73,183,.13);z-index:600;flex-direction:column;min-width:200px;}
+.ms-drop.open{display:flex;}
+.ms-sw{padding:7px 8px;border-bottom:1px solid var(--border);}
+.ms-si{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;}
+.ms-si:focus{border-color:var(--bb);}
+.ms-list{overflow-y:auto;max-height:190px;padding:4px 0;}
+.ms-item{display:flex;align-items:center;gap:8px;padding:6px 11px;cursor:pointer;font-size:12px;color:var(--text);transition:background .1s;}
+.ms-item:hover{background:var(--panel2);}
+.ms-item input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--bb);flex-shrink:0;}
+.ms-item.checked{background:#f0f5ff;}
+.ms-item.checked span{color:var(--bb);font-weight:600;}
+.ms-footer{display:flex;gap:8px;padding:6px 10px;border-top:1px solid var(--border);background:#f8f9fc;border-radius:0 0 8px 8px;}
+.ms-ft-btn{font-size:11px;font-weight:700;color:var(--bb);cursor:pointer;padding:2px 8px;border-radius:4px;transition:background .1s;}
+.ms-ft-btn:hover{background:#e8f0fe;}
+
+/* POPUP */
+#dw-pop-mo{position:fixed;inset:0;background:rgba(13,27,42,.65);z-index:820;display:none;align-items:center;justify-content:center;padding:10px;}
+#dw-pop-mo.open{display:flex;}
+.pop-box{background:#fff;border-radius:14px;width:100%;max-width:99vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.35);overflow:hidden;}
+.pop-hdr{padding:12px 16px;flex-shrink:0;}
+.pop-hdr-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.pop-title{font-size:14px;font-weight:800;font-family:'Space Mono',monospace;}
+.pop-sub{font-size:11px;opacity:.75;margin-top:2px;}
+.pop-grp-row{display:flex;align-items:center;gap:6px;margin-top:9px;flex-wrap:wrap;}
+.pop-grp-btn{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:5px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.pop-grp-btn.active{background:rgba(255,255,255,.38);font-weight:800;}
+.pop-body{overflow:auto;flex:1;}
+.pop-close{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:7px;padding:5px 12px;cursor:pointer;font-size:13px;font-weight:700;}
+.pop-export{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.38);color:#fff;border-radius:7px;padding:5px 12px;cursor:pointer;font-size:11px;font-weight:700;font-family:'DM Sans',sans-serif;}
+#pop-srch{padding:4px 10px;border:1px solid rgba(255,255,255,.35);border-radius:5px;background:rgba(255,255,255,.12);color:#fff;font-size:11px;width:180px;outline:none;}
+#pop-srch::placeholder{color:rgba(255,255,255,.55);}
+.pop-table{width:100%;border-collapse:collapse;}
+.pop-table thead th{position:sticky;top:0;z-index:2;padding:7px 9px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid;cursor:pointer;white-space:nowrap;text-align:left;}
+.pop-table tbody tr{border-bottom:1px solid #f0f4ff;}
+.pop-table tbody tr:hover{background:#f8faff;}
+.pop-table td{padding:6px 9px;font-size:11px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;border-right:1px solid #f0f4ff;}
+.sep-row td{padding:5px 10px;background:#f0f5ff;font-size:11px;font-weight:800;color:#0049B7;border-bottom:1px solid #dde8ff;border-top:2px solid #c7d8f8;}
+
+/* SORT BAR */
+.sort-bar{display:flex;gap:6px;align-items:center;padding:10px 14px;background:#f8faff;border-bottom:1px solid #e8f0ff;flex-wrap:wrap;}
+.sort-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.sort-btn{padding:4px 11px;font-size:11px;border-radius:5px;border:1px solid transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;background:transparent;color:var(--muted);}
+.sort-btn.active{background:#e8f0fe;color:#0049B7;border-color:#0049B720;}
+.sort-btn:hover:not(.active){background:#f0f4ff;}
+
+/* TOAST & LOADER */
+#dw-tc{position:fixed;bottom:20px;right:18px;z-index:900;display:flex;flex-direction:column;gap:7px;}
+.dw-toast{background:#1a2540;color:#fff;padding:9px 14px;border-radius:7px;font-size:12px;box-shadow:0 3px 12px rgba(0,0,0,.18);animation:tin .25s ease;max-width:280px;}
+.dw-toast.ok{border-left:3px solid #7EE787;}.dw-toast.err{border-left:3px solid #ff1d58;}
+.dw-toast.info{border-left:3px solid #00DDFF;}.dw-toast.warn{border-left:3px solid #f59e0b;}
+@keyframes tin{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+#dw-loader{position:fixed;inset:0;background:rgba(0,73,183,.88);z-index:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;}
+#dw-loader .ring{width:40px;height:40px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:900px){.filter-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.filter-grid{grid-template-columns:1fr;}.main-content{padding:12px 14px 40px;}}
+@media print{.dw-header,.tab-bar,.filter-bar,#dw-pop-mo,#dw-tc,#dw-loader{display:none!important;}}
+</style>
+</head>
+<body>
+<div id="dw-loader" style="display:none"><div class="ring"></div><p id="dw-loader-msg">Loading…</p></div>
+
+<!-- HEADER -->
+<div class="dw-header">
+  <h1><span style="font-size:18px">🤝</span> ASSOCIATE-WISE DASHBOARD <span class="hdr-badge">Selection Module</span></h1>
+  <div class="hdr-right">
+    <a href="Selection-ModuleFinal.html" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">← Back</a>
+    <a href="DesignationWiseDashboard.html" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">👷 Desig Dashboard</a>
+    <button class="hbtn" onclick="dwExportCSV()">📤 Export CSV</button>
+    <button class="hbtn" onclick="window.print()">🖨️ Print</button>
+    <button class="hbtn" onclick="dwReload()">🔄 Refresh</button>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;background:rgba(255,255,255,.12);padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.2);">
+      <span id="dw-cdot" style="width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;"></span>
+      <span id="dw-clbl">Connecting…</span>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <div class="filter-title">🔍 Dashboard Filters — Associate Wise</div>
+  <div class="filter-grid">
+    <div class="fg"><label>Company Name</label>
+      <select id="df-comp" onchange="onCompChange()"><option value="">— All Companies —</option></select></div>
+    <div class="fg"><label>Campaign / Drive</label>
+      <div class="ms-btn" id="ms-camp-btn" onclick="toggleMs('camp')"><span id="ms-camp-lbl" class="ms-lbl">— All Campaigns —</span><span class="ms-arr">▼</span></div>
+      <div class="ms-drop" id="ms-camp-drop">
+        <div class="ms-sw"><input class="ms-si" type="text" placeholder="Search…" oninput="filterMs('camp',this.value)"/></div>
+        <div class="ms-list" id="ms-camp-list"></div>
+        <div class="ms-footer"><span onclick="selectAllMs('camp')" class="ms-ft-btn">All</span><span onclick="clearMs('camp')" class="ms-ft-btn">Clear</span></div>
+      </div></div>
+    <div class="fg"><label>Interview Date</label>
+      <div class="ms-btn" id="ms-idate-btn" onclick="toggleMs('idate')"><span id="ms-idate-lbl" class="ms-lbl">— All Dates —</span><span class="ms-arr">▼</span></div>
+      <div class="ms-drop" id="ms-idate-drop">
+        <div class="ms-sw"><input class="ms-si" type="text" placeholder="Search…" oninput="filterMs('idate',this.value)"/></div>
+        <div class="ms-list" id="ms-idate-list"></div>
+        <div class="ms-footer"><span onclick="selectAllMs('idate')" class="ms-ft-btn">All</span><span onclick="clearMs('idate')" class="ms-ft-btn">Clear</span></div>
+      </div></div>
+    <div class="fg"><label>Result</label>
+      <div class="ms-btn" id="ms-result-btn" onclick="toggleMs('result')"><span id="ms-result-lbl" class="ms-lbl">— All Results —</span><span class="ms-arr">▼</span></div>
+      <div class="ms-drop" id="ms-result-drop">
+        <div class="ms-list" id="ms-result-list"></div>
+        <div class="ms-footer"><span onclick="selectAllMs('result')" class="ms-ft-btn">All</span><span onclick="clearMs('result')" class="ms-ft-btn">Clear</span></div>
+      </div></div>
+    <div class="fg"><label>Associate</label>
+      <div class="ms-btn" id="ms-assoc-btn" onclick="toggleMs('assoc')"><span id="ms-assoc-lbl" class="ms-lbl">— All Associates —</span><span class="ms-arr">▼</span></div>
+      <div class="ms-drop" id="ms-assoc-drop">
+        <div class="ms-sw"><input class="ms-si" type="text" placeholder="Search…" oninput="filterMs('assoc',this.value)"/></div>
+        <div class="ms-list" id="ms-assoc-list"></div>
+        <div class="ms-footer"><span onclick="selectAllMs('assoc')" class="ms-ft-btn">All</span><span onclick="clearMs('assoc')" class="ms-ft-btn">Clear</span></div>
+      </div></div>
+    <div class="fg" style="padding-top:16px"><button class="btn btn-clear" onclick="clearFilters()">✕ Clear All</button></div>
+  </div>
+  <div class="filter-count" id="dw-count"></div>
+  <div class="active-tags" id="dw-active-tags"></div>
+</div>
+
+<!-- MAIN -->
+<div class="main-content">
+
+<!-- ASSOCIATE DASHBOARD -->
+<div id="pane-assoc">
+  <div class="stat-grid" id="assoc-stat-grid"></div>
+
+  <!-- ASSOCIATE MASTER TABLE with collapsible designation breakup -->
+  <div class="section">
+    <div class="sec-hdr" style="background:linear-gradient(135deg,#7c3aed,#9f67f5);">
+      📊 Associate-Wise Full Summary Table
+      <span class="sec-count" id="assoc-table-lbl"></span>
+    </div>
+    <div class="sort-bar">
+      <span class="sort-lbl">Sort:</span>
+      <button class="sort-btn active" id="as-sort-count" onclick="setSortA('count')">Count ↓</button>
+      <button class="sort-btn" id="as-sort-alpha" onclick="setSortA('alpha')">A → Z</button>
+      <button class="sort-btn" id="as-sort-sel" onclick="setSortA('selected')">Selected ↓</button>
+      <button class="sort-btn" id="as-sort-onb" onclick="setSortA('onboard')">On-Board ↓</button>
+    </div>
+    <div class="sec-body" style="padding:0;">
+      <div class="mtbl-wrap">
+        <table class="mtbl" id="assoc-main-tbl">
+          <thead><tr>
+            <th style="width:36px;"></th>
+            <th>#</th><th>Associate</th><th>Code</th>
+            <th class="c">Total</th><th class="c">Selected</th><th class="c">Rejected</th>
+            <th class="c">Hold</th><th class="c">Backup</th><th class="c">Accepted</th>
+            <th class="c">Declined</th><th class="c">Med Fit</th><th class="c">Med Unfit</th>
+            <th class="c">Med Pending</th><th class="c">Visa Sent</th><th class="c">Visa Rcvd</th>
+            <th class="c">Tkt Req</th><th class="c">Tkt Rcvd</th>
+            <th class="c">On-Board</th><th class="c">Not-OB</th>
+            <th class="c">ECR</th><th class="c">ECNR</th>
+          </tr></thead>
+          <tbody id="assoc-tbody"></tbody>
+          <tfoot id="assoc-tfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSPORT 25% + TICKETING 75% SIDE BY SIDE -->
+  <div style="display:grid;grid-template-columns:1fr 3fr;gap:14px;margin-bottom:14px;">
+
+    <!-- PASSPORT 25% -->
+    <div class="section" style="margin-bottom:0;">
+      <div class="sec-hdr" style="background:linear-gradient(135deg,#b45309,#f59e0b);">🛂 Passport (ECR/ECNR) by Associate<span class="sec-count" id="a-pass-lbl"></span></div>
+      <div class="sec-body" style="padding:0;" id="a-pass-body"></div>
+    </div>
+
+    <!-- TICKETING 75% -->
+    <div class="section" style="margin-bottom:0;">
+      <div class="sec-hdr" style="background:linear-gradient(135deg,#d97706,#fbbf24);">✈️ Ticketing &amp; Travel by Associate<span class="sec-count" id="a-tkt-lbl"></span></div>
+      <div class="sec-body" style="padding:0;" id="a-tkt-body"></div>
+    </div>
+
+  </div>
+
+  <!-- ONBOARD FULL WIDTH -->
+  <div class="section">
+    <div class="sec-hdr" style="background:linear-gradient(135deg,#0f766e,#059669);">🛫 Onboard Status by Associate<span class="sec-count" id="a-onb-lbl"></span></div>
+    <div class="sec-body" id="a-onb-body"></div>
+  </div>
+
+</div><!-- /pane-assoc -->
+
+</div><!-- /main-content -->
+
+<!-- DRILL-DOWN POPUP -->
+<div id="dw-pop-mo">
+  <div class="pop-box">
+    <div class="pop-hdr" id="pop-hdr-div" style="background:#0049B7;">
+      <div class="pop-hdr-top">
+        <div><div class="pop-title" id="pop-title">Records</div><div class="pop-sub" id="pop-sub">0 records</div></div>
+        <div style="display:flex;gap:7px;flex-shrink:0;">
+          <button class="pop-export" onclick="dwPopExport()">📤 Export</button>
+          <button class="pop-close" onclick="closePop()">✕</button>
+        </div>
+      </div>
+      <div class="pop-grp-row" id="pop-grp-row"></div>
+    </div>
+    <div class="pop-body">
+      <table class="pop-table" id="pop-table">
+        <thead id="pop-thead"></thead>
+        <tbody id="pop-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div id="dw-tc"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  ASSOCIATE & DESIGNATION DASHBOARD
+// ══════════════════════════════════════════════════════
+const WEB   = 'https://script.google.com/macros/s/AKfycbzNoK4d2MdtTciXBRHcZ_aE8UIPpIcnWcXIzNBCd8Hxg2EwpEhP1e_Hpu528PHsHs4z/exec';
+const SHEET = 'Selections';
+let allRecs=[], popRows=[], popSortKey='', popSortDir=1;
+let sortModeA='count';
+
+const C={
+  blue:'#1d4ed8',blueL:'#dbeafe',green:'#059669',greenL:'#d1fae5',
+  teal:'#0f766e',tealL:'#ccfbf1',red:'#dc2626',redL:'#fee2e2',
+  orange:'#d97706',orangeL:'#fef3c7',purple:'#7c3aed',purpleL:'#ede9fe',
+  sky:'#0284c7',skyL:'#e0f2fe',pink:'#db2777',pinkL:'#fce7f3',
+  indigo:'#4338ca',indigoL:'#e0e7ff',amber:'#b45309',amberL:'#fef3c7',
+  gray:'#4b5563',grayL:'#f3f4f6',
+};
+const DCOLORS=['#1d4ed8','#059669','#7c3aed','#d97706','#0284c7','#db2777','#0f766e','#dc2626','#4338ca','#b45309','#0e7490','#6d28d9','#b91c1c','#047857','#c026d3','#0369a1','#be185d','#15803d','#7c3aed','#ea580c'];
+const ACOLORS=['#0f766e','#d97706','#4338ca','#059669','#db2777','#0284c7','#7c3aed','#dc2626','#b45309','#1d4ed8','#6d28d9','#0369a1','#b91c1c','#047857','#be185d','#ea580c','#0e7490','#c026d3','#065f46','#92400e'];
+
+function dColor(idx){ return DCOLORS[idx%DCOLORS.length]; }
+function aColor(idx){ return ACOLORS[idx%ACOLORS.length]; }
+
+// ── HELPERS ──
+function dwLd(m){document.getElementById('dw-loader').style.display='flex';document.getElementById('dw-loader-msg').textContent=m||'Loading…';}
+function dwHd(){document.getElementById('dw-loader').style.display='none';}
+function dwToast(m,t='info'){const d=document.createElement('div');d.className='dw-toast '+t;d.textContent=m;document.getElementById('dw-tc').appendChild(d);setTimeout(()=>d.remove(),3800);}
+function esc(s){const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML;}
+function cd(s){if(!s||!s.trim())return'';if(/^\d{4}-\d{2}-\d{2}$/.test(s.trim()))return s.trim();try{const d=new Date(s);if(!isNaN(d))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}catch(x){}return s;}
+function cnt(arr,key,val){return arr.filter(r=>r[key]===val).length;}
+function setConn(st,lbl){
+  const dot=document.getElementById('dw-cdot'),lb=document.getElementById('dw-clbl');
+  if(dot){dot.style.background=st==='ok'?'#7EE787':st==='err'?'#ff1d58':'#f59e0b';dot.style.boxShadow=st==='ok'?'0 0 5px rgba(126,231,135,.8)':'';}
+  if(lb)lb.textContent=lbl;
+}
+const today0=()=>{const d=new Date();d.setHours(0,0,0,0);return d;};
+const daysDiff=d=>{if(!d)return 9999;const t=new Date(d);t.setHours(0,0,0,0);return Math.round((t-today0())/864e5);};
+
+// ── API ──
+async function api(p){
+  const u=new URL(WEB);Object.entries(p).forEach(([k,v])=>u.searchParams.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
+  let r,t,j;try{r=await fetch(u.toString());t=await r.text();}catch(e){throw new Error('Network: '+e.message);}
+  try{j=JSON.parse(t);}catch(e){throw new Error('Bad response: '+t.slice(0,180));}
+  if(!j.success)throw new Error(j.error||'Server error');return j;
+}
+
+// ── LOAD ──
+async function dwLoad(){
+  dwLd('Loading records…');setConn('sync','Connecting…');
+  try{
+    const r=await api({action:'getAll',sheet:SHEET});
+    allRecs=(r.data||[]).map(x=>({
+      id:x.ID||'',name:x.Name||'',designation:x.Designation||'',
+      passport:x.Passport||'',passportStatus:x.PassportStatus||'',
+      passportExpiry:cd(x.PassportExpiry||''),dob:cd(x.DOB||''),age:x.Age||'',
+      phone:x.Phone||'',whatsapp:x.WhatsApp||'',email:x.Email||'',state:x.State||'',
+      assocCode:x.AssociateCode||'',assocName:x.AssociateName||'',assocPhone:x.AssociatePhone||'',
+      compCode:x.CompanyCode||'',compName:x.CompanyName||'',country:x.Country||'',
+      intDate:cd(x.InterviewDate||''),campaign:x.Campaign||'',result:x.Result||'',grade:x.Grade||'',
+      basic:x.BasicSalary||'',alw1:x.Allowance1||'',alw2:x.Allowance2||'',alw3:x.Allowance3||'',
+      food:x.Food||'',stay:x.Stay||'',totalSal:x.TotalSalary||'',
+      acceptance:x.Acceptance||'',dept:x.Department||'',empCode:x.EmployeeCode||'',
+      medType:x.MedicalType||'',medRef:x.MedicalRef||'',medStatus:x.MedicalStatus||'',
+      vdoc:x.VisaDocuments||'',vstat:x.VisaStatus||'',vissue:cd(x.VisaIssueDate||''),
+      vexpiry:cd(x.VisaExpiryDate||''),vverify:x.VisaVerification||'',
+      emig:x.Emigration||'',tkt:x.TicketStatus||'',
+      tvlDate:cd(x.TravelDate||''),sector:x.TravelSector||'',
+      onboard:x.OnboardStatus||'',noreason:x.NotOnboardReason||'',
+      paid:x.PaidAmount||'',paidAt:x.PaidAt||'',payDate:cd(x.PaymentDate||''),
+      abroadExp:parseM(x.AbroadExp||''),localExp:parseM(x.LocalExp||''),totalExp:parseM(x.TotalExp||''),
+      offerReceipt:x.OfferReceipt||'',recruitType:x.RecruitmentType||'',passCustody:x.PassportCustody||'',
+      visaType:x.VisaType||'',visaNumber:x.VisaNumber||'',
+      invoiceNumber:x.InvoiceNumber||'',
+      nomName:x.NomineeName||'',nomRelation:x.NomineeRelation||'',nomAccount:x.NomineeBankAccount||'',nomIFSC:x.NomineeIFSC||'',nomBank:x.NomineeBankName||'',
+      flightNum:x.FlightNumber||'',airline:x.Airline||'',arrivalDate:cd(x.ArrivalDate||''),arrivalTime:x.ArrivalTime||'',
+      vcorrRemarks:x.VcorrRemarks||'',
+      vcorrType:x.VcorrType||'',vcorrResolved:cd(x.VcorrResolved||''),savedAt:x.SavedAt||''
+    })).filter(x=>x.id);
+    setConn('ok','Connected · '+allRecs.length+' records');
+    buildFilters();renderAll();
+    dwToast('Loaded '+allRecs.length+' records','ok');
+  }catch(err){
+    setConn('err','Error');dwToast('Load failed: '+err.message,'err');
+    allRecs=generateDemoData();buildFilters();renderAll();
+  }finally{dwHd();}
+}
+
+// ── DEMO DATA ──
+function generateDemoData(){
+  const desigs=['Welder','Fabricator','Fitter','Scaffolder','Electrician','Rigger','Painter','Helper','Foreman','Supervisor','Pipe Fitter','Steel Fixer'];
+  const assocs=[['A01','Rajan Associates','9876543210'],['A02','Gulf Manpower','9876543211'],['A03','Star Recruiters','9876543212'],['A04','Vision Placement','9876543213'],['A05','Elite HR','9876543214'],['A06','Overseas Connect','9876543215']];
+  const companies=['ARAMCO','SABIC','ADNOC','L&T Gulf','Petrofac'];
+  const campaigns=['Campaign A','Campaign B','Drive 2024','Gulf Drive 1'];
+  const results=['Selected','Rejected','Hold','Backup'],meds=['Fit','Unfit','Pending','Fit-Report awaiting','Remedial'];
+  const vstats=['Received','Hold-Candidate','Hold-Agent','Under Visa',''],tkts=['Request Raised','Received','Hold-Candidate','Hold-Company',''];
+  const accepts=['Accepted','Declined','Hold',''],onboards=['On-Board','Not-Onboard',''];
+  const pstats=['ECR','ECNR'],vdocs=['Sent','Hold-Candidate','Pending Documents(Photo)',''],vverify=['Visa – Ok','Visa Correction',''];
+  const dates=['2024-10-15','2024-11-20','2024-12-05','2025-01-10','2025-02-14','2025-03-22'];
+  const arr=[];
+  for(let i=0;i<320;i++){
+    const desig=desigs[Math.floor(Math.random()*desigs.length)];
+    const ac=assocs[Math.floor(Math.random()*assocs.length)];
+    const res=results[Math.floor(Math.random()*results.length)];
+    const acc=res==='Selected'?accepts[Math.floor(Math.random()*accepts.length)]:'';
+    const med=meds[Math.floor(Math.random()*meds.length)];
+    const vst=med==='Fit'?vstats[Math.floor(Math.random()*vstats.length)]:'';
+    const vdoc=med==='Fit'?vdocs[Math.floor(Math.random()*vdocs.length)]:'';
+    const tkt=(vst==='Received'||vst==='Under Visa')?tkts[Math.floor(Math.random()*tkts.length)]:'';
+    const onb=tkt==='Received'?onboards[Math.floor(Math.random()*onboards.length)]:'';
+    arr.push({
+      id:'demo-'+i,name:'Candidate '+String(i+1).padStart(3,'0'),designation:desig,
+      passport:'IN'+String(Math.floor(Math.random()*9000000+1000000)),
+      passportStatus:pstats[Math.floor(Math.random()*pstats.length)],
+      passportExpiry:'202'+(Math.floor(Math.random()*4)+6)+'-06-15',
+      dob:'198'+Math.floor(Math.random()*9)+'-06-15',age:String(25+Math.floor(Math.random()*20)),
+      phone:'98'+String(Math.floor(Math.random()*90000000+10000000)),whatsapp:'',email:'',state:'Andhra Pradesh',
+      assocCode:ac[0],assocName:ac[1],assocPhone:ac[2],
+      compCode:'C01',compName:companies[Math.floor(Math.random()*companies.length)],country:'Saudi Arabia',
+      intDate:dates[Math.floor(Math.random()*dates.length)],campaign:campaigns[Math.floor(Math.random()*campaigns.length)],
+      result:res,grade:['A1','A2','B1','B2'][Math.floor(Math.random()*4)],
+      basic:res==='Selected'?String(Math.round(Math.random()*800+400)):'',alw1:'',alw2:'',alw3:'',food:'',stay:'',
+      totalSal:res==='Selected'?String(Math.round(Math.random()*1200+600)):'',
+      acceptance:acc,dept:'Yard',empCode:acc==='Accepted'?'EMP'+String(i+100):'',
+      medType:'GAMCA',medRef:'MED'+i,medStatus:med,
+      vdoc,vstat:vst,vissue:'',vexpiry:'2025-12-31',vverify:vverify[Math.floor(Math.random()*vverify.length)],
+      emig:'',tkt,tvlDate:'',sector:'',
+      onboard:onb,noreason:onb==='Not-Onboard'?['Health Issue','Declined Offer','Family Reason','No Response'][Math.floor(Math.random()*4)]:'',
+      paid:onb==='On-Board'?String(Math.round(Math.random()*3000+1000)):'',paidAt:'',payDate:'',
+      vcorrType:'',vcorrResolved:'',savedAt:''
+    });
+  }
+  dwToast('Showing demo data (offline preview)','warn');
+  return arr;
+}
+
+// ── TAB SWITCHING ──
+function switchTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+tab).classList.add('active');
+  document.getElementById('filter-title-lbl').textContent='🔍 Dashboard Filters — '+(tab==='assoc'?'Associate':'Designation')+' Wise';
+  const assocFg=document.getElementById('fg-assoc-filter');
+  if(assocFg)assocFg.style.display=tab==='assoc'?'':'none';
+  renderAll();
+}
+
+// ── MULTI-SELECT STATE ──
+const MS={camp:new Set(),idate:new Set(),result:new Set(),assoc:new Set()};
+const RESULT_OPTS=['Selected','Rejected','Hold','Backup'];
+const _msAll={camp:[],idate:[],result:[],assoc:[]};
+
+function toggleMs(which){
+  const drop=document.getElementById('ms-'+which+'-drop');
+  const btn=document.getElementById('ms-'+which+'-btn');
+  if(!drop||!btn)return;
+  const isOpen=drop.classList.contains('open');
+  ['camp','idate','result','assoc'].forEach(w=>{
+    document.getElementById('ms-'+w+'-drop')?.classList.remove('open');
+    document.getElementById('ms-'+w+'-btn')?.classList.remove('active');
+  });
+  if(!isOpen){drop.classList.add('open');btn.classList.add('active');drop.querySelector('.ms-si')?.focus();}}
+function renderMsItems(which,items){
+  const list=document.getElementById('ms-'+which+'-list');if(!list)return;
+  if(!items.length){list.innerHTML='<div style="padding:8px 12px;font-size:12px;color:#aaa;">No options</div>';return;}
+  list.innerHTML=items.map(v=>{
+    const chk=MS[which].has(v);
+    return `<label class="ms-item${chk?' checked':''}" onclick="event.stopPropagation()">
+      <input type="checkbox" value="${esc(v)}" ${chk?'checked':''} onchange="onMsCheck('${which}',this,'${esc(v)}')"/>
+      <span>${esc(v)}</span></label>`;
+  }).join('');
+}
+function filterMs(which,q){renderMsItems(which,q?(_msAll[which]||[]).filter(v=>v.toLowerCase().includes(q.toLowerCase())):_msAll[which]||[]);}
+function onMsCheck(which,cb,val){
+  if(cb.checked)MS[which].add(val);else MS[which].delete(val);
+  const item=cb.closest('.ms-item');
+  if(item){item.classList.toggle('checked',cb.checked);item.querySelector('span').style.fontWeight=cb.checked?'600':'';}
+  updateMsLabel(which);
+  if(which==='camp')cascadeDates();
+  renderAll();
+}
+function updateMsLabel(which){
+  const lbl=document.getElementById('ms-'+which+'-lbl');if(!lbl)return;
+  const sel=MS[which];
+  const def={camp:'— All Campaigns —',idate:'— All Dates —',result:'— All Results —',assoc:'— All Associates —'};
+  if(!sel.size){lbl.textContent=def[which];lbl.classList.remove('has-sel');}
+  else if(sel.size===1){lbl.textContent=[...sel][0];lbl.classList.add('has-sel');}
+  else{lbl.textContent=sel.size+' selected';lbl.classList.add('has-sel');}
+}
+function selectAllMs(which){(_msAll[which]||[]).forEach(v=>MS[which].add(v));renderMsItems(which,_msAll[which]||[]);updateMsLabel(which);if(which==='camp')cascadeDates();renderAll();}
+function clearMs(which){
+  MS[which].clear();
+  const si=document.getElementById('ms-'+which+'-drop')?.querySelector('.ms-si');if(si)si.value='';
+  renderMsItems(which,_msAll[which]||[]);updateMsLabel(which);if(which==='camp')cascadeDates();renderAll();
+}
+
+// ── FILTERS ──
+function getFiltered(){
+  const fc=document.getElementById('df-comp')?.value||'';
+  return allRecs.filter(r=>{
+    if(fc&&r.compName!==fc)return false;
+    if(MS.camp.size&&!MS.camp.has(r.campaign))return false;
+    if(MS.idate.size&&!MS.idate.has(r.intDate))return false;
+    if(MS.result.size&&!MS.result.has(r.result))return false;
+    if(MS.assoc.size&&!MS.assoc.has(r.assocName))return false;
+    return true;
+  });
+}
+
+function buildFilters(){
+  const fc=document.getElementById('df-comp')?.value||'';
+  const base=fc?allRecs.filter(r=>r.compName===fc):allRecs;
+  const compSel=document.getElementById('df-comp');
+  if(compSel){
+    const cur=compSel.value;
+    const comps=[...new Set(allRecs.map(r=>r.compName).filter(Boolean))].sort();
+    compSel.innerHTML=`<option value="">— All Companies —</option>`+comps.map(v=>`<option${v===cur?' selected':''}>${esc(v)}</option>`).join('');
+  }
+  const camps=[...new Set(base.map(r=>r.campaign).filter(Boolean))].sort();
+  _msAll.camp=camps;MS.camp.forEach(v=>{if(!camps.includes(v))MS.camp.delete(v);});
+  renderMsItems('camp',camps);updateMsLabel('camp');
+  cascadeDates();
+  _msAll.result=RESULT_OPTS;renderMsItems('result',RESULT_OPTS);updateMsLabel('result');
+  const assocs=[...new Set(allRecs.map(r=>r.assocName).filter(Boolean))].sort();
+  _msAll.assoc=assocs;MS.assoc.forEach(v=>{if(!assocs.includes(v))MS.assoc.delete(v);});
+  renderMsItems('assoc',assocs);updateMsLabel('assoc');
+}
+
+function cascadeDates(){
+  const fc=document.getElementById('df-comp')?.value||'';
+  const base=allRecs.filter(r=>{
+    if(fc&&r.compName!==fc)return false;
+    if(MS.camp.size&&!MS.camp.has(r.campaign))return false;
+    return true;
+  });
+  const dates=[...new Set(base.map(r=>r.intDate).filter(Boolean))].sort();
+  _msAll.idate=dates;MS.idate.forEach(v=>{if(!dates.includes(v))MS.idate.delete(v);});
+  renderMsItems('idate',dates);updateMsLabel('idate');
+}
+
+function onCompChange(){
+  MS.camp.clear();MS.idate.clear();buildFilters();renderAll();
+}
+function clearFilters(){
+  const c=document.getElementById('df-comp');if(c)c.value='';
+  ['camp','idate','result','assoc'].forEach(w=>{MS[w].clear();});
+  buildFilters();renderAll();
+}
+function updateCountLabel(D){
+  const el=document.getElementById('dw-count');
+  if(el)el.textContent=(D.length<allRecs.length)?`Showing ${D.length} of ${allRecs.length} records`:`${allRecs.length} total records`;
+  const tw=document.getElementById('dw-active-tags');if(!tw)return;
+  const tags=[];
+  const fc=document.getElementById('df-comp')?.value||'';
+  if(fc)tags.push({w:'comp',v:fc,single:true});
+  MS.camp.forEach(v=>tags.push({w:'camp',v}));
+  MS.idate.forEach(v=>tags.push({w:'idate',v}));
+  MS.result.forEach(v=>tags.push({w:'result',v}));
+  MS.assoc.forEach(v=>tags.push({w:'assoc',v}));
+  tw.innerHTML=tags.map(t=>`<span class="atag">${esc(t.v)}<span class="atag-x" onclick="${t.single?'removeCompTag()':("removeMsTag('"+t.w+"','"+t.v.replace(/'/g,"\\'")+"')")}">×</span></span>`).join('');
+}
+function removeCompTag(){const c=document.getElementById('df-comp');if(c)c.value='';onCompChange();}
+function removeMsTag(w,v){MS[w].delete(v);renderMsItems(w,_msAll[w]||[]);updateMsLabel(w);if(w==='camp')cascadeDates();renderAll();}
+
+// Close dropdowns outside click
+document.addEventListener('click',ev=>{
+  if(!ev.target.closest('.fg')){
+    ['camp','idate','result','assoc'].forEach(w=>{
+      document.getElementById('ms-'+w+'-drop')?.classList.remove('open');
+      document.getElementById('ms-'+w+'-btn')?.classList.remove('active');
+    });
+  }
+});
+
+// ── SORT ──
+function setSortA(m){
+  sortModeA=m;
+  ['count','alpha','selected','onboard'].forEach(s=>{const b=document.getElementById('as-sort-'+s);if(b)b.classList.toggle('active',s===m);});
+  renderAll();
+}
+function sortEntries(entries,mode){
+  if(mode==='count')   return entries.sort((a,b)=>b[1].length-a[1].length);
+  if(mode==='alpha')   return entries.sort((a,b)=>a[0].localeCompare(b[0]));
+  if(mode==='selected')return entries.sort((a,b)=>cnt(b[1],'result','Selected')-cnt(a[1],'result','Selected'));
+  if(mode==='onboard') return entries.sort((a,b)=>cnt(b[1],'onboard','On-Board')-cnt(a[1],'onboard','On-Board'));
+  return entries;
+}
+
+// ── GROUP ──
+function groupBy(D,key){
+  const map={};
+  D.forEach(r=>{const k=(r[key]||'').trim()||'Unknown';if(!map[k])map[k]=[];map[k].push(r);});
+  return map;
+}
+
+// ── MAIN RENDER ──
+function renderAll(){
+  const D=getFiltered();
+  updateCountLabel(D);
+  renderAssocPane(D);
+}
+
+// ════════════════════════════════════════════════
+//  ASSOCIATE PANE RENDERS
+// ════════════════════════════════════════════════
+function renderAssocPane(D){
+  renderStatGrid(D,'assoc-stat-grid','assoc');
+  renderMasterTable(D,'assoc');
+  renderPassSection(D,'assoc');
+  renderTktSection(D,'assoc');
+  renderOnbSection(D,'assoc');
+}
+
+// ── SHARED: get entries ──
+function getEntries(D,mode){
+  const key=mode==='assoc'?'assocName':'designation';
+  const sMode=mode==='assoc'?sortModeA:sortModeA;
+  const map=groupBy(D,key);
+  return sortEntries(Object.entries(map),sMode);
+}
+function getGroupKey(mode){return mode==='assoc'?'assocName':'designation';}
+function pfx(mode){return mode==='assoc'?'a':'d';}
+function gLabel(mode){return mode==='assoc'?'🤝':'👷';}
+function gColorFn(mode){return mode==='assoc'?aColor:dColor;}
+
+// ── STAT GRID ──
+function renderStatGrid(D,gridId,mode){
+  const groupKey=getGroupKey(mode);
+  const map=groupBy(D,groupKey);
+  const groupCount=Object.keys(map).length;
+  const selected=cnt(D,'result','Selected');
+  const onboard=cnt(D,'onboard','On-Board');
+  const fit=cnt(D,'medStatus','Fit');
+  const accepted=cnt(D,'acceptance','Accepted');
+  const declined=cnt(D,'acceptance','Declined');
+  const visaSent=D.filter(r=>(r.vdoc||'').includes('Sent')).length;
+  const visaRecv=cnt(D,'vstat','Received');
+  const tktRec=cnt(D,'tkt','Received');
+  const tktReq=cnt(D,'tkt','Request Raised');
+  const paid=D.reduce((s,r)=>{const v=parseFloat(r.paid||0);return s+(isNaN(v)?0:v);},0);
+  const notOnboard=cnt(D,'onboard','Not-Onboard');
+  const grpLabel=mode==='assoc'?'Associates':'Designations';
+  const cards=[
+    {l:grpLabel,v:groupCount,c:'purple',noDrill:true},
+    {l:'Total Records',v:D.length,c:'blue',k:'total'},
+    {l:'Selected',v:selected,c:'green',k:'result:Selected'},
+    {l:'Accepted',v:accepted,c:'teal',k:'acceptance:Accepted'},
+    {l:'Declined',v:declined,c:'red',k:'acceptance:Declined'},
+    {l:'On-Board',v:onboard,c:'indigo',k:'onboard:On-Board'},
+    {l:'Not-Onboard',v:notOnboard,c:'red',k:'onboard:Not-Onboard'},
+    {l:'Medical Fit',v:fit,c:'green',k:'medStatus:Fit'},
+    {l:'Visa Sent',v:visaSent,c:'sky',k:'visaSent'},
+    {l:'Visa Received',v:visaRecv,c:'blue',k:'vstat:Received'},
+    {l:'Ticket Requests',v:tktReq,c:'orange',k:'tkt:Request Raised'},
+    {l:'Tickets Received',v:tktRec,c:'green',k:'tkt:Received'},
+    {l:'Total Paid',v:'₹'+paid.toLocaleString('en-IN'),c:'purple',noDrill:true},
+  ];
+  const grid=document.getElementById(gridId);if(!grid)return;
+  grid.innerHTML=cards.map(s=>{
+    const drill=s.noDrill?'':` onclick="openGlobalDrill('${s.k}','${s.l}',mode)"`.replace('mode',"'"+mode+"'");
+    return `<div class="stat-card ${s.c}"${drill}>
+      <div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;">${esc(s.l)}</div>
+      <div class="sc-val ${s.c}">${s.v}</div>
+      ${!s.noDrill?'<div class="sc-sub">Click to drill down</div>':''}
+    </div>`;
+  }).join('');
+}
+
+// ── MASTER TABLE with collapsible designation breakup ──
+function renderMasterTable(D,mode){
+  const entries=getEntries(D,mode);
+  const colorFn=gColorFn(mode);
+  const tbodyEl=document.getElementById('assoc-tbody');
+  const tfootEl=document.getElementById('assoc-tfoot');
+  const lblEl=document.getElementById('assoc-table-lbl');
+  if(lblEl)lblEl.textContent=entries.length+' associates';
+
+  let T={total:0,sel:0,rej:0,hold:0,back:0,acc:0,dec:0,fit:0,unfit:0,medpend:0,vsent:0,vrcv:0,treq:0,trcv:0,onb:0,nob:0,ecr:0,ecnr:0};
+  const COL_SPAN=22; // total number of columns in header
+
+  // Badge helpers
+  const cbd=(grp,col,n,cls,field,val)=>{
+    if(!n)return'<span style="color:#ddd">—</span>';
+    const sg=grp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const sv=(val||'').replace(/'/g,"\\'");
+    return `<span class="badge ${cls}" style="cursor:pointer;" onclick="openSubDrill('${sg}','${field}','${sv}','${col}','assoc')">${n}</span>`;
+  };
+  const cbtotal=(grp,col,n)=>{
+    const sg=grp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    return `<strong style="color:${col};font-size:14px;cursor:pointer;" onclick="openGroupPop('${sg}','${col}','assoc')">${n}</strong>`;
+  };
+  const cbVisa=(grp,col,n)=>{
+    if(!n)return'<span style="color:#ddd">—</span>';
+    const sg=grp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    return `<span class="badge b-back" style="cursor:pointer;" onclick="openSubDrill('${sg}','visaSent','','${C.sky}','assoc')">${n}</span>`;
+  };
+
+  // Designation breakup sub-table builder
+  const buildDesigBreakup=(assocName,assocArr,assocCol,rowIdx)=>{
+    const dmap=groupBy(assocArr,'designation');
+    const dentries=Object.entries(dmap).sort((a,b)=>b[1].length-a[1].length);
+    if(!dentries.length)return'';
+    const dbd=(dn,drgbs,fn,fv)=>{
+      if(!dn)return'<span style="color:#bbb;font-size:10px;">—</span>';
+      const sd=assocName.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      const sv2=(fv||'').replace(/'/g,"\\'");
+      return `<span class="badge ${drgbs}" style="cursor:pointer;font-size:10px;" onclick="openDesigInAssocDrill('${sd}','${fn}','${sv2}','assocInDesig_${rowIdx}_${dn.replace(/'/g,"\\'")}','assoc')">${dn}</span>`;
+    };
+    const dbdVisa=(dn)=>{
+      if(!dn)return'<span style="color:#bbb;font-size:10px;">—</span>';
+      const sd=assocName.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      return `<span class="badge b-back" style="cursor:pointer;font-size:10px;" onclick="openDesigInAssocDrill('${sd}','visaSent','','assocInDesig_${rowIdx}_vS','assoc')">${dn}</span>`;
+    };
+
+    let dt={total:0,sel:0,rej:0,hold:0,back:0,acc:0,dec:0,fit:0,unfit:0,medpend:0,vsent:0,vrcv:0,treq:0,trcv:0,onb:0,nob:0,ecr:0,ecnr:0};
+
+    const rows=dentries.map(([desig,darr],di)=>{
+      const dc=dColor(di);
+      const dsel=cnt(darr,'result','Selected'),drej=cnt(darr,'result','Rejected');
+      const dhold=cnt(darr,'result','Hold'),dback=cnt(darr,'result','Backup');
+      const dacc=cnt(darr,'acceptance','Accepted'),ddec=cnt(darr,'acceptance','Declined');
+      const dfit=cnt(darr,'medStatus','Fit'),dunfit=cnt(darr,'medStatus','Unfit');
+      const dmedpend=cnt(darr,'medStatus','Pending');
+      const dvsent=darr.filter(r=>(r.vdoc||'').includes('Sent')).length;
+      const dvrcv=cnt(darr,'vstat','Received'),dtreq=cnt(darr,'tkt','Request Raised');
+      const dtrcv=cnt(darr,'tkt','Received'),donb=cnt(darr,'onboard','On-Board');
+      const dnob=cnt(darr,'onboard','Not-Onboard');
+      const decr=cnt(darr,'passportStatus','ECR'),decnr=cnt(darr,'passportStatus','ECNR');
+      dt.total+=darr.length;dt.sel+=dsel;dt.rej+=drej;dt.hold+=dhold;dt.back+=dback;
+      dt.acc+=dacc;dt.dec+=ddec;dt.fit+=dfit;dt.unfit+=dunfit;dt.medpend+=dmedpend;
+      dt.vsent+=dvsent;dt.vrcv+=dvrcv;dt.treq+=dtreq;dt.trcv+=dtrcv;
+      dt.onb+=donb;dt.nob+=dnob;dt.ecr+=decr;dt.ecnr+=decnr;
+      const sa=assocName.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      const cbdd=(dn,cls,field,val)=>{
+        if(!dn)return'<span style="color:#bbb;font-size:10px;">—</span>';
+        const sv2=(val||'').replace(/'/g,"\\'");
+        const dk='di_'+rowIdx+'_'+di+'_'+field;
+        window._desigDrill=window._desigDrill||{};
+        window._desigDrill[dk]={rows:field==='visaSent'?darr.filter(r=>(r.vdoc||'').includes('Sent')):(field&&val?darr.filter(r=>r[field]===val):darr),title:'👷 '+desig+' ('+assocName+')',color:dc};
+        return `<span class="badge ${cls}" style="cursor:pointer;font-size:10px;" onclick="openDesigDrillReg('${dk}')">${dn}</span>`;
+      };
+      const cbddV=(dn)=>{
+        if(!dn)return'<span style="color:#bbb;font-size:10px;">—</span>';
+        const dk='di_'+rowIdx+'_'+di+'_vs';
+        window._desigDrill=window._desigDrill||{};
+        window._desigDrill[dk]={rows:darr.filter(r=>(r.vdoc||'').includes('Sent')),title:'👷 '+desig+' ('+assocName+') — Visa Sent',color:C.sky};
+        return `<span class="badge b-back" style="cursor:pointer;font-size:10px;" onclick="openDesigDrillReg('${dk}')">${dn}</span>`;
+      };
+      const cbdtotal=()=>{
+        const dk='di_'+rowIdx+'_'+di+'_all';
+        window._desigDrill=window._desigDrill||{};
+        window._desigDrill[dk]={rows:darr,title:'👷 '+desig+' ('+assocName+')',color:dc};
+        return `<strong style="color:${dc};font-size:13px;cursor:pointer;" onclick="openDesigDrillReg('${dk}')">${darr.length}</strong>`;
+      };
+      return `<tr style="border-bottom:1px solid #dde8ff;background:#f8fbff;" onmouseenter="this.style.background='#deeaff'" onmouseleave="this.style.background='#f8fbff'">
+        <td style="padding:5px 8px 5px 28px;font-weight:700;color:${dc};font-size:12px;">↳ ${esc(desig)}</td>
+        <td style="padding:5px 8px;font-size:10px;color:#aaa;">—</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdtotal()}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(dsel,'b-sel','result','Selected')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(drej,'b-rej','result','Rejected')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(dhold,'b-hold','result','Hold')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(dback,'b-back','result','Backup')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(dacc,'b-acc','acceptance','Accepted')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(ddec,'b-dec','acceptance','Declined')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(dfit,'b-fit','medStatus','Fit')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(dunfit,'b-unfit','medStatus','Unfit')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(dmedpend,'b-pend','medStatus','Pending')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbddV(dvsent)}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(dvrcv,'b-sel','vstat','Received')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(dtreq,'b-hold','tkt','Request Raised')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(dtrcv,'b-sel','tkt','Received')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(donb,'b-onb','onboard','On-Board')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(dnob,'b-rej','onboard','Not-Onboard')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(decr,'b-ecr','passportStatus','ECR')}</td>
+        <td style="padding:5px 8px;text-align:center;">${cbdd(decnr,'b-ecnr','passportStatus','ECNR')}</td>
+      </tr>`;
+    }).join('');
+
+    const dtotRow=`<tr style="background:#dbeafe;border-top:1.5px solid #93c5fd;">
+      <td style="padding:5px 8px 5px 28px;font-weight:700;color:#1d4ed8;font-size:11px;text-transform:uppercase;letter-spacing:.4px;" colspan="3">${dentries.length} Designations — Sub Total</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:#1d4ed8;">${dt.total}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.green};">${dt.sel||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.red};">${dt.rej||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.orange};">${dt.hold||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.blue};">${dt.back||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.teal};">${dt.acc||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.red};">${dt.dec||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.green};">${dt.fit||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.red};">${dt.unfit||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.gray};">${dt.medpend||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.sky};">${dt.vsent||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.green};">${dt.vrcv||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.orange};">${dt.treq||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.green};">${dt.trcv||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.indigo};">${dt.onb||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.red};">${dt.nob||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.amber};">${dt.ecr||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.green};">${dt.ecnr||'—'}</td>
+    </tr>`;
+
+    return `<div class="desig-expand-panel" id="exp-panel-${rowIdx}">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:#e8f0fe;">
+          <th style="padding:6px 8px 6px 28px;text-align:left;font-size:10px;font-weight:700;color:#1d4ed8;border-bottom:1.5px solid #c7d8f8;">Designation</th>
+          <th style="padding:6px 8px;font-size:10px;font-weight:700;color:#1d4ed8;border-bottom:1.5px solid #c7d8f8;">Code</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;font-weight:700;color:#1d4ed8;border-bottom:1.5px solid #c7d8f8;">Total</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#059669;border-bottom:1.5px solid #c7d8f8;">Sel</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#dc2626;border-bottom:1.5px solid #c7d8f8;">Rej</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#d97706;border-bottom:1.5px solid #c7d8f8;">Hold</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#1d4ed8;border-bottom:1.5px solid #c7d8f8;">Back</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#0f766e;border-bottom:1.5px solid #c7d8f8;">Acc</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#dc2626;border-bottom:1.5px solid #c7d8f8;">Dec</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#059669;border-bottom:1.5px solid #c7d8f8;">Fit</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#dc2626;border-bottom:1.5px solid #c7d8f8;">Unfit</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#4b5563;border-bottom:1.5px solid #c7d8f8;">Pend</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#0284c7;border-bottom:1.5px solid #c7d8f8;">V.Sent</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#059669;border-bottom:1.5px solid #c7d8f8;">V.Rcvd</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#d97706;border-bottom:1.5px solid #c7d8f8;">T.Req</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#059669;border-bottom:1.5px solid #c7d8f8;">T.Rcvd</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#4338ca;border-bottom:1.5px solid #c7d8f8;">OB</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#dc2626;border-bottom:1.5px solid #c7d8f8;">Not-OB</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#b45309;border-bottom:1.5px solid #c7d8f8;">ECR</th>
+          <th style="padding:6px 8px;text-align:center;font-size:10px;color:#059669;border-bottom:1.5px solid #c7d8f8;">ECNR</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot>${dtotRow}</tfoot>
+      </table>
+    </div>`;
+  };
+
+  tbodyEl.innerHTML=entries.map(([grp,arr],i)=>{
+    const col=colorFn(i);
+    const sel=cnt(arr,'result','Selected'),rej=cnt(arr,'result','Rejected');
+    const hold=cnt(arr,'result','Hold'),back=cnt(arr,'result','Backup');
+    const acc=cnt(arr,'acceptance','Accepted'),dec=cnt(arr,'acceptance','Declined');
+    const fit=cnt(arr,'medStatus','Fit'),unfit=cnt(arr,'medStatus','Unfit');
+    const medpend=cnt(arr,'medStatus','Pending');
+    const vsent=arr.filter(r=>(r.vdoc||'').includes('Sent')).length;
+    const vrcv=cnt(arr,'vstat','Received'),treq=cnt(arr,'tkt','Request Raised');
+    const trcv=cnt(arr,'tkt','Received'),onb=cnt(arr,'onboard','On-Board');
+    const nob=cnt(arr,'onboard','Not-Onboard');
+    const ecr=cnt(arr,'passportStatus','ECR'),ecnr=cnt(arr,'passportStatus','ECNR');
+
+    T.total+=arr.length;T.sel+=sel;T.rej+=rej;T.hold+=hold;T.back+=back;
+    T.acc+=acc;T.dec+=dec;T.fit+=fit;T.unfit+=unfit;T.medpend+=medpend;
+    T.vsent+=vsent;T.vrcv+=vrcv;T.treq+=treq;T.trcv+=trcv;
+    T.onb+=onb;T.nob+=nob;T.ecr+=ecr;T.ecnr+=ecnr;
+
+    const pct=D.length?Math.round(arr.length/D.length*100):0;
+    const sg=grp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const desigCount=[...new Set(arr.map(r=>(r.designation||'').trim()).filter(Boolean))].length;
+    const desigBreakup=buildDesigBreakup(grp,arr,col,i);
+
+    return `<tr id="assoc-row-${i}" style="border-bottom:1px solid #f0f4ff;">
+      <td style="padding:8px 6px;text-align:center;vertical-align:middle;width:44px;">
+        ${desigBreakup?`<button class="expand-btn" id="exp-btn-${i}" onclick="toggleDesigBreakup(${i})" title="Show designation breakdown">
+          <span class="expand-arrow">▶</span> <span style="font-size:10px;">${desigCount}d</span>
+        </button>`:'<span style="color:#ddd;font-size:11px;">—</span>'}
+      </td>
+      <td style="font-weight:700;color:#aaa;width:28px;">${i+1}</td>
+      <td style="cursor:pointer;min-width:120px;" onclick="openGroupPop('${sg}','${col}','assoc')">
+        <div class="grp-name" style="color:${col}">${esc(grp)}</div>
+        <div style="font-size:10px;color:#aaa;margin-top:2px;">${desigCount} designation${desigCount!==1?'s':''}</div>
+      </td>
+      <td style="font-size:11px;color:var(--muted);">${esc(arr[0]?.assocCode||'—')}</td>
+      <td class="c">${cbtotal(grp,col,arr.length)}</td>
+      <td class="c">${cbd(grp,C.green,sel,'b-sel','result','Selected')}</td>
+      <td class="c">${cbd(grp,C.red,rej,'b-rej','result','Rejected')}</td>
+      <td class="c">${cbd(grp,C.orange,hold,'b-hold','result','Hold')}</td>
+      <td class="c">${cbd(grp,C.blue,back,'b-back','result','Backup')}</td>
+      <td class="c">${cbd(grp,C.teal,acc,'b-acc','acceptance','Accepted')}</td>
+      <td class="c">${cbd(grp,C.red,dec,'b-dec','acceptance','Declined')}</td>
+      <td class="c">${cbd(grp,C.green,fit,'b-fit','medStatus','Fit')}</td>
+      <td class="c">${cbd(grp,C.red,unfit,'b-unfit','medStatus','Unfit')}</td>
+      <td class="c">${cbd(grp,C.gray,medpend,'b-pend','medStatus','Pending')}</td>
+      <td class="c">${cbVisa(grp,C.sky,vsent)}</td>
+      <td class="c">${cbd(grp,C.green,vrcv,'b-sel','vstat','Received')}</td>
+      <td class="c">${cbd(grp,C.orange,treq,'b-hold','tkt','Request Raised')}</td>
+      <td class="c">${cbd(grp,C.green,trcv,'b-sel','tkt','Received')}</td>
+      <td class="c">${cbd(grp,C.indigo,onb,'b-onb','onboard','On-Board')}</td>
+      <td class="c">${cbd(grp,C.red,nob,'b-rej','onboard','Not-Onboard')}</td>
+      <td class="c">${cbd(grp,C.amber,ecr,'b-ecr','passportStatus','ECR')}</td>
+      <td class="c">${cbd(grp,C.green,ecnr,'b-ecnr','passportStatus','ECNR')}</td>
+    </tr>
+    ${desigBreakup?`<tr class="desig-expand-row" id="exp-row-${i}"><td colspan="${COL_SPAN}" style="padding:0;">${desigBreakup}</td></tr>`:''}`;
+  }).join('');
+
+  // Footer
+  const ft=(n,col,field,val)=>{
+    if(!n)return`<td class="c" style="color:#aaa;">0</td>`;
+    const k=field?field+':'+val:'total';
+    return `<td class="c" style="color:${col};font-weight:700;cursor:pointer;" onclick="openGlobalDrill('${k}','${val||'Total'}','assoc')">${n}</td>`;
+  };
+  tfootEl.innerHTML=`<tr style="background:#f8f9ff;">
+    <td colspan="4" style="font-weight:700;color:#0049B7;font-size:12px;padding:8px 10px;">TOTAL (${entries.length} associates)</td>
+    <td class="c" style="font-weight:700;color:#0049B7;cursor:pointer;" onclick="openGlobalDrill('total','Total Records','assoc')">${T.total}</td>
+    ${ft(T.sel,C.green,'result','Selected')}${ft(T.rej,C.red,'result','Rejected')}
+    ${ft(T.hold,C.orange,'result','Hold')}${ft(T.back,C.blue,'result','Backup')}
+    ${ft(T.acc,C.teal,'acceptance','Accepted')}${ft(T.dec,C.red,'acceptance','Declined')}
+    ${ft(T.fit,C.green,'medStatus','Fit')}${ft(T.unfit,C.red,'medStatus','Unfit')}
+    ${ft(T.medpend,C.gray,'medStatus','Pending')}
+    <td class="c" style="color:${C.sky};font-weight:700;cursor:pointer;" onclick="openGlobalDrill('visaSent','Visa Sent','assoc')">${T.vsent||'—'}</td>
+    ${ft(T.vrcv,C.green,'vstat','Received')}
+    ${ft(T.treq,C.orange,'tkt','Request Raised')}${ft(T.trcv,C.green,'tkt','Received')}
+    ${ft(T.onb,C.indigo,'onboard','On-Board')}${ft(T.nob,C.red,'onboard','Not-Onboard')}
+    ${ft(T.ecr,C.amber,'passportStatus','ECR')}${ft(T.ecnr,C.green,'passportStatus','ECNR')}
+  </tr>`;
+}
+
+// ── TOGGLE DESIGNATION BREAKUP ──
+function toggleDesigBreakup(idx){
+  const panel=document.getElementById('exp-panel-'+idx);
+  const btn=document.getElementById('exp-btn-'+idx);
+  if(!panel||!btn)return;
+  const isOpen=panel.classList.contains('open');
+  panel.classList.toggle('open',!isOpen);
+  btn.classList.toggle('active',!isOpen);
+}
+
+// ── DESIGNATION DRILL FROM ASSOC TABLE ──
+function openDesigDrillReg(key){
+  const e=window._desigDrill?.[key];
+  if(!e){dwToast('No data','warn');return;}
+  openPop(e.title,e.rows,e.color);
+}
+function openDesigInAssocDrill(assocName,field,val,key,mode){
+  const D=getFiltered();
+  let rows=D.filter(r=>r.assocName===assocName);
+  if(field==='visaSent')rows=rows.filter(r=>(r.vdoc||'').includes('Sent'));
+  else if(field&&val)rows=rows.filter(r=>r[field]===val);
+  openPop('🤝 '+assocName+' — '+val,rows,'#7c3aed');
+}
+
+// ── SELECTION SECTION ──
+function renderSelSection(D,mode){
+  const entries=getEntries(D,mode);const colorFn=gColorFn(mode);const p=pfx(mode);
+  const lbl=document.getElementById(p+'-sel-lbl');const body=document.getElementById(p+'-sel-body');
+  if(lbl)lbl.textContent=entries.length+' '+(mode==='assoc'?'associates':'designations');
+  const resClrs={Selected:[C.greenL,C.green],Rejected:[C.redL,C.red],Hold:[C.orangeL,C.orange],Backup:[C.blueL,C.blue]};
+  body.innerHTML=entries.map(([grp,arr],i)=>{
+    const col=colorFn(i);const sg=grp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const pills=['Selected','Rejected','Hold','Backup'].map(res=>{
+      const n=cnt(arr,'result',res);if(!n)return'';
+      const[bg,fg]=resClrs[res];
+      return `<span class="pill" style="background:${bg};color:${fg};" onclick="openSubDrill('${sg}','result','${res}','${fg}','${mode}')">${res}: <strong>${n}</strong></span>`;
+    }).join('');
+    return `<div style="padding:8px 12px;border-bottom:1px solid #f0f4ff;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+        <span style="font-weight:700;font-size:12px;color:${col};cursor:pointer;" onclick="openGroupPop('${sg}','${col}','${mode}')">${esc(grp)}</span>
+        <span style="background:${col}18;color:${col};padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;" onclick="openGroupPop('${sg}','${col}','${mode}')">${arr.length}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;">${pills||'<span style="color:#ddd;font-size:11px;">No result data</span>'}</div>
+    </div>`;
+  }).join('')||'<div style="color:#aaa;padding:14px;">No data</div>';
+}
+
+// ── PASSPORT SECTION ──
+function renderPassSection(D,mode){
+  const entries=getEntries(D,mode);const colorFn=gColorFn(mode);const p=pfx(mode);
+  const lbl=document.getElementById(p+'-pass-lbl');const body=document.getElementById(p+'-pass-body');
+  if(lbl)lbl.textContent=entries.length+' '+(mode==='assoc'?'associates':'designations');
+  window._passReg2=window._passReg2||{};
+  body.innerHTML=entries.map(([grp,arr],i)=>{
+    const col=colorFn(i);const key='p2_'+mode+'_'+i;
+    const sg=grp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const ecr=cnt(arr,'passportStatus','ECR'),ecnr=cnt(arr,'passportStatus','ECNR');
+    const exp365Recs=arr.filter(r=>{const dl=daysDiff(r.passportExpiry);return dl>=0&&dl<365;});
+    const expdRecs=arr.filter(r=>{const dl=daysDiff(r.passportExpiry);return dl<0;});
+    window._passReg2[key+'_ecr']={rows:arr.filter(r=>r.passportStatus==='ECR'),title:gLabel(mode)+' '+grp+' — ECR',color:'#b45309'};
+    window._passReg2[key+'_ecnr']={rows:arr.filter(r=>r.passportStatus==='ECNR'),title:gLabel(mode)+' '+grp+' — ECNR',color:C.green};
+    window._passReg2[key+'_exp']={rows:exp365Recs,title:gLabel(mode)+' '+grp+' — Expiring <1yr',color:'#be185d'};
+    window._passReg2[key+'_expd']={rows:expdRecs,title:gLabel(mode)+' '+grp+' — Passport Expired',color:C.red};
+    window._passReg2[key+'_all']={rows:arr,title:gLabel(mode)+' '+grp+' — All Records',color:col};
+    return `<div style="padding:8px 12px;border-bottom:1px solid #fef3c7;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-weight:700;font-size:12px;color:${col};cursor:pointer;" onclick="openPassReg2('${key}_all')">${esc(grp)}</span>
+        <span style="background:${col}18;color:${col};padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;" onclick="openPassReg2('${key}_all')">${arr.length}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">
+        ${ecr?`<span class="pill" style="background:#fef3c7;color:#92400e;" onclick="openPassReg2('${key}_ecr')">ECR: <strong>${ecr}</strong></span>`:''}
+        ${ecnr?`<span class="pill" style="background:#d1fae5;color:#065f46;" onclick="openPassReg2('${key}_ecnr')">ECNR: <strong>${ecnr}</strong></span>`:''}
+        ${exp365Recs.length?`<span class="pill" style="background:#ffe0e6;color:#c0003a;" onclick="openPassReg2('${key}_exp')">⚠️ Expiring &lt;1yr: <strong>${exp365Recs.length}</strong></span>`:''}
+        ${expdRecs.length?`<span class="pill" style="background:#fee2e2;color:#dc2626;" onclick="openPassReg2('${key}_expd')">❌ Expired: <strong>${expdRecs.length}</strong></span>`:''}
+      </div>
+    </div>`;
+  }).join('')||'<div style="color:#aaa;padding:14px;">No passport data</div>';
+}
+function openPassReg2(k){const e=window._passReg2?.[k];if(!e){dwToast('No data','warn');return;}openPop(e.title,e.rows,e.color);}
+
+// ── ACCEPTANCE SECTION ──
+function renderAccSection(D,mode){
+  const entries=getEntries(D,mode);const colorFn=gColorFn(mode);const p=pfx(mode);
+  const lbl=document.getElementById(p+'-acc-lbl');const body=document.getElementById(p+'-acc-body');
+  if(lbl)lbl.textContent=entries.length+' '+(mode==='assoc'?'associates':'designations');
+  const accClrs={Accepted:[C.tealL,C.teal],Declined:[C.redL,C.red],Hold:[C.orangeL,C.orange]};
+  body.innerHTML=entries.map(([grp,arr],i)=>{
+    const col=colorFn(i);const sg=grp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const hasAcc=arr.some(r=>r.acceptance);if(!hasAcc)return'';
+    const pills=Object.entries(accClrs).map(([stat,[bg,fg]])=>{
+      const n=cnt(arr,'acceptance',stat);if(!n)return'';
+      return `<span class="pill" style="background:${bg};color:${fg};" onclick="openSubDrill('${sg}','acceptance','${stat}','${fg}','${mode}')">${stat}: <strong>${n}</strong></span>`;
+    }).join('');
+    return `<div style="padding:8px 12px;border-bottom:1px solid #f0f4ff;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+        <span style="font-weight:700;font-size:12px;color:${col};cursor:pointer;" onclick="openGroupPop('${sg}','${col}','${mode}')">${esc(grp)}</span>
+        <span style="background:${col}18;color:${col};padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;" onclick="openGroupPop('${sg}','${col}','${mode}')">${arr.length}</span>
+      </div><div style="display:flex;flex-wrap:wrap;">${pills}</div></div>`;
+  }).filter(Boolean).join('')||'<div style="color:#aaa;padding:14px;">No acceptance data</div>';
+}
+
+// ── MEDICAL SECTION ──
+function renderMedSection(D,mode){
+  const entries=getEntries(D,mode);const colorFn=gColorFn(mode);const p=pfx(mode);
+  const lbl=document.getElementById(p+'-med-lbl');const body=document.getElementById(p+'-med-body');
+  if(lbl)lbl.textContent=entries.length+' '+(mode==='assoc'?'associates':'designations');
+  const medClrs={Fit:[C.greenL,C.green],Unfit:[C.redL,C.red],Pending:[C.grayL,C.gray],'Fit-Report awaiting':[C.orangeL,C.orange],Remedial:[C.amberL,C.amber]};
+  const medOrder=['Fit','Unfit','Pending','Fit-Report awaiting','Remedial'];
+  body.innerHTML=entries.map(([grp,arr],i)=>{
+    const col=colorFn(i);const sg=grp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const hasMed=arr.some(r=>r.medStatus);if(!hasMed)return'';
+    const pills=medOrder.map(stat=>{
+      const[bg,fg]=medClrs[stat]||[C.grayL,C.gray];const n=cnt(arr,'medStatus',stat);if(!n)return'';
+      return `<span class="pill" style="background:${bg};color:${fg};" onclick="openSubDrill('${sg}','medStatus','${stat}','${fg}','${mode}')">${stat}: <strong>${n}</strong></span>`;
+    }).join('');
+    return `<div style="padding:8px 12px;border-bottom:1px solid #f0f4ff;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+        <span style="font-weight:700;font-size:12px;color:${col};cursor:pointer;" onclick="openGroupPop('${sg}','${col}','${mode}')">${esc(grp)}</span>
+        <span style="background:${col}18;color:${col};padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;" onclick="openGroupPop('${sg}','${col}','${mode}')">${arr.length}</span>
+      </div><div style="display:flex;flex-wrap:wrap;">${pills}</div></div>`;
+  }).filter(Boolean).join('')||'<div style="color:#aaa;padding:14px;">No medical data</div>';
+}
+
+// ── VISA SECTION ──
+function renderVisaSection(D,mode){
+  const entries=getEntries(D,mode);const colorFn=gColorFn(mode);const p=pfx(mode);
+  const lbl=document.getElementById(p+'-visa-lbl');const body=document.getElementById(p+'-visa-body');
+  if(lbl)lbl.textContent=entries.length+' '+(mode==='assoc'?'associates':'designations');
+  body.innerHTML=entries.map(([grp,arr],i)=>{
+    const col=colorFn(i);const sg=grp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const vsent=arr.filter(r=>(r.vdoc||'').includes('Sent')).length;
+    const vrcv=cnt(arr,'vstat','Received');
+    const vcorr=arr.filter(r=>r.vverify==='Visa Correction').length;
+    const vok=arr.filter(r=>r.vverify==='Visa – Ok').length;
+    if(!vsent&&!vrcv&&!vcorr&&!vok)return'';
+    return `<div style="padding:8px 12px;border-bottom:1px solid #f0f4ff;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-weight:700;font-size:12px;color:${col};cursor:pointer;" onclick="openGroupPop('${sg}','${col}','${mode}')">${esc(grp)}</span>
+        <span style="background:${col}18;color:${col};padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;" onclick="openGroupPop('${sg}','${col}','${mode}')">${arr.length}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">
+        ${vsent?`<span class="pill" style="background:${C.skyL};color:${C.sky};" onclick="openSubDrill('${sg}','visaSent','','${C.sky}','${mode}')">📤 Sent: <strong>${vsent}</strong></span>`:''}
+        ${vrcv?`<span class="pill" style="background:${C.greenL};color:${C.green};" onclick="openSubDrill('${sg}','vstat','Received','${C.green}','${mode}')">📥 Received: <strong>${vrcv}</strong></span>`:''}
+        ${vcorr?`<span class="pill" style="background:${C.orangeL};color:${C.orange};" onclick="openSubDrill('${sg}','vverify','Visa Correction','${C.orange}','${mode}')">⚠️ Correction: <strong>${vcorr}</strong></span>`:''}
+        ${vok?`<span class="pill" style="background:${C.tealL};color:${C.teal};" onclick="openSubDrill('${sg}','vverify','Visa – Ok','${C.teal}','${mode}')">✅ OK: <strong>${vok}</strong></span>`:''}
+      </div></div>`;
+  }).filter(Boolean).join('')||'<div style="color:#aaa;padding:14px;">No visa data</div>';
+}
+
+// ── TICKETING SECTION ──
+function renderTktSection(D,mode){
+  const entries=getEntries(D,mode);const colorFn=gColorFn(mode);const p=pfx(mode);
+  const lbl=document.getElementById(p+'-tkt-lbl');const body=document.getElementById(p+'-tkt-body');
+  if(lbl)lbl.textContent=entries.length+' '+(mode==='assoc'?'associates':'designations');
+
+  // shared header builder
+  const TH_COLS=[
+    {t:'Visa Rcvd',c:'#4338ca'},{t:'ECR',c:'#b45309'},{t:'ECNR',c:'#059669'},
+    {t:'Tkt Request',c:'#d97706'},{t:'Tkt Received',c:'#059669'},
+    {t:'Hold',c:'#c0003a'},{t:'No Ticket',c:'#526187'},{t:'Coverage',c:'#0284c7',left:true}
+  ];
+  const thStyle=(col,left)=>`padding:8px 10px;text-align:${left?'left':'center'};font-weight:700;color:${col};font-size:10px;border-bottom:2px solid #fde68a;white-space:nowrap;`;
+  const header=`<tr style="background:#fff8ec;">
+    <th style="${thStyle('#d97706',false)}width:44px;"></th>
+    <th style="${thStyle('#d97706',true)}">${mode==='assoc'?'Associate':'Designation'}</th>
+    ${TH_COLS.map(h=>`<th style="${thStyle(h.c,h.left||false)}">${h.t}</th>`).join('')}
+  </tr>`;
+
+  // builds tkt data row — shared for both assoc row and desig sub-row
+  const tktRow=(rowArr,grpName,col,rowStyle,nameCell,expandCell='')=>{
+    const sg=grpName.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const visaRcvRecs=rowArr.filter(r=>r.vstat==='Received');
+    const visaRcv=visaRcvRecs.length;
+    const visaEcr=visaRcvRecs.filter(r=>r.passportStatus==='ECR').length;
+    const visaEcnr=visaRcvRecs.filter(r=>r.passportStatus==='ECNR').length;
+    const treq=cnt(rowArr,'tkt','Request Raised');
+    const trcv=cnt(rowArr,'tkt','Received');
+    const thold=rowArr.filter(r=>r.tkt&&r.tkt.toLowerCase().includes('hold')).length;
+    const tnone=rowArr.filter(r=>!r.tkt).length;
+    const pct=rowArr.length?Math.round((treq+trcv)/rowArr.length*100):0;
+    const spn=(n,bg,fg,clickAttr)=>!n?'<span style="color:#ddd;font-size:10px;">—</span>':`<span style="background:${bg};color:${fg};padding:2px 8px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;" ${clickAttr}>${n}</span>`;
+    const td=(content)=>`<td style="padding:7px 10px;text-align:center;">${content}</td>`;
+    return `<tr style="${rowStyle}" onmouseenter="this.style.background='#fffbf0'" onmouseleave="this.style.background=''">
+      ${expandCell}
+      ${nameCell}
+      ${td(spn(visaRcv,'#eef2ff','#4338ca',`onclick="openSubDrill('${sg}','vstat','Received','#4338ca','${mode}')"`  ))}
+      ${td(spn(visaEcr,'#fef3c7','#92400e',`onclick="openTktEcrEcnr('${sg}','ECR','${mode}')"`                         ))}
+      ${td(spn(visaEcnr,'#d1fae5','#065f46',`onclick="openTktEcrEcnr('${sg}','ECNR','${mode}')"`                       ))}
+      ${td(spn(treq,C.orangeL,C.orange,`onclick="openSubDrill('${sg}','tkt','Request Raised','${C.orange}','${mode}')"`  ))}
+      ${td(spn(trcv,C.greenL,C.green,`onclick="openSubDrill('${sg}','tkt','Received','${C.green}','${mode}')"`            ))}
+      ${td(spn(thold,'#ffe0e6','#c0003a',`onclick="openSubDrillCustom('${sg}','tktHold','${mode}')"`                     ))}
+      ${td(spn(tnone,C.grayL,C.gray,`onclick="openSubDrillCustom('${sg}','tktNone','${mode}')"`                          ))}
+      <td style="padding:7px 10px;min-width:90px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="flex:1;background:#fef3c7;border-radius:10px;height:7px;overflow:hidden;"><div style="height:7px;border-radius:10px;background:${C.orange};width:${pct}%;"></div></div>
+          <span style="font-size:11px;color:#d97706;font-weight:700;min-width:26px;">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  };
+
+  // builds designation sub-rows for a given associate
+  const buildTktDesigRows=(assocName,assocArr,assocIdx)=>{
+    const dmap=groupBy(assocArr,'designation');
+    const dentries=Object.entries(dmap).sort((a,b)=>b[1].length-a[1].length);
+    if(!dentries.length)return'';
+
+    // totals sub-row
+    let ST={vrcv:0,vecr:0,vecnr:0,treq:0,trcv:0,thold:0,tnone:0};
+
+    const desigRows=dentries.map(([desig,darr],di)=>{
+      const dc=dColor(di);
+      const dvrcv=darr.filter(r=>r.vstat==='Received').length;
+      const decr=darr.filter(r=>r.vstat==='Received'&&r.passportStatus==='ECR').length;
+      const decnr=darr.filter(r=>r.vstat==='Received'&&r.passportStatus==='ECNR').length;
+      const dtreq=cnt(darr,'tkt','Request Raised');
+      const dtrcv=cnt(darr,'tkt','Received');
+      const dthold=darr.filter(r=>r.tkt&&r.tkt.toLowerCase().includes('hold')).length;
+      const dtnone=darr.filter(r=>!r.tkt).length;
+      const dpct=darr.length?Math.round((dtreq+dtrcv)/darr.length*100):0;
+
+      ST.vrcv+=dvrcv;ST.vecr+=decr;ST.vecnr+=decnr;ST.treq+=dtreq;ST.trcv+=dtrcv;ST.thold+=dthold;ST.tnone+=dtnone;
+
+      // registry keys for desig-level drills in tkt section (safe numeric keys)
+      const rk=`tkt_${assocIdx}_${di}`;
+      window._tktDesigDrill=window._tktDesigDrill||{};
+      window._tktDesigDrill[rk+'_vrcv'] ={rows:darr.filter(r=>r.vstat==='Received'),               title:`👷 ${desig} (${assocName}) — Visa Received`,            color:'#4338ca'};
+      window._tktDesigDrill[rk+'_vecr'] ={rows:darr.filter(r=>r.vstat==='Received'&&r.passportStatus==='ECR'), title:`👷 ${desig} (${assocName}) — Visa Rcvd ECR`,  color:'#b45309'};
+      window._tktDesigDrill[rk+'_vecnr']={rows:darr.filter(r=>r.vstat==='Received'&&r.passportStatus==='ECNR'),title:`👷 ${desig} (${assocName}) — Visa Rcvd ECNR`, color:C.green};
+      window._tktDesigDrill[rk+'_treq'] ={rows:darr.filter(r=>r.tkt==='Request Raised'),             title:`👷 ${desig} (${assocName}) — Ticket Request Raised`,     color:C.orange};
+      window._tktDesigDrill[rk+'_trcv'] ={rows:darr.filter(r=>r.tkt==='Received'),                   title:`👷 ${desig} (${assocName}) — Ticket Received`,           color:C.green};
+      window._tktDesigDrill[rk+'_thold']={rows:darr.filter(r=>r.tkt&&r.tkt.toLowerCase().includes('hold')), title:`👷 ${desig} (${assocName}) — Ticket On Hold`, color:'#c0003a'};
+      window._tktDesigDrill[rk+'_tnone']={rows:darr.filter(r=>!r.tkt),                               title:`👷 ${desig} (${assocName}) — No Ticket`,                 color:C.gray};
+
+      const spnD=(n,rkSuffix)=>!n?'<span style="color:#bbb;font-size:10px;">—</span>':`<span style="background:${window._tktDesigDrill[rk+rkSuffix]?'#f0f4ff':'#f0f4ff'};color:${dc};padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid ${dc}22;" onclick="openTktDesigDrillReg('${rk+rkSuffix}')">${n}</span>`;
+      const tdD=(content)=>`<td style="padding:5px 8px;text-align:center;">${content}</td>`;
+
+      return `<tr style="background:#f8fbff;border-bottom:1px solid #dde8ff;" onmouseenter="this.style.background='#deeaff'" onmouseleave="this.style.background='#f8fbff'">
+        <td style="padding:5px 8px;width:44px;"></td>
+        <td style="padding:5px 8px 5px 24px;font-weight:700;color:${dc};font-size:12px;white-space:nowrap;">↳ ${esc(desig)}</td>
+        ${tdD(spnD(dvrcv,'_vrcv'))}
+        ${tdD(spnD(decr,'_vecr'))}
+        ${tdD(spnD(decnr,'_vecnr'))}
+        ${tdD(spnD(dtreq,'_treq'))}
+        ${tdD(spnD(dtrcv,'_trcv'))}
+        ${tdD(spnD(dthold,'_thold'))}
+        ${tdD(spnD(dtnone,'_tnone'))}
+        <td style="padding:5px 8px;min-width:90px;">
+          <div style="display:flex;align-items:center;gap:5px;">
+            <div style="flex:1;background:#fef3c7;border-radius:10px;height:6px;overflow:hidden;"><div style="height:6px;border-radius:10px;background:${C.orange};width:${dpct}%;"></div></div>
+            <span style="font-size:10px;color:#d97706;font-weight:700;min-width:24px;">${dpct}%</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    const stRow=`<tr style="background:#dbeafe;border-top:1.5px solid #93c5fd;">
+      <td style="padding:5px 8px;width:44px;"></td>
+      <td style="padding:5px 8px 5px 24px;font-weight:700;color:#1d4ed8;font-size:10px;text-transform:uppercase;letter-spacing:.4px;">${dentries.length} designations — sub total</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:#4338ca;">${ST.vrcv||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:#b45309;">${ST.vecr||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.green};">${ST.vecnr||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.orange};">${ST.treq||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.green};">${ST.trcv||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:#c0003a;">${ST.thold||'—'}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${C.gray};">${ST.tnone||'—'}</td>
+      <td style="padding:5px 8px;"></td>
+    </tr>`;
+
+    return desigRows + stRow;
+  };
+
+  // Build the full table
+  let tableRows='';
+  entries.forEach(([grp,arr],i)=>{
+    const col=colorFn(i);
+    const sg=grp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const desigCount=[...new Set(arr.map(r=>(r.designation||'').trim()).filter(Boolean))].length;
+    const hasDesig=(desigCount>0)&&(mode==='assoc');
+
+    const expandCell=hasDesig
+      ?`<td style="padding:7px 6px;text-align:center;vertical-align:middle;width:44px;">
+          <button class="expand-btn" id="tkt-exp-btn-${i}" onclick="toggleTktDesig(${i})" title="Show designation breakdown">
+            <span class="expand-arrow">▶</span> <span style="font-size:10px;">${desigCount}d</span>
+          </button>
+        </td>`
+      :`<td style="padding:7px 6px;text-align:center;width:44px;"><span style="color:#ddd;font-size:11px;">—</span></td>`;
+
+    const nameCell=`<td style="padding:7px 10px;font-weight:700;color:${col};cursor:pointer;white-space:nowrap;" onclick="openGroupPop('${sg}','${col}','${mode}')">${esc(grp)}</td>`;
+
+    // main assoc row
+    tableRows+=tktRow(arr,grp,col,'border-bottom:1px solid #fef3c7;',nameCell,expandCell);
+
+    // collapsible designation sub-rows
+    if(hasDesig){
+      const desigContent=buildTktDesigRows(grp,arr,i);
+      tableRows+=`<tr id="tkt-exp-row-${i}" style="display:none;">
+        <td colspan="10" style="padding:0;border-bottom:2px solid #fde68a;">
+          <div style="background:linear-gradient(135deg,#fffbf4,#fff8ec);border-top:1.5px solid #fde68a;">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead><tr style="background:#fff3d0;">
+                <th style="padding:5px 8px;width:44px;border-bottom:1px solid #fde68a;"></th>
+                <th style="padding:5px 8px;text-align:left;font-weight:700;color:#b45309;font-size:10px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #fde68a;">Designation</th>
+                <th style="padding:5px 8px;text-align:center;font-weight:700;color:#4338ca;font-size:10px;border-bottom:1px solid #fde68a;">Visa Rcvd</th>
+                <th style="padding:5px 8px;text-align:center;font-weight:700;color:#b45309;font-size:10px;border-bottom:1px solid #fde68a;">ECR</th>
+                <th style="padding:5px 8px;text-align:center;font-weight:700;color:#059669;font-size:10px;border-bottom:1px solid #fde68a;">ECNR</th>
+                <th style="padding:5px 8px;text-align:center;font-weight:700;color:#d97706;font-size:10px;border-bottom:1px solid #fde68a;">Tkt Request</th>
+                <th style="padding:5px 8px;text-align:center;font-weight:700;color:#059669;font-size:10px;border-bottom:1px solid #fde68a;">Tkt Received</th>
+                <th style="padding:5px 8px;text-align:center;font-weight:700;color:#c0003a;font-size:10px;border-bottom:1px solid #fde68a;">Hold</th>
+                <th style="padding:5px 8px;text-align:center;font-weight:700;color:#526187;font-size:10px;border-bottom:1px solid #fde68a;">No Ticket</th>
+                <th style="padding:5px 8px;text-align:left;font-weight:700;color:#0284c7;font-size:10px;border-bottom:1px solid #fde68a;">Coverage</th>
+              </tr></thead>
+              <tbody>${desigContent}</tbody>
+            </table>
+          </div>
+        </td>
+      </tr>`;
+    }
+  });
+
+  body.innerHTML=`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead>${header}</thead>
+    <tbody>${tableRows}</tbody>
+  </table></div>`;
+}
+
+// ── TOGGLE TKT DESIGNATION BREAKUP ──
+function toggleTktDesig(idx){
+  const row=document.getElementById('tkt-exp-row-'+idx);
+  const btn=document.getElementById('tkt-exp-btn-'+idx);
+  if(!row||!btn)return;
+  const isOpen=row.style.display!=='none';
+  row.style.display=isOpen?'none':'table-row';
+  btn.classList.toggle('active',!isOpen);
+}
+
+// ── TKT DESIGNATION DRILL REGISTRY ──
+function openTktDesigDrillReg(key){
+  const e=window._tktDesigDrill?.[key];
+  if(!e){dwToast('No data','warn');return;}
+  openPop(e.title,e.rows,e.color);
+}
+
+// ── ONBOARD SECTION ──
+function renderOnbSection(D,mode){
+  const entries=getEntries(D,mode);const colorFn=gColorFn(mode);const p=pfx(mode);
+  const lbl=document.getElementById(p+'-onb-lbl');const body=document.getElementById(p+'-onb-body');
+  if(lbl)lbl.textContent=entries.length+' '+(mode==='assoc'?'associates':'designations');
+  body.innerHTML=`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead><tr style="background:#f0fff8;">
+      <th style="padding:8px 12px;text-align:left;font-weight:700;color:#0f766e;font-size:11px;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid #a7f3d0;">${mode==='assoc'?'Associate':'Designation'}</th>
+      <th style="padding:8px 12px;text-align:center;font-weight:700;color:#0f766e;font-size:11px;border-bottom:2px solid #a7f3d0;">Total</th>
+      <th style="padding:8px 12px;text-align:center;font-weight:700;color:#059669;font-size:11px;border-bottom:2px solid #a7f3d0;">✅ On-Board</th>
+      <th style="padding:8px 12px;text-align:center;font-weight:700;color:#dc2626;font-size:11px;border-bottom:2px solid #a7f3d0;">❌ Not-Onboard</th>
+      <th style="padding:8px 12px;text-align:left;font-weight:700;color:#0284c7;font-size:11px;border-bottom:2px solid #a7f3d0;">Onboard Rate</th>
+    </tr></thead>
+    <tbody>
+    ${entries.map(([grp,arr],i)=>{
+      const col=colorFn(i);const sg=grp.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      const onb=cnt(arr,'onboard','On-Board'),nob=cnt(arr,'onboard','Not-Onboard');
+      const total2=onb+nob;if(!total2)return'';
+      const pct=total2?Math.round(onb/total2*100):0;
+      return `<tr style="border-bottom:1px solid #ecfdf5;">
+        <td style="padding:8px 12px;font-weight:700;color:${col};cursor:pointer;" onclick="openGroupPop('${sg}','${col}','${mode}')">${esc(grp)}</td>
+        <td style="padding:8px 12px;text-align:center;font-weight:700;cursor:pointer;" onclick="openGroupPop('${sg}','${col}','${mode}')">${arr.length}</td>
+        <td style="padding:8px 12px;text-align:center;">${onb?`<span style="background:#d1fae5;color:#059669;padding:3px 12px;border-radius:14px;font-size:13px;font-weight:700;cursor:pointer;" onclick="openSubDrill('${sg}','onboard','On-Board','${C.green}','${mode}')">${onb}</span>`:'—'}</td>
+        <td style="padding:8px 12px;text-align:center;">${nob?`<span style="background:#fee2e2;color:#dc2626;padding:3px 12px;border-radius:14px;font-size:13px;font-weight:700;cursor:pointer;" onclick="openSubDrill('${sg}','onboard','Not-Onboard','${C.red}','${mode}')">${nob}</span>`:'—'}</td>
+        <td style="padding:8px 12px;"><div style="display:flex;align-items:center;gap:7px;">
+          <div style="flex:1;background:#dcfce7;border-radius:10px;height:10px;overflow:hidden;"><div style="height:10px;border-radius:10px;background:#059669;width:${pct}%;"></div></div>
+          <span style="font-size:11px;color:#059669;font-weight:700;min-width:34px;">${pct}%</span>
+        </div></td>
+      </tr>`;
+    }).filter(Boolean).join('')||'<tr><td colspan="5" style="text-align:center;padding:20px;color:#aaa;">No onboard data</td></tr>'}
+    </tbody></table></div>`;
+}
+
+// ── INSIGHTS SECTION ──
+function renderInsSection(D,mode){
+  const entries=getEntries(D,mode);const colorFn=gColorFn(mode);const p=pfx(mode);
+  const lbl=document.getElementById(p+'-ins-lbl');const body=document.getElementById(p+'-ins-body');
+  if(lbl)lbl.textContent=entries.length+' '+(mode==='assoc'?'associates':'designations');
+  window._insReg3=window._insReg3||{};
+  body.innerHTML=entries.map(([grp,arr],i)=>{
+    const col=colorFn(i);const ik='ins3_'+mode+'_'+i;
+    const accMedRecs=arr.filter(r=>r.acceptance==='Accepted'&&r.medStatus!=='Fit'&&r.medStatus!=='Unfit');
+    const visBalRecs=arr.filter(r=>(r.vdoc||'').includes('Sent')&&r.vstat!=='Received');
+    const tktBlkRecs=arr.filter(r=>r.vstat==='Received'&&r.tkt!=='Received'&&r.tkt!=='Request Raised');
+    const tktPayRecs=arr.filter(r=>r.tkt==='Received'&&(!r.paid||parseFloat(r.paid||0)===0));
+    const visa30Recs=arr.filter(r=>{const dl=daysDiff(r.vexpiry);return dl>=0&&dl<=30&&r.tkt!=='Received'&&r.tkt!=='Request Raised';});
+    const pass365Recs=arr.filter(r=>{const dl=daysDiff(r.passportExpiry);return dl>=0&&dl<365;});
+    const gl=gLabel(mode);
+    window._insReg3[ik+'_accMed']={rows:accMedRecs,title:gl+' '+grp+' — Accepted, Medical Pending',color:C.teal};
+    window._insReg3[ik+'_visBal']={rows:visBalRecs,title:gl+' '+grp+' — Visa Sent, Not Received',color:C.orange};
+    window._insReg3[ik+'_tktBlk']={rows:tktBlkRecs,title:gl+' '+grp+' — Visa Rcvd, Ticket Not Raised',color:C.orange};
+    window._insReg3[ik+'_tktPay']={rows:tktPayRecs,title:gl+' '+grp+' — Ticket Rcvd, Payment Missing',color:C.red};
+    window._insReg3[ik+'_visa30']={rows:visa30Recs,title:gl+' '+grp+' — Visa Expiring ≤30 Days',color:C.orange};
+    window._insReg3[ik+'_pass365']={rows:pass365Recs,title:gl+' '+grp+' — Passport Validity <365 Days',color:'#be185d'};
+    const alertCount=accMedRecs.length+visBalRecs.length+tktBlkRecs.length+tktPayRecs.length+visa30Recs.length+pass365Recs.length;
+    if(!alertCount)return'';
+    const irow=(em,label,n,bg,fg,rk)=>n?`
+      <div class="ii-row" style="background:${bg};border-color:${fg}25;">
+        <div class="ii-row-left"><span style="font-size:14px;">${em}</span>
+          <div style="font-size:11px;font-weight:700;color:${fg};">${label}${n>0&&(bg===C.orangeL||bg===C.redL)?` <span style="background:${fg};color:#fff;font-size:8px;font-weight:800;padding:1px 4px;border-radius:4px;margin-left:3px;">⚠</span>`:''}</div>
+        </div>
+        <span class="ii-count" style="background:${fg};color:#fff;" onclick="openInsReg3('${rk}')">${n} <span style="font-size:9px;opacity:.7">view</span></span>
+      </div>`:'';
+    return `<div style="padding:12px 14px;border-bottom:1px solid #f0f4ff;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-weight:700;font-size:13px;color:${col};">${esc(grp)}</span>
+        <span style="background:${col};color:#fff;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;">${alertCount} alerts</span>
+      </div>
+      ${irow('🩺','Accepted — Medical Pending',accMedRecs.length,C.tealL,C.teal,ik+'_accMed')}
+      ${irow('⏳','Visa Sent — Not Received',visBalRecs.length,C.orangeL,C.orange,ik+'_visBal')}
+      ${irow('🎫','Visa Rcvd — Ticket Not Raised',tktBlkRecs.length,C.orangeL,C.orange,ik+'_tktBlk')}
+      ${irow('🚨','Ticket Rcvd — Payment Missing',tktPayRecs.length,C.redL,C.red,ik+'_tktPay')}
+      ${irow('📅','Visa Expiring ≤30 Days',visa30Recs.length,C.orangeL,C.orange,ik+'_visa30')}
+      ${irow('🛂','Passport Validity &lt;365 Days',pass365Recs.length,'#fce7f3','#be185d',ik+'_pass365')}
+    </div>`;
+  }).filter(Boolean).join('')||'<div style="color:#aaa;padding:14px;text-align:center;">✅ No critical alerts</div>';
+}
+function openInsReg3(k){const e=window._insReg3?.[k];if(!e){dwToast('No data','warn');return;}openPop(e.title,e.rows,e.color);}
+
+// ── DRILL-DOWN HELPERS ──
+function openGroupPop(grp,col,mode){
+  const D=getFiltered();const key=getGroupKey(mode);
+  const rows=D.filter(r=>(r[key]||'Unknown')===grp);
+  openPop(gLabel(mode)+' '+grp,rows,col);
+}
+function openSubDrill(grp,field,val,col,mode){
+  const D=getFiltered();const key=getGroupKey(mode);
+  let rows=D.filter(r=>(r[key]||'Unknown')===grp);
+  if(field==='visaSent') rows=rows.filter(r=>(r.vdoc||'').includes('Sent'));
+  else if(field&&val)    rows=rows.filter(r=>r[field]===val);
+  openPop(gLabel(mode)+' '+grp+' — '+(val||field),rows,col);
+}
+function openSubDrillCustom(grp,type,mode){
+  const D=getFiltered();const key=getGroupKey(mode);
+  let rows=D.filter(r=>(r[key]||'Unknown')===grp);
+  if(type==='tktHold')  rows=rows.filter(r=>r.tkt&&r.tkt.toLowerCase().includes('hold'));
+  else if(type==='tktNone') rows=rows.filter(r=>!r.tkt);
+  const title=type==='tktHold'?'Ticket On Hold':'No Ticket Assigned';
+  openPop(gLabel(mode)+' '+grp+' — '+title,rows,'#526187');
+}
+function openTktEcrEcnr(grp,pstat,mode){
+  const D=getFiltered();const key=getGroupKey(mode);
+  const rows=D.filter(r=>(r[key]||'Unknown')===grp&&r.vstat==='Received'&&r.passportStatus===pstat);
+  openPop(gLabel(mode)+' '+grp+' — Visa Received · '+pstat,rows,pstat==='ECR'?'#b45309':'#059669');
+}
+function openGlobalDrill(k,title,mode){
+  const D=getFiltered();let rows=[];
+  if(k==='total')       rows=[...D];
+  else if(k==='visaSent') rows=D.filter(r=>(r.vdoc||'').includes('Sent'));
+  else if(k.includes(':')){ const[f,v]=k.split(':'); rows=D.filter(r=>r[f]===v); }
+  else rows=[...D];
+  openPop(title,rows,'#0049B7');
+}
+
+// ── POPUP ──
+let activeGrps=new Set(); // tracks currently selected group keys
+
+const GRP_OPTS=[
+  {l:'Designation',v:'designation'},{l:'Associate',v:'assocName'},
+  {l:'Result',v:'result'},{l:'Passport Status',v:'passportStatus'},
+  {l:'Medical',v:'medStatus'},{l:'Visa Status',v:'vstat'},
+  {l:'Ticket',v:'tkt'},{l:'Onboard',v:'onboard'},{l:'Company',v:'compName'},
+];
+// ── Popup column header colours (module-level for export use) ──
+const DW_GC={
+  empCode:['#eff6ff','#1d4ed8'],dept:['#eff6ff','#1d4ed8'],name:['#eff6ff','#1d4ed8'],designation:['#eff6ff','#1d4ed8'],
+  passport:['#fef9c3','#854d0e'],passportStatus:['#fef9c3','#854d0e'],passportExpiry:['#fef9c3','#854d0e'],passCustody:['#fdf4ff','#7e22ce'],
+  dob:['#f0fdf4','#15803d'],age:['#f0fdf4','#15803d'],phone:['#f0fdf4','#15803d'],whatsapp:['#f0fdf4','#15803d'],abroadExp:['#f0fdf4','#15803d'],localExp:['#f0fdf4','#15803d'],totalExp:['#f0fdf4','#15803d'],
+  assocCode:['#fdf4ff','#7e22ce'],assocName:['#fdf4ff','#7e22ce'],assocPhone:['#fdf4ff','#7e22ce'],
+  compName:['#fff7ed','#c2410c'],intDate:['#fff7ed','#c2410c'],campaign:['#fff7ed','#c2410c'],
+  result:['#f0fdf4','#065f46'],grade:['#f0fdf4','#065f46'],totalSal:['#f0fdf4','#065f46'],acceptance:['#f0fdf4','#065f46'],offerReceipt:['#f0fdf4','#065f46'],recruitType:['#f0fdf4','#065f46'],
+  medType:['#ccfbf1','#0f766e'],medRef:['#ccfbf1','#0f766e'],medStatus:['#ccfbf1','#0f766e'],
+  vdoc:['#eef2ff','#4338ca'],vstat:['#eef2ff','#4338ca'],vexpiry:['#eef2ff','#4338ca'],visaType:['#eef2ff','#4338ca'],visaNumber:['#eef2ff','#4338ca'],vverify:['#eef2ff','#4338ca'],vcorrType:['#eef2ff','#4338ca'],vcorrRemarks:['#eef2ff','#4338ca'],
+  emig:['#e0f2fe','#0369a1'],tkt:['#e0f2fe','#0369a1'],tvlDate:['#e0f2fe','#0369a1'],sector:['#e0f2fe','#0369a1'],
+  nomName:['#fffbeb','#92400e'],nomRelation:['#fffbeb','#92400e'],nomAccount:['#fffbeb','#92400e'],nomIFSC:['#fffbeb','#92400e'],nomBank:['#fffbeb','#92400e'],
+  flightNum:['#ecfdf5','#065f46'],airline:['#ecfdf5','#065f46'],arrivalDate:['#ecfdf5','#065f46'],arrivalTime:['#ecfdf5','#065f46'],
+  onboard:['#fce7f3','#be185d'],noreason:['#fce7f3','#be185d'],
+  paid:['#ede9fe','#6d28d9'],paidAt:['#ede9fe','#6d28d9'],payDate:['#ede9fe','#6d28d9'],invoiceNumber:['#ede9fe','#6d28d9'],
+};
+const DW_GL={empCode:'Identity',dept:'Identity',name:'Identity',designation:'Identity',
+  passport:'Passport',passportStatus:'Passport',passportExpiry:'Passport',passCustody:'Passport',
+  dob:'Personal',age:'Personal',phone:'Personal',whatsapp:'Personal',abroadExp:'Personal',localExp:'Personal',totalExp:'Personal',
+  assocCode:'Associate',assocName:'Associate',assocPhone:'Associate',
+  compName:'Company',intDate:'Company',campaign:'Company',
+  result:'Selection',grade:'Selection',totalSal:'Selection',acceptance:'Selection',offerReceipt:'Selection',recruitType:'Selection',
+  medType:'Medical',medRef:'Medical',medStatus:'Medical',
+  vdoc:'Visa',vstat:'Visa',vexpiry:'Visa',visaType:'Visa',visaNumber:'Visa',vverify:'Visa',vcorrType:'Visa',vcorrRemarks:'Visa',
+  emig:'Travel',tkt:'Travel',tvlDate:'Travel',sector:'Travel',
+  nomName:'Nominee Bank',nomRelation:'Nominee Bank',nomAccount:'Nominee Bank',nomIFSC:'Nominee Bank',nomBank:'Nominee Bank',
+  flightNum:'Flight Details',airline:'Flight Details',arrivalDate:'Flight Details',arrivalTime:'Flight Details',
+  onboard:'Onboard',noreason:'Onboard',
+  paid:'Payment',paidAt:'Payment',payDate:'Payment',invoiceNumber:'Payment',
+};
+const PCOLS=[
+  {k:'empCode',l:'Emp Code'},{k:'dept',l:'Department'},{k:'name',l:'Name'},{k:'designation',l:'Designation'},
+  {k:'passport',l:'Passport No'},{k:'passportStatus',l:'P.Status'},{k:'passportExpiry',l:'P.Expiry'},{k:'passCustody',l:'Pass Custody'},
+  {k:'dob',l:'DOB'},{k:'age',l:'Age'},{k:'phone',l:'Phone'},{k:'whatsapp',l:'WhatsApp'},{k:'abroadExp',l:'Abroad Exp'},{k:'localExp',l:'Local Exp'},{k:'totalExp',l:'Total Exp'},
+  {k:'assocCode',l:'Assoc Code'},{k:'assocName',l:'Assoc Name'},{k:'assocPhone',l:'Assoc Phone'},
+  {k:'compName',l:'Company'},{k:'intDate',l:'Interview Date'},{k:'campaign',l:'Campaign'},
+  {k:'result',l:'Result'},{k:'grade',l:'Grade'},{k:'totalSal',l:'Total Salary'},{k:'acceptance',l:'Acceptance'},{k:'offerReceipt',l:'Offer Receipt'},{k:'recruitType',l:'Recruit Type'},
+  {k:'medType',l:'Med Type'},{k:'medRef',l:'Med Ref'},{k:'medStatus',l:'Med Status'},
+  {k:'vdoc',l:'Visa Doc'},{k:'vstat',l:'Visa Status'},{k:'vexpiry',l:'Visa Expiry'},{k:'visaType',l:'Visa Type'},{k:'visaNumber',l:'Visa No/Ref'},
+  {k:'vverify',l:'Visa Verify'},{k:'vcorrType',l:'VCorr Type'},{k:'vcorrRemarks',l:'VCorr Remarks'},
+  {k:'emig',l:'Emigration'},{k:'tkt',l:'Ticket Status'},{k:'tvlDate',l:'Travel Date'},{k:'sector',l:'Travel Sector'},
+  {k:'nomName',l:'Nominee Name'},{k:'nomRelation',l:'Relation'},{k:'nomAccount',l:'Bank Acc No'},{k:'nomIFSC',l:'IFSC Code'},{k:'nomBank',l:'Bank Name'},
+  {k:'flightNum',l:'Flight No'},{k:'airline',l:'Airline'},{k:'arrivalDate',l:'Arrival Date'},{k:'arrivalTime',l:'Arrival Time'},
+  {k:'onboard',l:'Onboard Status'},{k:'noreason',l:'Not-OB Reason'},
+  {k:'paid',l:'Paid Amount'},{k:'paidAt',l:'Paid At'},{k:'payDate',l:'Pay Date'},{k:'invoiceNumber',l:'Invoice No'},
+];
+const PBADGE={
+  passportStatus:{ECR:['#fef3c7','#92400e'],ECNR:['#d1fae5','#065f46'],_:['#f3f4f6','#374151']},
+  result:{Selected:['#d1fae5','#065f46'],Rejected:['#fee2e2','#991b1b'],Hold:['#fef3c7','#92400e'],Backup:['#dbeafe','#1e40af'],_:['#f3f4f6','#374151']},
+  acceptance:{Accepted:['#d1fae5','#065f46'],Declined:['#fee2e2','#991b1b'],Hold:['#fef3c7','#92400e'],_:['#f3f4f6','#374151']},
+  medStatus:{Fit:['#d1fae5','#065f46'],Unfit:['#fee2e2','#991b1b'],Pending:['#f3f4f6','#374151'],'Fit-Report awaiting':['#fef3c7','#92400e'],Remedial:['#fef3c7','#92400e'],_:['#f3f4f6','#374151']},
+  vstat:{Received:['#d1fae5','#065f46'],Reject:['#fee2e2','#991b1b'],'Under Visa':['#dbeafe','#1e40af'],_:['#fef3c7','#92400e']},
+  tkt:{Received:['#d1fae5','#065f46'],'Request Raised':['#fef3c7','#92400e'],_:['#f3f4f6','#374151']},
+  onboard:{'On-Board':['#d1fae5','#065f46'],'Not-Onboard':['#fee2e2','#991b1b'],_:['#f3f4f6','#374151']},
+  offerReceipt:{Received:['#d1fae5','#065f46'],'Awaiting Offer':['#fef3c7','#92400e'],'—':['#f3f4f6','#374151'],_:['#f3f4f6','#374151']},
+  recruitType:{Free:['#d4f5e9','#007a40'],'—':['#f3f4f6','#374151'],_:['#ffe0e6','#c0003a']},
+  passCustody:{'With-Associate':['#ede9fe','#7c3aed'],'With-Kannan':['#ccfbf1','#0f766e'],'With-Candidate':['#dbeafe','#1d4ed8'],'With-Other Agency':['#fef3c7','#d97706'],Unknown:['#f3f4f6','#4b5563'],'Under Renewal':['#fce7f3','#db2777'],'—':['#f3f4f6','#374151'],_:['#f3f4f6','#374151']},
+  visaType:{Employment:['#dbeafe','#1d4ed8'],Visit:['#ccfbf1','#0f766e'],Work:['#ede9fe','#7c3aed'],'—':['#f3f4f6','#374151'],_:['#f3f4f6','#374151']},
+};
+function fmtMDot(m){const y=Math.floor(m/12),mo=m%12;return String(y).padStart(2,'0')+'.'+String(mo).padStart(2,'0');}
+function parseM(s){if(!s)return 0;if(!isNaN(s))return parseInt(s)||0;let t=0;const ym=s.match(/(\d+)y/),mm=s.match(/(\d+)m/);if(ym)t+=parseInt(ym[1])*12;if(mm)t+=parseInt(mm[1]);return t;}
+function pbdg(v,f){
+  if(f==='abroadExp'||f==='localExp'||f==='totalExp'){const n=parseInt(v)||0;const s=n?fmtMDot(n):'—';return `<span style="font-size:11px;color:#374151">${esc(s)}</span>`;}
+  v=v||'—';const m=PBADGE[f];
+  if(m){const p=m[v]||m['_']||['#f3f4f6','#374151'];return`<span style="background:${p[0]};color:${p[1]};padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap">${esc(v)}</span>`;}
+  return`<span style="font-size:11px;color:#374151">${esc(v)}</span>`;
+}
+function openPop(title,rows,color,sub){
+  popRows=[...rows];window._popCurRows=[...rows];window._popTitle=title;popSortKey='';popSortDir=1;activeGrps.clear();
+  const mo=document.getElementById('dw-pop-mo');
+  document.getElementById('pop-hdr-div').style.background=color||'#0049B7';
+  document.getElementById('pop-title').textContent=title;
+  document.getElementById('pop-sub').textContent=sub||(rows.length+' record'+(rows.length!==1?'s':''));
+  document.getElementById('pop-grp-row').innerHTML=`
+    <span style="font-size:9.5px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.5px;color:#fff;flex-shrink:0;">Group:</span>
+    ${GRP_OPTS.map(o=>`<button class="pop-grp-btn" data-grp="${o.v}" onclick="toggleGrp('${o.v}',this)">${o.l}</button>`).join('')}
+    <button class="pop-grp-btn" onclick="clearGrps()" style="opacity:.7;">✕ Clear</button>
+    <div style="margin-left:auto;"><input id="pop-srch" placeholder="🔍 Search…" oninput="srchPop(this.value)"/></div>`;
+  buildPopTable(rows);mo.classList.add('open');
+}
+
+function toggleGrp(grp,btn){
+  if(activeGrps.has(grp)){activeGrps.delete(grp);btn.classList.remove('active');}
+  else{activeGrps.add(grp);btn.classList.add('active');}
+  applyGrps();
+}
+function clearGrps(){
+  activeGrps.clear();
+  document.querySelectorAll('.pop-grp-btn[data-grp]').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pop-tbody').innerHTML=mkPopRows(popRows);
+}
+function applyGrps(){
+  if(!activeGrps.size){document.getElementById('pop-tbody').innerHTML=mkPopRows(popRows);return;}
+  // Sort by all active group keys combined (primary→secondary→…)
+  const keys=[...activeGrps];
+  let sorted=[...popRows].sort((a,b)=>{
+    for(const k of keys){
+      const av=a[k]||'',bv=b[k]||'';
+      if(av<bv)return-1;if(av>bv)return 1;
+    }
+    return 0;
+  });
+  // Insert separator rows for combined group values
+  const ws=[];let lastKey=null;
+  sorted.forEach(r=>{
+    const groupVal=keys.map(k=>r[k]||'—').join(' · ');
+    if(groupVal!==lastKey){
+      const n=sorted.filter(x=>keys.map(k=>x[k]||'—').join(' · ')===groupVal).length;
+      ws.push({_sep:true,_v:groupVal,_n:n});lastKey=groupVal;
+    }
+    ws.push(r);
+  });
+  document.getElementById('pop-tbody').innerHTML=ws.map(r=>r._sep
+    ?`<tr class="sep-row"><td colspan="99">▸ ${esc(r._v)} <span style="background:#0049B7;color:#fff;padding:1px 7px;border-radius:9px;font-size:10px;margin-left:5px;">${r._n}</span></td></tr>`
+    :`<tr onmouseenter="this.style.background='#f8faff'" onmouseleave="this.style.background=''">
+       ${PCOLS.map(c=>`<td title="${esc(r[c.k]||'')}">${pbdg(r[c.k]||'',c.k)}</td>`).join('')}
+     </tr>`
+  ).join('');
+}
+function buildPopTable(rows){
+  const GRP={
+    empCode:['#eff6ff','#1d4ed8'],dept:['#eff6ff','#1d4ed8'],name:['#eff6ff','#1d4ed8'],designation:['#eff6ff','#1d4ed8'],
+    passport:['#fef9c3','#854d0e'],passportStatus:['#fef9c3','#854d0e'],passportExpiry:['#fef9c3','#854d0e'],passCustody:['#fdf4ff','#7e22ce'],
+    dob:['#f0fdf4','#15803d'],age:['#f0fdf4','#15803d'],phone:['#f0fdf4','#15803d'],whatsapp:['#f0fdf4','#15803d'],abroadExp:['#f0fdf4','#15803d'],localExp:['#f0fdf4','#15803d'],totalExp:['#f0fdf4','#15803d'],
+    assocCode:['#fdf4ff','#7e22ce'],assocName:['#fdf4ff','#7e22ce'],assocPhone:['#fdf4ff','#7e22ce'],
+    compName:['#fff7ed','#c2410c'],intDate:['#fff7ed','#c2410c'],campaign:['#fff7ed','#c2410c'],
+    result:['#f0fdf4','#065f46'],grade:['#f0fdf4','#065f46'],totalSal:['#f0fdf4','#065f46'],acceptance:['#f0fdf4','#065f46'],offerReceipt:['#f0fdf4','#065f46'],recruitType:['#f0fdf4','#065f46'],
+    medType:['#ccfbf1','#0f766e'],medRef:['#ccfbf1','#0f766e'],medStatus:['#ccfbf1','#0f766e'],
+    vdoc:['#eef2ff','#4338ca'],vstat:['#eef2ff','#4338ca'],vexpiry:['#eef2ff','#4338ca'],visaType:['#eef2ff','#4338ca'],visaNumber:['#eef2ff','#4338ca'],vverify:['#eef2ff','#4338ca'],vcorrType:['#eef2ff','#4338ca'],vcorrRemarks:['#eef2ff','#4338ca'],
+    emig:['#e0f2fe','#0369a1'],tkt:['#e0f2fe','#0369a1'],tvlDate:['#e0f2fe','#0369a1'],sector:['#e0f2fe','#0369a1'],
+    nomName:['#fffbeb','#92400e'],nomRelation:['#fffbeb','#92400e'],nomAccount:['#fffbeb','#92400e'],nomIFSC:['#fffbeb','#92400e'],nomBank:['#fffbeb','#92400e'],
+    flightNum:['#ecfdf5','#065f46'],airline:['#ecfdf5','#065f46'],arrivalDate:['#ecfdf5','#065f46'],arrivalTime:['#ecfdf5','#065f46'],
+    onboard:['#fce7f3','#be185d'],noreason:['#fce7f3','#be185d'],
+    paid:['#ede9fe','#6d28d9'],paidAt:['#ede9fe','#6d28d9'],payDate:['#ede9fe','#6d28d9'],invoiceNumber:['#ede9fe','#6d28d9'],
+  };
+  document.getElementById('pop-thead').innerHTML=`<tr>${PCOLS.map(c=>{const g=GRP[c.k]||['#f3f4f6','#374151'];return`<th style="background:${g[0]};color:${g[1]};border-bottom:2px solid ${g[1]}28;border-right:1px solid ${g[1]}18;" onclick="srtPop(this,'${c.k}')">${esc(c.l)} <span style="opacity:.4;font-size:8px;">⇅</span></th>`;}).join('')}</tr>`;
+  document.getElementById('pop-tbody').innerHTML=mkPopRows(rows);
+}
+function mkPopRows(rows){
+  if(!rows.length)return`<tr><td colspan="99" style="text-align:center;padding:30px;color:#aaa;">No records</td></tr>`;
+  return rows.map(r=>`<tr onmouseenter="this.style.background='#f8faff'" onmouseleave="this.style.background=''">
+    ${PCOLS.map(c=>`<td title="${esc(r[c.k]||'')}">${pbdg(r[c.k]||'',c.k)}</td>`).join('')}
+  </tr>`).join('');
+}
+function srtPop(th,k){
+  if(popSortKey===k)popSortDir*=-1;else{popSortKey=k;popSortDir=1;}
+  document.querySelectorAll('#pop-thead th span').forEach(s=>s.textContent='⇅');
+  th.querySelector('span').textContent=popSortDir===1?'↑':'↓';
+  const s=[...popRows].sort((a,b)=>{const av=a[k]||'',bv=b[k]||'';return av<bv?-popSortDir:av>bv?popSortDir:0;});
+  document.getElementById('pop-tbody').innerHTML=mkPopRows(s);
+}
+function srchPop(q){
+  const ql=q.toLowerCase();
+  const f=ql?popRows.filter(r=>PCOLS.some(c=>(r[c.k]||'').toString().toLowerCase().includes(ql))):popRows;
+  window._popCurRows=f;
+  document.getElementById('pop-tbody').innerHTML=mkPopRows(f);
+}
+function closePop(){document.getElementById('dw-pop-mo').classList.remove('open');}
+function dwPopExport(){
+  if(!popRows.length){dwToast('No data','warn');return;}
+  const curRows=window._popCurRows||popRows;
+  const isFiltered=curRows.length!==popRows.length;
+  let em=document.getElementById('dw-exp-choice-mo');
+  if(em)em.remove();
+  em=document.createElement('div');em.id='dw-exp-choice-mo';
+  em.style.cssText='position:fixed;inset:0;background:rgba(13,27,42,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:10px';
+  const btnBase='padding:10px 14px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px';
+  em.innerHTML=`<div style="background:#fff;border-radius:12px;padding:26px;width:92%;max-width:500px;box-shadow:0 16px 48px rgba(0,0,0,.22)">
+    <div style="font-size:15px;font-weight:800;color:#0d1b2a;margin-bottom:4px">&#128228; Export Options</div>
+    <div style="font-size:12px;color:#526187;margin-bottom:18px">Choose scope and format:</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
+      <thead><tr>
+        <th style="padding:6px 10px;background:#f3f4f6;font-size:10px;color:#526187;font-weight:700;border-radius:6px 0 0 0;text-align:left">SCOPE</th>
+        <th style="padding:6px 10px;background:#f3f4f6;font-size:10px;color:#526187;font-weight:700;text-align:center">&#128203; HTML Report</th>
+        <th style="padding:6px 10px;background:#f3f4f6;font-size:10px;color:#526187;font-weight:700;border-radius:0 6px 0 0;text-align:center">&#128202; Excel (.xls)</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-top:1px solid #f0f4ff">
+          <td style="padding:10px;font-size:12px;font-weight:700;color:#0d1b2a">&#128203; Full List<br><span style="font-size:10px;color:#888;font-weight:400">All ${popRows.length} records</span></td>
+          <td style="padding:8px;text-align:center"><button onclick="_dwDoExp('all','html')" style="${btnBase};background:#0049B7;color:#fff">&#127760; HTML</button></td>
+          <td style="padding:8px;text-align:center"><button onclick="_dwDoExp('all','xls')" style="${btnBase};background:#1d6f42;color:#fff">&#128202; Excel</button></td>
+        </tr>
+        ${isFiltered?`<tr style="border-top:1px solid #f0f4ff">
+          <td style="padding:10px;font-size:12px;font-weight:700;color:#0d1b2a">&#128269; Filtered List<br><span style="font-size:10px;color:#888;font-weight:400">${curRows.length} records</span></td>
+          <td style="padding:8px;text-align:center"><button onclick="_dwDoExp('cur','html')" style="${btnBase};background:#0f766e;color:#fff">&#127760; HTML</button></td>
+          <td style="padding:8px;text-align:center"><button onclick="_dwDoExp('cur','xls')" style="${btnBase};background:#166534;color:#fff">&#128202; Excel</button></td>
+        </tr>`:''}
+      </tbody>
+    </table>
+    <button onclick="document.getElementById('dw-exp-choice-mo').remove()" style="width:100%;padding:9px;background:#f3f4f6;color:#526187;border:none;border-radius:7px;font-size:12px;cursor:pointer">&#10005; Cancel</button>
+  </div>`;
+  document.body.appendChild(em);
+  em.addEventListener('click',ev=>{if(ev.target===em)em.remove();});
+}
+function _dwDoExp(scope,fmt){
+  document.getElementById('dw-exp-choice-mo')?.remove();
+  const rows=scope==='cur'?(window._popCurRows||popRows):popRows;
+  if(!rows.length){dwToast('No data','warn');return;}
+  if(fmt==='xls'){_dwExpXls(rows);return;}
+  _dwExpHtml(rows);
+}
+function _dwExpHtml(rows){
+  const cols=PCOLS.map(c=>{const g=DW_GC[c.k]||['#f3f4f6','#374151'];return{...c,bg:g[0],cl:g[1]};});
+  const STATUS_COLORS={'Fit':'#d1fae5|#065f46','Unfit':'#fee2e2|#991b1b','Pending':'#fef9c3|#854d0e',
+    'Selected':'#d1fae5|#065f46','Rejected':'#fee2e2|#991b1b','Hold':'#fef3c7|#92400e',
+    'Accepted':'#d1fae5|#065f46','Declined':'#fee2e2|#991b1b','Received':'#d1fae5|#065f46',
+    'Request Raised':'#dbeafe|#1e40af','Cleared':'#d1fae5|#065f46','On-Board':'#d1fae5|#065f46',
+    'Not-Onboard':'#fee2e2|#991b1b','ECR':'#fef3c7|#92400e','ECNR':'#ede9fe|#5b21b6',
+    'Free':'#d4f5e9|#007a40','Yes':'#d1fae5|#065f46','No':'#fee2e2|#991b1b'};
+  const BK=['result','medStatus','vstat','emig','tkt','onboard','acceptance','passportStatus','offerReceipt','recruitType','visaType'];
+  // Group band
+  const groups=[];let lg=null,gs=0,gsi=0;
+  cols.forEach((c,i)=>{if(DW_GL[c.k]!==lg){if(lg!==null)groups.push({g:lg,span:gs,bg:cols[gsi].bg,cl:cols[gsi].cl});lg=DW_GL[c.k];gs=1;gsi=i;}else gs++;});
+  if(lg!==null)groups.push({g:lg,span:gs,bg:cols[gsi].bg,cl:cols[gsi].cl});
+  const grpRow=groups.map(g=>`<th colspan="${g.span}" style="padding:4px 8px;background:${g.bg};color:${g.cl};font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;border-right:2px solid #fff;text-align:center">${g.g}</th>`).join('');
+  const colHd=cols.map(c=>`<th style="padding:6px 8px;background:${c.bg};color:${c.cl};font-size:10px;font-weight:800;white-space:nowrap;border-right:1px solid #fff;border-bottom:2px solid ${c.cl}33;text-align:left;cursor:pointer" onclick="sortTable('${c.k}')">${c.l} <span style="opacity:.4;font-size:8px">&#8645;</span></th>`).join('');
+  // Dropdowns for badge cols
+  const uniqueVals={};
+  BK.forEach(k=>{if(cols.some(c=>c.k===k)){const vals=[...new Set(rows.map(r=>r[k]||'').filter(Boolean))].sort();if(vals.length>1&&vals.length<=20)uniqueVals[k]=vals;}});
+  const dropdownsHtml=Object.entries(uniqueVals).map(([k,vals])=>{
+    const col=cols.find(c=>c.k===k);const label=col?col.l:k;
+    return`<div style="display:flex;flex-direction:column;gap:3px;min-width:130px"><label style="font-size:9px;font-weight:700;color:#526187;text-transform:uppercase;letter-spacing:.5px">${label}</label><select id="flt_${k}" onchange="applyFilters()" style="padding:5px 8px;border:1px solid #dde8ff;border-radius:6px;font-size:11px;color:#0d1b2a;background:#fff;cursor:pointer"><option value="">All</option>${vals.map(v=>{const sc=STATUS_COLORS[v];const[bg,cl]=(sc||'#f3f4f6|#374151').split('|');return`<option value="${v}" style="background:${bg};color:${cl};font-weight:700">${v}</option>`;}).join('')}</select></div>`;
+  }).join('');
+  const rowsJson=JSON.stringify(rows.map(r=>{const o={};cols.forEach(c=>{o[c.k]=r[c.k]||'';});return o;}));
+  const colsJson=JSON.stringify(cols.map(c=>({k:c.k,l:c.l,bg:c.bg,cl:c.cl})));
+  const expTitle=window._popTitle||'Export';
+  const now=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${expTitle}</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',Arial,sans-serif;background:#f0f4ff;color:#1e293b}
+.hdr{background:linear-gradient(135deg,#0049B7,#1565c0);color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.hdr h1{font-size:15px;font-weight:800}.hdr .meta{font-size:11px;opacity:.85;text-align:right}
+.filter-bar{background:#fff;border-bottom:2px solid #dde8ff;padding:12px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.sw{display:flex;flex-direction:column;gap:3px;flex:1;min-width:180px}.sw label{font-size:9px;font-weight:700;color:#526187;text-transform:uppercase;letter-spacing:.5px}
+.sw input{padding:5px 10px;border:1px solid #dde8ff;border-radius:6px;font-size:12px;color:#0d1b2a;outline:none}
+.sw input:focus{border-color:#0049B7;box-shadow:0 0 0 3px #0049b720}
+.stats{background:#f8faff;border-bottom:1px solid #dde8ff;padding:7px 18px;font-size:11px;color:#526187;display:flex;align-items:center;gap:16px}
+.wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:max-content}
+tbody tr:hover{background:#eef4ff!important}
+.btn{padding:6px 14px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer}
+.btn-r{background:#f3f4f6;color:#526187;border:1px solid #dde8ff}.btn-p{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff}
+@media print{.filter-bar,.stats,.btn{display:none!important}body{background:#fff}}</style></head>
+<body>
+<div class="hdr"><div><h1>&#128203; ${expTitle}</h1><div style="font-size:11px;opacity:.8;margin-top:3px">Exported: ${now}</div></div>
+<div class="meta"><span id="vc">${rows.length}</span> of ${rows.length} records<div style="margin-top:6px"><button class="btn btn-p" onclick="window.print()">&#128424; Print</button></div></div></div>
+<div class="filter-bar"><div class="sw"><label>&#128269; Global Search</label><input type="text" id="flt_search" placeholder="Search all columns…" oninput="applyFilters()"/></div>
+${dropdownsHtml}<div style="display:flex;gap:8px;align-items:flex-end"><button class="btn btn-r" onclick="resetFilters()">&#10005; Reset</button></div></div>
+<div class="stats"><span>Showing <strong id="vc2">${rows.length}</strong> of <strong>${rows.length}</strong> records</span><span id="af" style="color:#0049B7;font-weight:600"></span></div>
+<div class="wrap"><table id="mainTable"><thead><tr id="grp">${grpRow}</tr><tr id="ch">${colHd}</tr></thead><tbody id="tbody"></tbody></table></div>
+<script>
+const ALL=${rowsJson};const COLS=${colsJson};
+const SC=${JSON.stringify(STATUS_COLORS)};const BK=${JSON.stringify(BK)};
+let _sk=null,_sd=1;
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function badge(v,k){if(!v)return'<span style="color:#aaa">&#8212;</span>';const sc=SC[v];if(sc&&BK.includes(k)){const[bg,cl]=sc.split('|');return\`<span style="background:\${bg};color:\${cl};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap">\${esc(v)}</span>\`;}return esc(v);}
+function renderRows(data){document.getElementById('tbody').innerHTML=data.map((r,i)=>\`<tr style="background:\${i%2===0?'#fff':'#f8faff'}">\${COLS.map(c=>\`<td style="padding:6px 9px;font-size:11px;border-right:1px solid #e8edf8;border-bottom:1px solid #eef1f8;white-space:nowrap">\${badge(r[c.k]||'',c.k)}</td>\`).join('')}</tr>\`).join('');document.getElementById('vc').textContent=data.length;document.getElementById('vc2').textContent=data.length;}
+function applyFilters(){const q=(document.getElementById('flt_search')?.value||'').toLowerCase();const active=[];let data=ALL.filter(r=>{if(q&&!COLS.some(c=>(r[c.k]||'').toLowerCase().includes(q)))return false;for(const c of COLS){const el=document.getElementById('flt_'+c.k);if(el&&el.value&&(r[c.k]||'')!==el.value)return false;}return true;});if(q)active.push(\`Search:"\${q}"\`);COLS.forEach(c=>{const el=document.getElementById('flt_'+c.k);if(el&&el.value)active.push(\`\${c.l}:\${el.value}\`);});document.getElementById('af').textContent=active.length?\`Active: \${active.join(' | ')}\`:'';if(_sk)data=[...data].sort((a,b)=>{const av=(a[_sk]||'').toLowerCase(),bv=(b[_sk]||'').toLowerCase();return av<bv?-_sd:av>bv?_sd:0;});renderRows(data);}
+function sortTable(k){if(_sk===k)_sd*=-1;else{_sk=k;_sd=1;}applyFilters();}
+function resetFilters(){document.getElementById('flt_search').value='';COLS.forEach(c=>{const el=document.getElementById('flt_'+c.k);if(el)el.value='';});_sk=null;_sd=1;applyFilters();}
+renderRows(ALL);
+<\/script></body></html>`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+  a.download='Export_'+expTitle.replace(/[^a-z0-9]/gi,'_')+'_'+new Date().toISOString().slice(0,10)+'.html';
+  a.click();dwToast('Exported '+rows.length+' records as interactive HTML','ok');
+}
+function _dwExpXls(rows){
+  if(!rows.length){dwToast('No data','warn');return;}
+  const cols=PCOLS.map(c=>{const g=DW_GC[c.k]||['#f3f4f6','#374151'];return{...c,bg:g[0],cl:g[1]};});
+  const SC={'Fit':'#d1fae5|#065f46','Unfit':'#fee2e2|#991b1b','Pending':'#fef9c3|#854d0e',
+    'Selected':'#d1fae5|#065f46','Rejected':'#fee2e2|#991b1b','Hold':'#fef3c7|#92400e',
+    'Accepted':'#d1fae5|#065f46','Declined':'#fee2e2|#991b1b','Received':'#d1fae5|#065f46',
+    'Request Raised':'#dbeafe|#1e40af','On-Board':'#d1fae5|#065f46','Not-Onboard':'#fee2e2|#991b1b',
+    'ECR':'#fef3c7|#92400e','ECNR':'#ede9fe|#5b21b6','Free':'#d4f5e9|#007a40'};
+  const BK=['result','medStatus','vstat','emig','tkt','onboard','acceptance','passportStatus','offerReceipt','recruitType','visaType'];
+  const groups=[];let lg=null,gs=0,gsi=0;
+  cols.forEach((c,i)=>{const gl=DW_GL[c.k]||'Other';if(gl!==lg){if(lg!==null)groups.push({g:lg,span:gs,bg:cols[gsi].bg,cl:cols[gsi].cl});lg=gl;gs=1;gsi=i;}else gs++;});
+  if(lg!==null)groups.push({g:lg,span:gs,bg:cols[gsi].bg,cl:cols[gsi].cl});
+  const expTitle=window._popTitle||'Export';
+  function buildXlsx(){
+    const X=window.XLSXStyle;
+    function rgb(h){return'FF'+(h||'#ffffff').replace('#','').toUpperCase().padEnd(6,'0');}
+    function cs(bg,cl,bold,sz,ha){return{fill:{fgColor:{rgb:rgb(bg)}},font:{color:{rgb:rgb(cl)},bold:!!bold,sz:sz||10,name:'Calibri'},alignment:{horizontal:ha||'left',vertical:'center',wrapText:false},border:{bottom:{style:'thin',color:{rgb:'FFE8EDF8'}},right:{style:'thin',color:{rgb:'FFE8EDF8'}}}};}
+    const wb=X.utils.book_new();const ws={};const merges=[];let ri=0;const nc=cols.length;
+    function sc2(r,c,v,s){ws[X.utils.encode_cell({r,c})]={v:String(v||''),t:'s',s};}
+    const now=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    const ts=cs('#0049B7','#ffffff',true,12,'left');
+    for(let c=0;c<nc;c++)sc2(ri,c,c===0?`${expTitle} | ${rows.length} records | ${now}`:'',ts);
+    merges.push({s:{r:ri,c:0},e:{r:ri,c:nc-1}});ri++;
+    let co=0;groups.forEach(g=>{const gs2=cs(g.bg,g.cl,true,8,'center');for(let c=0;c<g.span;c++)sc2(ri,co+c,c===0?g.g:'',gs2);if(g.span>1)merges.push({s:{r:ri,c:co},e:{r:ri,c:co+g.span-1}});co+=g.span;});ri++;
+    cols.forEach((c,i)=>sc2(ri,i,c.l,cs(c.bg,c.cl,true,9,'left')));ri++;
+    rows.forEach((r,idx)=>{const rbg=idx%2===0?'#ffffff':'#f0f4ff';cols.forEach((c,ci)=>{const v=r[c.k]||'';const sv=SC[v]&&BK.includes(c.k)?SC[v]:null;const bg=sv?sv.split('|')[0]:rbg;const cl=sv?sv.split('|')[1]:'#1e293b';sc2(ri,ci,v,cs(bg,cl,!!sv,10,sv?'center':'left'));});ri++;});
+    ws['!ref']=X.utils.encode_range({s:{r:0,c:0},e:{r:ri-1,c:nc-1}});ws['!merges']=merges;
+    ws['!cols']=cols.map(c=>({wch:Math.min(Math.max(c.l.length+4,10),28)}));ws['!rows']=[{hpt:24},{hpt:16},{hpt:20}];
+    X.utils.book_append_sheet(wb,ws,'Export');
+    X.writeFile(wb,'Export_'+expTitle.replace(/[^a-z0-9]/gi,'_')+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+    dwToast('Exported '+rows.length+' records as .xlsx','ok');
+  }
+  if(typeof window.XLSXStyle!=='undefined'){buildXlsx();}
+  else{dwToast('Loading Excel library…','info');const s=document.createElement('script');s.src='https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';s.onload=()=>{window.XLSXStyle=window.XLSXStyle||window.XLSX;buildXlsx();};s.onerror=()=>dwToast('Could not load Excel library','err');document.head.appendChild(s);}
+}
+function dwExportCSV(){
+  if(!allRecs.length){dwToast('No data','warn');return;}
+  _showDwExpModal('main');
+}
+function _showDwExpModal(ctx){
+  let m=document.getElementById('dw-export-modal');if(m)m.remove();
+  m=document.createElement('div');m.id='dw-export-modal';
+  m.style='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  const D=getFiltered();
+  const btns=ctx==='pop'
+    ?`<button onclick="_doDwExp('drill')" style="padding:10px 16px;background:#0049B7;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer">📊 Export Drill-down Records (${popRows.length})</button>
+       <button onclick="_doDwExp('filtered')" style="padding:10px 16px;background:#0f766e;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer">🔍 Export All Filtered Records (${D.length})</button>`
+    :`<button onclick="_doDwExp('all')" style="padding:10px 16px;background:#0049B7;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer">📋 Export All Records (${allRecs.length})</button>
+       <button onclick="_doDwExp('filtered')" style="padding:10px 16px;background:#0f766e;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer">🔍 Export Filtered Records (${D.length})</button>`;
+  m.innerHTML=`<div style="background:#fff;border-radius:12px;padding:28px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <h3 style="font-size:15px;margin:0 0 8px;color:#0d1b2a">📤 Export CSV</h3>
+    <p style="font-size:13px;color:#526187;margin:0 0 18px">Choose which records to export:</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${btns}
+      <button onclick="document.getElementById('dw-export-modal').remove()" style="padding:10px 16px;background:#f3f4f6;color:#526187;border:none;border-radius:7px;font-size:13px;cursor:pointer">✕ Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',ev=>{if(ev.target===m)m.remove();});
+}
+function _doDwExp(scope){
+  document.getElementById('dw-export-modal')?.remove();
+  const data=scope==='all'?allRecs:scope==='drill'?popRows:getFiltered();
+  const ev=v=>{const s=(v||'').toString().replace(/"/g,'""');return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s}"`:s;};
+  const csv=[PCOLS.map(c=>c.l).join(','),...data.map(r=>PCOLS.map(c=>ev(r[c.k]||'')).join(','))].join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='Export_'+scope+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  dwToast('Exported '+data.length+' records ('+scope+')','ok');
+}
+
+
+function dwReload(){dwLoad();}
+
+// Close dropdown outside
+document.getElementById('dw-pop-mo').addEventListener('click',ev=>{if(ev.target===document.getElementById('dw-pop-mo'))closePop();});
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded',dwLoad);
+</script>
+</body>
+</html>

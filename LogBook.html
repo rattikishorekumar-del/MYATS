@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Log Book — Kannan Enterprises</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bb:#0049B7;--yq:#ff1d58;--mint:#7EE787;--teal:#0f766e;--pur:#7c3aed;
+  --bg:#f0f4ff;--panel:#fff;--panel2:#f2f5ff;--muted:#526187;--text:#0d1b2a;--tmuted:#3a4a6a;
+  --border:#c9d1e6;--hbg:#f0f5ff;--rhov:#f8fbff;--r:10px;--sh:0 2px 12px rgba(0,73,183,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+
+/* HEADER */
+.app-header{background:linear-gradient(135deg,var(--bb),#1a6dff);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;position:sticky;top:0;z-index:300;box-shadow:0 2px 10px rgba(0,73,183,.3);}
+.app-header h1{font-family:'Space Mono',monospace;font-size:14px;letter-spacing:1px;}
+.hdr-right{display:flex;gap:8px;align-items:center;}
+.hbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;}
+.hbtn:hover{background:rgba(255,255,255,.25);}
+.user-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;color:#fff;}
+.rbadge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;background:#ff1d58;color:#fff;}
+
+.container{max-width:1600px;margin:0 auto;padding:20px 24px 60px;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);text-align:center;}
+.stat .sv{font-size:24px;font-weight:700;font-family:'Space Mono',monospace;}
+.stat .sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
+
+/* FILTERS */
+.filter-bar{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;box-shadow:var(--sh);}
+.filter-bar .fg{display:flex;flex-direction:column;gap:4px;}
+.filter-bar label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.filter-bar input,.filter-bar select{padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;min-width:150px;}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--bb);outline:none;}
+
+/* CARD + TABLE — NO sticky thead, scroll inside twrap */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--hbg);border-bottom:1px solid var(--border);}
+.card-hdr h3{font-size:12px;font-weight:700;color:var(--bb);text-transform:uppercase;letter-spacing:.5px;}
+.twrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 380px);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{
+  background:var(--hbg);
+  padding:9px 12px;
+  text-align:left;
+  font-weight:700;
+  color:var(--bb);
+  white-space:nowrap;
+  border-bottom:2px solid var(--border);
+  /* Sticky relative to .twrap scroll container */
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;cursor:pointer;}
+tbody tr:hover{background:var(--rhov);}
+tbody td{padding:8px 12px;color:var(--tmuted);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nodata{text-align:center;padding:48px;color:var(--muted);cursor:default;}
+
+/* ACTION BADGES */
+.act-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.act-ADD{background:#d4f5e9;color:#007a40;}
+.act-UPDATE{background:#e8f0fe;color:#0049B7;}
+.act-DELETE{background:#ffe0e6;color:#c0003a;}
+.act-LOGIN{background:#f0fdf4;color:#059669;}
+.act-LOGOUT{background:#f3f4f6;color:#6b7280;}
+.act-VIEW{background:#fef9c3;color:#854d0e;}
+.act-ERROR{background:#fff0f3;color:#be123c;}
+
+/* MODULE BADGE */
+.mod-badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;background:#e8f0fe;color:var(--bb);}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;gap:6px;padding:12px 16px;background:var(--hbg);border-top:1px solid var(--border);flex-wrap:wrap;}
+.pg-btn{padding:4px 10px;border:1px solid var(--border);border-radius:5px;cursor:pointer;font-size:12px;background:#fff;color:var(--tmuted);}
+.pg-btn:hover:not(:disabled){border-color:var(--bb);color:var(--bb);}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed;}
+.pg-btn.active{background:var(--bb);color:#fff;border-color:var(--bb);}
+.pg-info{font-size:11px;color:var(--muted);margin-left:6px;}
+
+/* SYNC BAR */
+.syncbar{display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:8px 14px;margin-bottom:14px;font-size:12px;color:var(--tmuted);box-shadow:var(--sh);}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:#aaa;flex-shrink:0;}
+.conn-dot.ok{background:var(--mint);}
+.conn-dot.sync{background:#f59e0b;animation:blink .8s infinite;}
+.conn-dot.err{background:var(--yq);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* DETAIL MODAL */
+.mo{position:fixed;inset:0;background:rgba(13,27,42,.55);z-index:600;display:none;align-items:center;justify-content:center;padding:20px;}
+.mo.open{display:flex;}
+.mbox{background:#fff;border-radius:14px;width:100%;max-width:680px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.25);}
+.mbox-hdr{padding:16px 20px;background:linear-gradient(135deg,var(--bb),#1a6dff);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.mbox-hdr h3{font-size:13px;font-weight:700;color:#fff;font-family:'Space Mono',monospace;}
+.mbox-close{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.mbox-body{padding:0;overflow-y:auto;flex:1;}
+
+/* DETAIL TABLE */
+.detail-table{width:100%;border-collapse:collapse;}
+.detail-table tr{border-bottom:1px solid var(--border);}
+.detail-table tr:last-child{border-bottom:none;}
+.detail-table td:first-child{
+  font-size:10px;font-weight:700;color:var(--muted);padding:10px 16px;
+  width:130px;background:#f8fbff;text-transform:uppercase;letter-spacing:.3px;
+  vertical-align:top;white-space:nowrap;
+}
+.detail-table td:last-child{font-size:12px;color:var(--text);padding:10px 16px;word-break:break-word;}
+
+/* DIFF BLOCKS */
+.diff-section{padding:12px 16px;background:#f8f9fc;border-top:2px solid var(--border);}
+.diff-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.diff-col h4{font-size:10px;font-weight:700;margin-bottom:6px;padding:4px 8px;border-radius:5px;}
+.diff-old h4{background:#ffe0e6;color:#c0003a;}
+.diff-new h4{background:#d4f5e9;color:#007a40;}
+.diff-content{font-family:'Space Mono',monospace;font-size:11px;line-height:1.7;white-space:pre-wrap;word-break:break-word;padding:8px;border-radius:6px;border:1px solid var(--border);background:#fff;min-height:40px;max-height:300px;overflow-y:auto;}
+.diff-old .diff-content{border-color:#f5c6cb;background:#fff8f8;}
+.diff-new .diff-content{border-color:#b2dfdb;background:#f8fff8;}
+
+/* changed field highlight */
+.changed-field{background:#fff3cd;padding:1px 4px;border-radius:3px;font-weight:600;color:#856404;}
+
+/* LOADER & TOAST */
+#loader{position:fixed;inset:0;background:rgba(0,73,183,.88);z-index:800;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;}
+.ring{width:40px;height:40px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#tc{position:fixed;bottom:20px;right:18px;z-index:700;display:flex;flex-direction:column;gap:7px;}
+.toast{background:#1a2540;color:#fff;padding:9px 14px;border-radius:7px;font-size:12px;box-shadow:0 3px 12px rgba(0,0,0,.2);animation:tin .25s ease;max-width:320px;}
+.toast.ok{border-left:3px solid var(--mint);}
+.toast.err{border-left:3px solid var(--yq);}
+.toast.info{border-left:3px solid #00DDFF;}
+@keyframes tin{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+@media(max-width:700px){.diff-grid{grid-template-columns:1fr;}.container{padding:12px;}}
+</style>
+</head>
+<body>
+
+<!-- PORTAL AUTH GUARD -->
+<script>
+(function(){
+  function getPS(){try{var s=sessionStorage.getItem('ke_portal_session')||sessionStorage.getItem('ke_session');if(!s)return null;var o=JSON.parse(s);if(Date.now()-o.loginTime>10*60*60*1000)return null;return o;}catch(e){return null;}}
+  var session=getPS();
+  var isLocal=window.location.protocol==='file:';
+  if(!isLocal&&!session){if(confirm('Not logged in. Go to Portal?'))window.location.href='Index.html';return;}
+  document.addEventListener('DOMContentLoaded',function(){
+    if(!session)return;
+    var bar=document.createElement('div');
+    bar.style='background:linear-gradient(90deg,#002d8a,#0049B7);color:#fff;padding:5px 20px;font-size:11px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:DM Sans,sans-serif;';
+    var rc={superadmin:'#ff1d58',admin:'#f59e0b',manager:'#7EE787',mobilizationplus:'#7c3aed',mobilization:'#0f766e'}[session.role]||'#526187';
+    bar.innerHTML='<a href="Index.html" style="color:#fff;text-decoration:none;font-weight:700;font-size:12px">&#8592; Portal</a><div style="display:flex;align-items:center;gap:8px"><span style="opacity:.75">'+session.name+'</span><span style="background:'+rc+';color:#fff;padding:1px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase">'+session.role+'</span><button onclick="sessionStorage.clear();window.location.href=\'Index.html\';" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px">Logout</button></div>';
+    document.body.insertBefore(bar,document.body.firstChild);
+  });
+})();
+</script>
+
+<div id="loader"><div class="ring"></div><p id="lmsg">Loading logs…</p></div>
+
+<div class="app-header">
+  <h1>📒 LOG BOOK — Activity Tracker</h1>
+  <div class="hdr-right">
+    <div class="user-pill"><span id="hdr-name">—</span>&nbsp;<span class="rbadge" id="hdr-role"></span></div>
+    <button class="hbtn" onclick="loadLogs()">🔄 Refresh</button>
+    <button class="hbtn" onclick="exportCSV()">📤 Export CSV</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Sync Bar -->
+  <div class="syncbar">
+    <span class="conn-dot sync" id="cdot"></span>
+    <span id="clbl">Connecting…</span>
+    <span id="synctime" style="margin-left:auto;font-size:11px;color:var(--muted)"></span>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats" id="stats-row"></div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="fg">
+      <label>Search</label>
+      <input id="f-q" placeholder="🔍 User, record, description…" oninput="applyFilters()"/>
+    </div>
+    <div class="fg">
+      <label>Module</label>
+      <select id="f-mod" onchange="applyFilters()">
+        <option value="">All Modules</option>
+        <option value="Portal">Portal</option>
+        <option value="Candidate">Candidate</option>
+        <option value="Mobilization">Mobilization</option>
+        <option value="Associate">Associate</option>
+        <option value="Company">Company</option>
+        <option value="Selection">Selection</option>
+        <option value="Invoice">Invoice</option>
+        <option value="UserManagement">User Management</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Action</label>
+      <select id="f-act" onchange="applyFilters()">
+        <option value="">All Actions</option>
+        <option value="ADD">ADD</option>
+        <option value="UPDATE">UPDATE</option>
+        <option value="DELETE">DELETE</option>
+        <option value="LOGIN">LOGIN</option>
+        <option value="LOGOUT">LOGOUT</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>User</label>
+      <select id="f-user" onchange="applyFilters()"><option value="">All Users</option></select>
+    </div>
+    <div class="fg">
+      <label>From Date</label>
+      <input type="date" id="f-from" onchange="applyFilters()"/>
+    </div>
+    <div class="fg">
+      <label>To Date</label>
+      <input type="date" id="f-to" onchange="applyFilters()"/>
+    </div>
+    <div class="fg" style="justify-content:flex-end">
+      <button class="hbtn" style="background:#526187;border-color:#526187;padding:7px 14px" onclick="clearFilters()">✕ Clear</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-hdr">
+      <h3>📋 Activity Logs</h3>
+      <span id="tinfo" style="font-size:11px;color:var(--muted)"></span>
+    </div>
+    <div class="twrap" id="twrap">
+      <table id="log-table">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th style="min-width:140px">Timestamp</th>
+            <th style="min-width:120px">User</th>
+            <th style="min-width:80px">Role</th>
+            <th style="min-width:110px">Module</th>
+            <th style="min-width:80px">Action</th>
+            <th style="min-width:120px">Record</th>
+            <th style="min-width:200px">Description</th>
+            <th style="min-width:100px">IP / Host</th>
+            <th style="width:50px">Status</th>
+            <th style="width:60px">Detail</th>
+          </tr>
+        </thead>
+        <tbody id="log-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="mo" id="detail-mo">
+  <div class="mbox">
+    <div class="mbox-hdr">
+      <h3 id="detail-title">Log Detail</h3>
+      <button class="mbox-close" onclick="document.getElementById('detail-mo').classList.remove('open')">×</button>
+    </div>
+    <div class="mbox-body" id="detail-body"></div>
+  </div>
+</div>
+
+<div id="tc"></div>
+
+<script>
+const WEB   = 'https://script.google.com/macros/s/AKfycbzNoK4d2MdtTciXBRHcZ_aE8UIPpIcnWcXIzNBCd8Hxg2EwpEhP1e_Hpu528PHsHs4z/exec';
+const SHEET = 'Logs';
+const PAGE_SIZE = 50;
+
+let allLogs=[], filteredLogs=[], currentPage=1;
+
+// HELPERS
+const gv  = id=>(document.getElementById(id)?.value||'').trim();
+const sv  = (id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
+const ld  = m=>{document.getElementById('loader').style.display='flex';if(m)document.getElementById('lmsg').textContent=m;};
+const hd  = ()=>document.getElementById('loader').style.display='none';
+const esc = s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function toast(m,t='info'){
+  const d=document.createElement('div');d.className='toast '+t;d.textContent=m;
+  document.getElementById('tc').appendChild(d);setTimeout(()=>d.remove(),3500);
+}
+function setConn(st,lbl){
+  const d=document.getElementById('cdot'),l=document.getElementById('clbl');
+  if(d) d.className='conn-dot '+(st==='ok'?'ok':st==='err'?'err':'sync');
+  if(l) l.textContent=lbl;
+}
+
+// API (JSONP + fetch)
+function api(p){
+  return new Promise((resolve,reject)=>{
+    const u=new URL(WEB);
+    Object.entries(p).forEach(([k,v])=>u.searchParams.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
+    if(window.location.protocol==='file:'){
+      const cb='ke_cb_'+Date.now();
+      u.searchParams.set('callback',cb);
+      const s=document.createElement('script');s.src=u.toString();
+      window[cb]=(data)=>{delete window[cb];if(document.body.contains(s))document.body.removeChild(s);data.success?resolve(data):reject(new Error(data.error||'Error'));};
+      s.onerror=()=>{delete window[cb];if(document.body.contains(s))document.body.removeChild(s);reject(new Error('Network error'));};
+      document.body.appendChild(s);
+    } else {
+      fetch(u.toString()).then(r=>r.text()).then(t=>{const j=JSON.parse(t);j.success?resolve(j):reject(new Error(j.error||'Error'));}).catch(reject);
+    }
+  });
+}
+
+// LOAD LOGS
+async function loadLogs(){
+  setConn('sync','Loading…');
+  ld('Loading activity logs…');
+  try{
+    const r = await api({action:'getAll', sheet:SHEET});
+    allLogs = (r.data||[]).map(x=>({
+      _row    : x._row,
+      id      : x.LogID||'',
+      ts      : x.Timestamp||'',
+      user    : x.UserName||'',
+      username: x.Username||'',
+      role    : x.Role||'',
+      module  : x.Module||'',
+      action  : x.Action||'',
+      recId   : x.RecordID||'',
+      recName : x.RecordName||'',
+      desc    : x.Description||'',
+      oldVal  : x.OldValue||'',
+      newVal  : x.NewValue||'',
+      ip      : x.IPAddress||'',
+      mac     : x.MACAddress||'',
+      host    : x.Hostname||'',
+      status  : x.Status||'Success',
+      browser : x.Browser||'',
+    })).filter(x=>x.ts).reverse(); // newest first
+
+    // Populate user filter
+    const users = [...new Set(allLogs.map(l=>l.user).filter(Boolean))].sort();
+    const sel = document.getElementById('f-user');
+    sel.innerHTML = '<option value="">All Users</option>' + users.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('');
+
+    setConn('ok',`Connected · ${allLogs.length} log entries`);
+    document.getElementById('synctime').textContent = 'Synced ' + new Date().toLocaleTimeString();
+
+    // Set header user info
+    try{
+      const s=JSON.parse(sessionStorage.getItem('ke_portal_session')||sessionStorage.getItem('ke_session')||'{}');
+      if(s.name){ document.getElementById('hdr-name').textContent=s.name; document.getElementById('hdr-role').textContent=s.role||''; }
+    }catch(e){}
+
+    applyFilters();
+    renderStats();
+  }catch(err){
+    setConn('err','Error loading logs');
+    toast('Load failed: '+err.message,'err');
+  }finally{ hd(); }
+}
+
+// STATS
+function renderStats(){
+  const total  = allLogs.length;
+  const today  = new Date().toISOString().slice(0,10);
+  const tCount = allLogs.filter(l=>l.ts.startsWith(today)).length;
+  const ac     = {ADD:0,UPDATE:0,DELETE:0,LOGIN:0};
+  allLogs.forEach(l=>{ if(ac.hasOwnProperty(l.action)) ac[l.action]++; });
+  const uCount = new Set(allLogs.map(l=>l.username).filter(Boolean)).size;
+  document.getElementById('stats-row').innerHTML=[
+    {l:'Total Logs',  v:total,    c:'#1d4ed8'},
+    {l:'Today',       v:tCount,   c:'#059669'},
+    {l:'Additions',   v:ac.ADD,   c:'#007a40'},
+    {l:'Updates',     v:ac.UPDATE,c:'#0049B7'},
+    {l:'Deletions',   v:ac.DELETE,c:'#dc2626'},
+    {l:'Logins',      v:ac.LOGIN, c:'#7c3aed'},
+    {l:'Active Users',v:uCount,   c:'#0f766e'},
+  ].map(s=>`<div class="stat"><div class="sv" style="color:${s.c}">${s.v}</div><div class="sl">${s.l}</div></div>`).join('');
+}
+
+// FILTERS
+function applyFilters(){
+  const q  = (gv('f-q')||'').toLowerCase();
+  const fm = gv('f-mod'), fa=gv('f-act'), fu=gv('f-user');
+  const fd = gv('f-from'), ft=gv('f-to');
+  filteredLogs = allLogs.filter(l=>{
+    if(q && ![l.user,l.username,l.recId,l.recName,l.desc,l.module,l.ip,l.mac,l.host,l.oldVal,l.newVal,l.browser].join(' ').toLowerCase().includes(q)) return false;
+    if(fm && l.module!==fm) return false;
+    if(fa && l.action!==fa) return false;
+    if(fu && l.user!==fu)   return false;
+    if(fd && l.ts.slice(0,10)<fd) return false;
+    if(ft && l.ts.slice(0,10)>ft) return false;
+    return true;
+  });
+  currentPage = 1;
+  renderTable();
+}
+function clearFilters(){
+  ['f-q','f-mod','f-act','f-user','f-from','f-to'].forEach(id=>sv(id,''));
+  applyFilters();
+}
+
+// RENDER TABLE
+function renderTable(){
+  const total = filteredLogs.length;
+  const pages = Math.max(1, Math.ceil(total/PAGE_SIZE));
+  currentPage = Math.min(currentPage, pages);
+  const start = (currentPage-1)*PAGE_SIZE;
+  const page  = filteredLogs.slice(start, start+PAGE_SIZE);
+
+  document.getElementById('tinfo').textContent =
+    total ? `Showing ${start+1}–${Math.min(start+PAGE_SIZE,total)} of ${total} entries` : 'No entries';
+
+  const tbody = document.getElementById('log-tbody');
+  if(!page.length){
+    tbody.innerHTML = `<tr><td colspan="11" class="nodata">${allLogs.length?'No logs match filters.':'No activity logs yet.'}</td></tr>`;
+  } else {
+    tbody.innerHTML = page.map((l,i)=>{
+      const ts  = l.ts ? l.ts.replace('T',' ').slice(0,19) : '—';
+      const ac  = l.action||'VIEW';
+      const hasChanges = l.oldVal || l.newVal;
+      const statusIcon = l.status==='Success'
+        ? '<span style="color:#059669;font-weight:700;font-size:14px">✓</span>'
+        : '<span style="color:#dc2626;font-weight:700;font-size:14px">✗</span>';
+      return `<tr onclick="showDetail(${start+i})">
+        <td style="font-weight:700;color:var(--bb);text-align:center">${start+i+1}</td>
+        <td style="font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap">${ts}</td>
+        <td style="font-weight:600;color:var(--text)">${esc(l.user||'—')}</td>
+        <td style="font-size:10px;color:var(--muted)">${esc(l.role||'—')}</td>
+        <td><span class="mod-badge">${esc(l.module||'—')}</span></td>
+        <td><span class="act-badge act-${ac}">${ac}${hasChanges?'&nbsp;✎':''}</span></td>
+        <td style="font-family:'Space Mono',monospace;font-size:10px" title="${esc(l.recId)}">${esc(l.recName||l.recId||'—')}</td>
+        <td title="${esc(l.desc)}">${esc((l.desc||'—').slice(0,60))}${l.desc&&l.desc.length>60?'…':''}</td>
+        <td style="font-size:10px;color:var(--muted)">${esc(l.host||l.ip||'—')}</td>
+        <td style="text-align:center">${statusIcon}</td>
+        <td style="text-align:center">
+          <button onclick="event.stopPropagation();showDetail(${start+i})"
+            style="background:var(--bb);color:#fff;border:none;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:10px;font-weight:600">
+            👁 View
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  renderPagination(pages, total);
+}
+
+function renderPagination(pages, total){
+  const pg = document.getElementById('pagination');
+  if(pages<=1){ pg.innerHTML=`<span class="pg-info">${total} total entries</span>`; return; }
+  let html = `<button class="pg-btn" onclick="changePage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹ Prev</button>`;
+  const s=Math.max(1,currentPage-2), e=Math.min(pages,currentPage+2);
+  if(s>1) html+=`<button class="pg-btn" onclick="changePage(1)">1</button>${s>2?'<span style="padding:0 4px">…</span>':''}`;
+  for(let p=s;p<=e;p++) html+=`<button class="pg-btn${p===currentPage?' active':''}" onclick="changePage(${p})">${p}</button>`;
+  if(e<pages) html+=`${e<pages-1?'<span style="padding:0 4px">…</span>':''}<button class="pg-btn" onclick="changePage(${pages})">${pages}</button>`;
+  html+=`<button class="pg-btn" onclick="changePage(${currentPage+1})" ${currentPage===pages?'disabled':''}>Next ›</button>`;
+  html+=`<span class="pg-info">${total} total entries</span>`;
+  pg.innerHTML = html;
+}
+function changePage(p){ currentPage=p; renderTable(); document.getElementById('twrap').scrollTop=0; }
+
+// SHOW DETAIL
+function showDetail(idx){
+  const l = filteredLogs[idx]; if(!l) return;
+  const ts = l.ts ? l.ts.replace('T',' ') : '—';
+  const ac = l.action||'VIEW';
+  document.getElementById('detail-title').textContent = `${ac} — ${l.module} — ${ts.slice(0,19)}`;
+
+  // Parse old/new values — try JSON first, fallback to plain text
+  function parseVal(v){
+    if(!v) return null;
+    try{ return JSON.parse(v); }catch(e){ return v; }
+  }
+  const oldObj = parseVal(l.oldVal);
+  const newObj = parseVal(l.newVal);
+
+  // Build changed fields comparison
+  function buildDiff(oldO, newO){
+    if(!oldO && !newO) return '';
+    // If both are objects, show field-by-field comparison
+    if(typeof oldO==='object' && oldO!==null && typeof newO==='object' && newO!==null){
+      const allKeys = [...new Set([...Object.keys(oldO||{}), ...Object.keys(newO||{})])];
+      const changed = allKeys.filter(k=> JSON.stringify((oldO||{})[k]) !== JSON.stringify((newO||{})[k]));
+      if(changed.length===0) return '<div style="padding:12px;color:var(--muted);font-size:12px">No field changes detected.</div>';
+      let html = `<div class="diff-section"><div class="diff-title">📝 Changed Fields (${changed.length})</div>`;
+      html += '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+      html += '<tr style="background:var(--hbg)"><th style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border)">Field</th><th style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);color:#c0003a">Before</th><th style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);color:#007a40">After</th></tr>';
+      changed.forEach(k=>{
+        const ov = String((oldO||{})[k]||'—');
+        const nv = String((newO||{})[k]||'—');
+        html+=`<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:6px 10px;font-weight:600;color:var(--bb);font-family:'Space Mono',monospace;font-size:10px">${esc(k)}</td>
+          <td style="padding:6px 10px;background:#fff8f8;color:#c0003a;font-family:'Space Mono',monospace;font-size:10px;max-width:200px;word-break:break-all">${esc(ov.slice(0,200))}</td>
+          <td style="padding:6px 10px;background:#f8fff8;color:#007a40;font-family:'Space Mono',monospace;font-size:10px;max-width:200px;word-break:break-all">${esc(nv.slice(0,200))}</td>
+        </tr>`;
+      });
+      html += '</table></div>';
+      return html;
+    }
+    // Plain text diff
+    if(!oldO && !newO) return '';
+    const ov = typeof oldO==='string' ? oldO : JSON.stringify(oldO,null,2);
+    const nv = typeof newO==='string' ? newO : JSON.stringify(newO,null,2);
+    return `<div class="diff-section">
+      <div class="diff-title">📝 Before &amp; After</div>
+      <div class="diff-grid">
+        <div class="diff-col diff-old"><h4>Before</h4><div class="diff-content">${esc(ov||'(empty)')}</div></div>
+        <div class="diff-col diff-new"><h4>After</h4><div class="diff-content">${esc(nv||'(empty)')}</div></div>
+      </div>
+    </div>`;
+  }
+
+  const dr = (label,val)=>`<tr><td>${label}</td><td>${val}</td></tr>`;
+  let html = `<table class="detail-table">
+    ${dr('Timestamp',   `<strong style="font-family:'Space Mono',monospace">${ts}</strong>`)}
+    ${dr('User',        `<strong>${esc(l.user)}</strong> <span style="color:var(--muted);font-size:11px">(@${esc(l.username)})</span>`)}
+    ${dr('Role',        `<span style="font-weight:600;text-transform:capitalize">${esc(l.role||'—')}</span>`)}
+    ${dr('Module',      `<span class="mod-badge">${esc(l.module)}</span>`)}
+    ${dr('Action',      `<span class="act-badge act-${ac}">${ac}</span>`)}
+    ${dr('Record ID',   `<span style="font-family:'Space Mono',monospace;font-size:11px">${esc(l.recId||'—')}</span>`)}
+    ${dr('Record Name', `<strong>${esc(l.recName||'—')}</strong>`)}
+    ${dr('Description', esc(l.desc||'—'))}
+    ${dr('IP Address',  `<span style="font-family:monospace;font-size:12px;color:#0049B7">${esc(l.ip||'—')}</span>`)}
+    ${dr('MAC Address', `<span style="font-family:monospace;font-size:11px;color:${l.mac&&!l.mac.includes('N/A')?'#0f766e':'#9ca3af'}">${esc(l.mac||'N/A — Not accessible via browser')}</span>`)}
+    ${dr('Hostname',    esc(l.host||'—'))}
+    ${dr('Browser / OS',esc(l.browser||'—'))}
+    ${dr('Status',      l.status==='Success'?'<span style="color:#059669;font-weight:700">✓ Success</span>':'<span style="color:#dc2626;font-weight:700">✗ Failed</span>')}
+  </table>`;
+
+  // Append diff section
+  html += buildDiff(oldObj, newObj);
+
+  document.getElementById('detail-body').innerHTML = html;
+  document.getElementById('detail-mo').classList.add('open');
+}
+
+// EXPORT CSV
+function exportCSV(){
+  if(!filteredLogs.length){ toast('No data to export','warn'); return; }
+  const cols=['Timestamp','UserName','Username','Role','Module','Action','RecordID','RecordName','Description','OldValue','NewValue','IPAddress','MACAddress','Hostname','Browser','Status'];
+  const keys=['ts','user','username','role','module','action','recId','recName','desc','oldVal','newVal','ip','mac','host','browser','status'];
+  const e2=v=>{const s=String(v||'');return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s.replace(/"/g,'""')}"`:s;};
+  const csv=[cols.join(','),...filteredLogs.map(r=>keys.map(k=>e2(r[k])).join(','))].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='logbook_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('CSV exported ('+filteredLogs.length+' rows)','ok');
+}
+// INIT
+loadLogs();
+</script>
+</body>
+</html>

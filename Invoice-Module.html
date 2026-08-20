@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Invoice Module — Kannan Enterprises</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bb:#0049B7;--yq:#ff1d58;--mint:#7EE787;--org:#e85d04;--teal:#0f766e;--pur:#7c3aed;
+  --bg:#f0f4ff;--panel:#fff;--panel2:#f2f5ff;--muted:#526187;--text:#0d1b2a;--tmuted:#3a4a6a;
+  --border:#c9d1e6;--hbg:#f0f5ff;--rhov:#f8fbff;--r:10px;--sh:0 2px 12px rgba(0,73,183,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+
+/* AUTH PORTAL BAR - injected by portal guard */
+#ke-portal-bar{position:sticky;top:0;z-index:9999;}
+
+/* HEADER */
+.app-header{background:linear-gradient(135deg,var(--bb),#1a6dff);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;position:sticky;top:0;z-index:200;box-shadow:0 2px 10px rgba(0,73,183,.25);}
+.app-header h1{font-family:'Space Mono',monospace;font-size:14px;letter-spacing:1px;display:flex;align-items:center;gap:8px;}
+.hdr-right{display:flex;gap:8px;align-items:center;}
+.conn-badge{display:flex;align-items:center;gap:6px;font-size:11px;background:rgba(255,255,255,.12);padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.2);}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;}
+.conn-dot.ok{background:var(--mint);box-shadow:0 0 5px rgba(126,231,135,.8);}
+.conn-dot.err{background:var(--yq);}
+.conn-dot.sync{background:#f59e0b;animation:blink .8s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;}
+.hbtn:hover{background:rgba(255,255,255,.25);}
+
+/* TABS */
+.tabs{display:flex;background:var(--bb);padding:0 24px;gap:2px;}
+.tab{padding:10px 18px;cursor:pointer;color:rgba(255,255,255,.6);border-bottom:3px solid transparent;font-size:13px;font-weight:600;transition:all .2s;}
+.tab.active{color:#fff;border-bottom-color:var(--yq);}
+.pane{display:none;padding:20px 24px 80px;max-width:1400px;margin:0 auto;}
+.pane.active{display:block;}
+
+/* CARDS */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);margin-bottom:18px;box-shadow:var(--sh);}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--hbg);border-bottom:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;}
+.card-hdr h3{font-size:12px;font-weight:700;color:var(--bb);letter-spacing:.5px;text-transform:uppercase;}
+.card-body{padding:18px;}
+
+/* FORM */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.fgrid.col2{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));}
+.fw{grid-column:1/-1;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fl{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+.fi{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--panel);outline:none;transition:border .15s;}
+.fi:focus{border-color:var(--bb);box-shadow:0 0 0 2px rgba(0,73,183,.08);}
+.fi:read-only{background:#f8f9fc;color:var(--muted);}
+.hint{font-size:10px;color:var(--muted);margin-top:2px;}
+textarea.fi{resize:vertical;min-height:64px;}
+
+/* INVOICE NUMBER */
+.inv-num-builder{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.inv-part{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--bb);}
+.inv-sep{color:var(--muted);font-weight:700;}
+.inv-inp{width:70px;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-family:'Space Mono',monospace;font-size:12px;text-align:center;}
+.inv-inp:focus{border-color:var(--bb);outline:none;}
+.inv-preview{font-family:'Space Mono',monospace;font-size:12px;color:var(--bb);background:#e8f0fe;padding:5px 12px;border-radius:6px;font-weight:700;margin-top:6px;word-break:break-all;}
+
+/* COMPANY COMBO */
+.combo-wrap{position:relative;}
+.combo-input-row{display:flex;gap:5px;}
+.combo-input-row input{flex:1;}
+.combo-dd{position:absolute;top:calc(100% + 3px);left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:7px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:400;max-height:220px;overflow-y:auto;display:none;}
+.combo-dd.open{display:block;}
+.combo-item{padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;transition:background .1s;}
+.combo-item:hover{background:var(--hbg);}
+.combo-item:last-child{border-bottom:none;}
+.combo-item .ci-name{font-weight:600;color:var(--text);}
+.combo-item .ci-code{font-size:10px;color:var(--muted);margin-top:1px;}
+.combo-empty{padding:12px;text-align:center;font-size:12px;color:var(--muted);}
+
+/* CREDIT NOTE PANEL */
+.cn-panel{display:none;background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:16px;margin-top:12px;}
+.cn-panel.show{display:block;}
+.cn-title{font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;}
+
+/* FILE UPLOAD */
+.upload-zone{border:2px dashed var(--border);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbff;}
+.upload-zone:hover{border-color:var(--bb);background:#f0f5ff;}
+.upload-zone.has-file{border-color:#059669;background:#f0fdf4;border-style:solid;}
+.uz-icon{font-size:28px;margin-bottom:6px;}
+.uz-text{font-size:12px;color:var(--muted);}
+.uz-name{font-size:12px;font-weight:600;color:#059669;margin-top:4px;}
+.file-actions{display:flex;gap:6px;justify-content:center;margin-top:8px;}
+.file-input{display:none;}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:5px;}
+.btnp{background:var(--bb);color:#fff;}.btnp:hover{background:#003a9e;}
+.btnd{background:var(--yq);color:#fff;}.btnd:hover{background:#cc0040;}
+.btno{background:transparent;border:1px solid var(--border);color:var(--tmuted);}.btno:hover{border-color:var(--bb);color:var(--bb);}
+.btng{background:#059669;color:#fff;}.btng:hover{background:#047857;}
+.btnw{background:#f59e0b;color:#fff;}.btnw:hover{background:#d97706;}
+.bsm{padding:4px 10px;font-size:11px;}
+
+/* TABLE */
+.twrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--hbg);padding:9px 12px;text-align:left;font-weight:700;color:var(--bb);white-space:nowrap;border-bottom:2px solid var(--border);}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s;}
+tbody tr:hover{background:var(--rhov);}
+tbody td{padding:8px 12px;color:var(--tmuted);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
+.nodata{text-align:center;padding:40px;color:var(--muted);}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 9px;border-radius:18px;font-size:10px;font-weight:700;}
+.b-paid{background:#059669;color:#ffffff;}
+.b-pending{background:#d97706;color:#ffffff;}
+.b-overdue{background:#dc2626;color:#ffffff;}
+.b-partial{background:#1d4ed8;color:#ffffff;}
+.b-cancelled{background:#6b7280;color:#ffffff;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:18px;}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);}
+.stat .sv{font-size:24px;font-weight:700;font-family:'Space Mono',monospace;}
+.stat .sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
+
+/* SEARCH */
+.srow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.srow input,.srow select{padding:7px 11px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;min-width:160px;}
+
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(13,27,42,.5);z-index:600;display:none;align-items:center;justify-content:center;}
+.mo.open{display:flex;}
+.mbox{background:#fff;border-radius:12px;padding:28px;width:90%;max-width:520px;box-shadow:0 16px 48px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;}
+.mbox h3{font-size:15px;font-weight:700;margin-bottom:16px;color:var(--bb);}
+.macts{display:flex;gap:8px;margin-top:18px;justify-content:flex-end;}
+
+/* TOAST / LOADER */
+#tc{position:fixed;bottom:20px;right:18px;z-index:700;display:flex;flex-direction:column;gap:7px;}
+.toast{background:#1a2540;color:#fff;padding:9px 14px;border-radius:7px;font-size:12px;box-shadow:0 3px 12px rgba(0,0,0,.2);animation:tin .25s ease;max-width:300px;}
+.toast.ok{border-left:3px solid var(--mint);}
+.toast.err{border-left:3px solid var(--yq);}
+.toast.info{border-left:3px solid #00DDFF;}
+.toast.warn{border-left:3px solid #f59e0b;}
+@keyframes tin{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+#loader{position:fixed;inset:0;background:rgba(0,73,183,.88);z-index:800;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;}
+.ring{width:40px;height:40px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.syncbar{display:flex;align-items:center;gap:9px;background:#f2f5ff;border:1px solid var(--border);border-radius:7px;padding:8px 14px;margin-bottom:14px;font-size:12px;color:var(--tmuted);}
+
+/* PRINT */
+@media print{
+  .app-header,.tabs,.hdr-right,.btn,.srow,.file-actions,#tc,#loader,.syncbar,#ke-portal-bar{display:none!important;}
+  .pane{display:block!important;}
+  .card{break-inside:avoid;}
+}
+
+/* ── INVOICE DRILL-DOWN POPUP ── */
+#inv-drill-overlay{position:fixed;inset:0;background:rgba(13,27,42,.55);z-index:900;display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;}
+#inv-drill-overlay.open{display:flex;}
+#inv-drill-box{background:#fff;border-radius:12px;width:100%;max-width:1200px;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column;max-height:calc(100vh - 48px);}
+.idd-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-radius:12px 12px 0 0;flex-shrink:0;}
+.idd-hdr h3{font-size:14px;font-weight:700;color:#fff;margin:0;}
+.idd-sub{font-size:12px;color:rgba(255,255,255,.75);margin-top:2px;}
+.idd-hdr-right{display:flex;align-items:center;gap:8px;}
+.idd-btn{padding:6px 13px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;}
+.idd-search-bar{padding:10px 14px;border-bottom:1px solid #e2e8f0;flex-shrink:0;display:flex;gap:8px;align-items:center;}
+.idd-search-bar input{flex:1;padding:7px 11px;border:1px solid #c9d1e6;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;}
+.idd-search-bar input:focus{border-color:#0049B7;}
+.idd-count{font-size:11px;color:#526187;white-space:nowrap;}
+.idd-scroll{overflow:auto;flex:1;}
+.idd-table{width:100%;border-collapse:collapse;font-size:11px;}
+.idd-table thead th{padding:8px 10px;background:#f0f5ff;color:#0049B7;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-bottom:2px solid #c7d7f8;border-right:1px solid #e0e7ff;position:sticky;top:0;z-index:2;text-align:left;}
+.idd-table tbody tr{border-bottom:1px solid #f0f4ff;}
+.idd-table tbody tr:hover{background:#f8faff;}
+.idd-table td{padding:7px 10px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;border-right:1px solid #f0f4ff;font-size:11px;color:#0d1b2a;}
+
+</style>
+</head>
+<body>
+
+<!-- PORTAL AUTH GUARD -->
+<script>
+(function(){
+  var MOD_ID='invoice';
+  function getPS(){try{var s=sessionStorage.getItem('ke_portal_session')||sessionStorage.getItem('ke_session');if(!s)return null;var o=JSON.parse(s);if(Date.now()-o.loginTime>10*60*60*1000)return null;return o;}catch(e){return null;}}
+  var session=getPS();
+  // Only enforce portal login when accessed via http/https (hosted), not local file://
+  var isLocal = window.location.protocol === 'file:';
+  if(!isLocal && !session){
+    if(confirm('Not logged in. Go to Portal login?')) window.location.href='Index.html';
+    return;
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    if(!session) return; // no bar when accessed directly without session
+    var bar=document.createElement('div');bar.id='ke-portal-bar';
+    bar.style='background:linear-gradient(90deg,#002d8a,#0049B7);color:#fff;padding:5px 20px;font-size:11px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:DM Sans,sans-serif;';
+    var rc={superadmin:'#ff1d58',admin:'#f59e0b',manager:'#7EE787',mobilizationplus:'#7c3aed',mobilization:'#0f766e'}[session.role]||'#526187';
+    bar.innerHTML='<a href="Index.html" style="color:#fff;text-decoration:none;font-weight:700;font-size:12px">&#8592; Portal</a><div style="display:flex;align-items:center;gap:8px"><span style="opacity:.75">'+session.name+'</span><span style="background:'+rc+';color:#fff;padding:1px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase">'+session.role+'</span><button onclick="sessionStorage.clear();window.location.href=\'Index.html\';" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px">Logout</button></div>';
+    document.body.insertBefore(bar,document.body.firstChild);
+  });
+})();
+</script>
+
+<div id="loader"><div class="ring"></div><p id="lmsg">Loading…</p></div>
+
+<!-- HEADER -->
+<div class="app-header">
+  <h1>🧾 INVOICE MODULE</h1>
+  <div class="hdr-right">
+    <div class="conn-badge"><span class="conn-dot sync" id="cdot"></span><span id="clbl">Connecting…</span></div>
+    <button class="hbtn" onclick="exportCSV()">📤 Export CSV</button>
+    <button class="hbtn" onclick="window.print()">🖨️ Print</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" id="tab-list" onclick="goTab('list')">📋 Invoices</div>
+  <div class="tab" id="tab-form" onclick="goTab('form');resetForm()">➕ New Invoice</div>
+  <div class="tab" id="tab-dash" onclick="goTab('dash')">📊 Dashboard</div>
+</div>
+
+<!-- ══ INVOICES LIST ══ -->
+<div id="pane-list" class="pane active">
+  <div class="syncbar">
+    <span class="conn-dot ok" style="width:7px;height:7px;flex-shrink:0"></span>
+    <span>Google Sheets · Invoices Tab</span>
+    <span id="synctime" style="margin-left:4px;color:var(--muted)"></span>
+    <button class="btn btno bsm" style="margin-left:auto" onclick="loadInvoices()">🔄 Refresh</button>
+    <button class="btn btnp bsm" onclick="goTab('form');resetForm()">➕ New Invoice</button>
+  </div>
+  <div class="srow">
+    <input id="s-q" placeholder="🔍 Search invoice no / company…" oninput="renderTable()"/>
+    <select id="s-status" onchange="renderTable()">
+      <option value="">All Status</option>
+      <option>Paid</option><option>Pending</option><option>Overdue</option>
+      <option>Partial</option><option>Cancelled</option>
+    </select>
+    <select id="s-company" onchange="renderTable()"><option value="">All Companies</option></select>
+    <input type="date" id="s-from" onchange="renderTable()" title="From Date"/>
+    <input type="date" id="s-to" onchange="renderTable()" title="To Date"/>
+    <button class="btn btno bsm" onclick="clearSearch()">✕ Clear</button>
+  </div>
+  <div class="card">
+    <div class="card-hdr"><h3>All Invoices</h3><span id="tinfo" style="font-size:11px;color:var(--muted)"></span></div>
+    <div class="card-body" style="padding:0">
+      <div class="twrap">
+        <table>
+          <thead><tr>
+            <th>S.No</th><th>Invoice No</th><th>Date</th><th>Company</th>
+            <th>Work Order</th><th>Currency</th><th>Amount</th><th>Amount(INR)</th>
+            <th>Status</th><th>Credit Note</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NEW / EDIT INVOICE ══ -->
+<div id="pane-form" class="pane">
+  <div class="card">
+    <div class="card-hdr">
+      <h3 id="form-title">➕ New Invoice</h3>
+      <button class="btn btno bsm" onclick="goTab('list')">← Back</button>
+    </div>
+    <div class="card-body">
+
+      <!-- INVOICE DETAILS -->
+      <div style="font-size:11px;font-weight:700;color:var(--bb);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid var(--border)">📄 Invoice Details</div>
+      <div class="fgrid">
+        <div class="fg">
+          <label class="fl">S.No</label>
+          <input class="fi" id="f-sno" readonly placeholder="Auto-generated"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Date of Invoice *</label>
+          <input class="fi" type="date" id="f-date"/>
+        </div>
+        <div class="fg fw">
+          <label class="fl">Invoice Number *</label>
+          <div class="inv-num-builder">
+            <span class="inv-part">KANNAN/VSP/</span>
+            <input class="inv-inp" id="inv-fy" placeholder="26-27" maxlength="5" title="Financial Year e.g. 26-27" oninput="buildInvNum()"/>
+            <span class="inv-sep">/FR/</span>
+            <input class="inv-inp" id="inv-serial" placeholder="001" maxlength="5" title="Serial Number e.g. 001" oninput="buildInvNum()"/>
+          </div>
+          <div class="inv-preview" id="inv-preview" style="display:none"></div>
+          <input type="hidden" id="f-invnum"/>
+          <span class="hint">Financial Year e.g. 26-27 · Serial Number e.g. 001, 002…</span>
+        </div>
+        <div class="fg fw">
+          <label class="fl">Invoiced Company *</label>
+          <div class="combo-wrap">
+            <div class="combo-input-row">
+              <input class="fi" type="text" id="f-company-search" placeholder="Type to search company…" autocomplete="off"
+                oninput="filterCombo()" onfocus="openCombo()" onkeydown="comboKeydown(event)"/>
+              <button class="btn btno bsm" onclick="clearCompany()" title="Clear">✕</button>
+            </div>
+            <div class="combo-dd" id="company-dd"></div>
+          </div>
+          <input type="hidden" id="f-company-id"/>
+          <input type="hidden" id="f-company-name"/>
+        </div>
+        <div class="fg fw">
+          <label class="fl">Invoice Raised Towards</label>
+          <input class="fi" id="f-towards" placeholder="e.g. Recruitment Services for Welders — March 2026"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Work Order (If any)</label>
+          <input class="fi" id="f-workorder" placeholder="Work order number…"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Invoice Currency</label>
+          <select class="fi" id="f-currency" onchange="onCurrencyChange()">
+            <option value="INR">INR — Indian Rupee</option>
+            <option value="USD">USD — US Dollar</option>
+            <option value="AED">AED — UAE Dirham</option>
+            <option value="SAR">SAR — Saudi Riyal</option>
+            <option value="QAR">QAR — Qatari Riyal</option>
+            <option value="KWD">KWD — Kuwaiti Dinar</option>
+            <option value="BHD">BHD — Bahraini Dinar</option>
+            <option value="OMR">OMR — Omani Rial</option>
+            <option value="GBP">GBP — British Pound</option>
+            <option value="EUR">EUR — Euro</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Invoice Amount *</label>
+          <input class="fi" type="number" id="f-amount" placeholder="0.00" step="0.01" min="0" oninput="calcINR()"/>
+        </div>
+        <div class="fg" id="exrate-wrap" style="display:none">
+          <label class="fl">Exchange Rate (to INR)</label>
+          <input class="fi" type="number" id="f-exrate" placeholder="e.g. 86.50" step="0.01" min="0" oninput="calcINR()"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Invoice Amount (INR)</label>
+          <input class="fi" type="number" id="f-amount-inr" placeholder="Auto-calculated / enter manually" step="0.01" min="0"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Invoice Status</label>
+          <select class="fi" id="f-status">
+            <option value="Pending">Pending</option>
+            <option value="Paid">Paid</option>
+            <option value="Partial">Partial Payment</option>
+            <option value="Overdue">Overdue</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="fg fw">
+          <label class="fl">Remarks</label>
+          <textarea class="fi" id="f-remarks" placeholder="Any additional notes…"></textarea>
+        </div>
+      </div>
+
+      <!-- CREDIT NOTE -->
+      <div style="margin-top:20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <label class="fl" style="margin:0">Credit Note</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;text-transform:none;letter-spacing:0;font-weight:500">
+            <input type="checkbox" id="f-cn-yn" onchange="toggleCN()" style="width:15px;height:15px;accent-color:var(--bb)"/>
+            Yes — Credit Note Raised
+          </label>
+        </div>
+        <div class="cn-panel" id="cn-panel">
+          <div class="cn-title">⚠️ Credit Note Details</div>
+          <div class="fgrid">
+            <div class="fg">
+              <label class="fl">Credit Note Number</label>
+              <input class="fi" id="f-cn-num" placeholder="CN-001…"/>
+            </div>
+            <div class="fg">
+              <label class="fl">Raised Against Invoice No</label>
+              <input class="fi" id="f-cn-against" placeholder="KANNAN/VSP/…"/>
+            </div>
+            <div class="fg">
+              <label class="fl">Credit Note Currency</label>
+              <select class="fi" id="f-cn-currency" onchange="calcCNINR()">
+                <option value="INR">INR</option><option value="USD">USD</option>
+                <option value="AED">AED</option><option value="SAR">SAR</option>
+                <option value="QAR">QAR</option><option value="OTHER">Other</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label class="fl">Credit Note Amount</label>
+              <input class="fi" type="number" id="f-cn-amount" placeholder="0.00" step="0.01" min="0" oninput="calcCNINR()"/>
+            </div>
+            <div class="fg" id="cn-exrate-wrap" style="display:none">
+              <label class="fl">Exchange Rate (to INR)</label>
+              <input class="fi" type="number" id="f-cn-exrate" placeholder="e.g. 86.50" step="0.01" min="0" oninput="calcCNINR()"/>
+            </div>
+            <div class="fg">
+              <label class="fl">Credit Note Amount (INR)</label>
+              <input class="fi" type="number" id="f-cn-amount-inr" placeholder="Auto-calculated / enter manually" step="0.01"/>
+            </div>
+            <div class="fg fw">
+              <label class="fl">Credit Note Remarks</label>
+              <textarea class="fi" id="f-cn-remarks" placeholder="Reason for credit note…" style="min-height:54px"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILE UPLOADS -->
+      <div style="margin-top:20px">
+        <div style="font-size:11px;font-weight:700;color:var(--bb);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid var(--border)">📎 Attachments</div>
+        <div class="fgrid col2">
+          <!-- Invoice Copy -->
+          <div class="fg">
+            <label class="fl">Invoice Copy</label>
+            <div class="upload-zone" id="uz-inv" onclick="document.getElementById('file-inv').click()">
+              <div class="uz-icon">📄</div>
+              <div class="uz-text">Click to upload invoice copy</div>
+              <div class="uz-text" style="font-size:10px;margin-top:2px">PDF, JPG, PNG · Max 10MB</div>
+              <div class="uz-name" id="uz-inv-name" style="display:none"></div>
+            </div>
+            <input type="file" id="file-inv" class="file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleFile('inv',this)"/>
+            <div class="file-actions" id="fa-inv" style="display:none">
+              <button class="btn btng bsm" onclick="downloadFile('inv')">⬇️ Download</button>
+              <button class="btn btnd bsm" onclick="removeFile('inv')">🗑️ Remove</button>
+            </div>
+            <div id="inv-upload-progress" style="display:none;margin-top:6px">
+              <div style="background:#e8f0fe;border-radius:4px;height:6px;overflow:hidden">
+                <div id="inv-prog-bar" style="height:100%;background:var(--bb);width:0%;transition:width .3s"></div>
+              </div>
+              <div id="inv-prog-text" style="font-size:10px;color:var(--muted);margin-top:3px">Uploading…</div>
+            </div>
+          </div>
+          <!-- Credit Note Copy -->
+          <div class="fg" id="uz-cn-wrap">
+            <label class="fl">Credit Note Copy (if any)</label>
+            <div class="upload-zone" id="uz-cn" onclick="document.getElementById('file-cn').click()">
+              <div class="uz-icon">📋</div>
+              <div class="uz-text">Click to upload credit note copy</div>
+              <div class="uz-text" style="font-size:10px;margin-top:2px">PDF, JPG, PNG · Max 10MB</div>
+              <div class="uz-name" id="uz-cn-name" style="display:none"></div>
+            </div>
+            <input type="file" id="file-cn" class="file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleFile('cn',this)"/>
+            <div class="file-actions" id="fa-cn" style="display:none">
+              <button class="btn btng bsm" onclick="downloadFile('cn')">⬇️ Download</button>
+              <button class="btn btnd bsm" onclick="removeFile('cn')">🗑️ Remove</button>
+            </div>
+            <div id="cn-upload-progress" style="display:none;margin-top:6px">
+              <div style="background:#e8f0fe;border-radius:4px;height:6px;overflow:hidden">
+                <div id="cn-prog-bar" style="height:100%;background:var(--bb);width:0%;transition:width .3s"></div>
+              </div>
+              <div id="cn-prog-text" style="font-size:10px;color:var(--muted);margin-top:3px">Uploading…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAVE BUTTONS -->
+      <div style="display:flex;gap:8px;margin-top:24px;flex-wrap:wrap">
+        <button class="btn btnp" onclick="saveInvoice()">💾 Save Invoice</button>
+        <button class="btn btno" onclick="resetForm()">↺ Reset</button>
+        <button class="btn btno" onclick="goTab('list')">← Cancel</button>
+      </div>
+      <input type="hidden" id="f-eid"/>
+      <input type="hidden" id="f-row"/>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div id="pane-dash" class="pane">
+  <div class="stats" id="dash-stats"></div>
+  <div id="dash-content"></div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="mo" id="view-mo">
+  <div class="mbox" style="max-width:700px">
+    <h3 id="view-title">Invoice Details</h3>
+    <div id="view-body"></div>
+    <div class="macts">
+      <button class="btn btno" onclick="document.getElementById('view-mo').classList.remove('open')">Close</button>
+      <button class="btn btnp" id="view-edit-btn">✏️ Edit</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="mo" id="conf-mo">
+  <div class="mbox">
+    <h3 id="conf-title">⚠️ Confirm</h3>
+    <p id="conf-msg" style="font-size:13px;color:var(--tmuted);line-height:1.6"></p>
+    <div class="macts">
+      <button class="btn btno" onclick="document.getElementById('conf-mo').classList.remove('open')">Cancel</button>
+      <button class="btn btnd" id="conf-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="tc"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  INVOICE MODULE — Kannan Enterprises
+//  Google Sheet: "Invoices" tab
+//  Google Drive: for file uploads
+// ════════════════════════════════════════════════════
+const WEB          = 'https://script.google.com/macros/s/AKfycbzNoK4d2MdtTciXBRHcZ_aE8UIPpIcnWcXIzNBCd8Hxg2EwpEhP1e_Hpu528PHsHs4z/exec';
+// ══════════════════════════════════════════════════════
+// KE LOGGER — Invoice Module
+// Logs: ADD, UPDATE, DELETE to Logs sheet
+// Captures: IP, Browser/OS, Before & After record data
+// MAC Address: Not accessible via browser (security policy)
+// ══════════════════════════════════════════════════════
+const KE_LOG_URL='https://script.google.com/macros/s/AKfycbzNoK4d2MdtTciXBRHcZ_aE8UIPpIcnWcXIzNBCd8Hxg2EwpEhP1e_Hpu528PHsHs4z/exec';
+let _keIP_='';
+async function _fetchIP_(){
+  if(_keIP_)return _keIP_;
+  try{const r=await fetch('https://api.ipify.org?format=json',{cache:'force-cache'});const j=await r.json();_keIP_=j.ip||'';}
+  catch(e){_keIP_='Unavailable';}
+  return _keIP_;
+}
+function _keBr_(){
+  const ua=navigator.userAgent;
+  const os=/Windows NT/.test(ua)?'Windows':/Mac OS X/.test(ua)?'macOS':/Linux/.test(ua)?'Linux':/Android/.test(ua)?'Android':/iPhone|iPad/.test(ua)?'iOS':'Unknown OS';
+  const br=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'Browser';
+  return `${br} on ${os} | ${screen.width}x${screen.height}`;
+}
+async function keLog(action,recId,recName,desc,oldVal,newVal,status){
+  try{
+    const ip=await _fetchIP_();
+    const ss=sessionStorage.getItem('ke_portal_session')||sessionStorage.getItem('ke_session');
+    const su=ss?JSON.parse(ss):{};
+    const logData={
+      LogID      :'log_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,5),
+      Timestamp  :new Date().toISOString(),
+      UserName   :su.name||'',
+      Username   :su.username||'',
+      Role       :su.role||'',
+      Module     :'Invoice',
+      Action     :action||'VIEW',
+      RecordID   :recId||'',
+      RecordName :recName||'',
+      Description:desc||'',
+      OldValue   :oldVal?(typeof oldVal==='object'?JSON.stringify(oldVal):String(oldVal)):'',
+      NewValue   :newVal?(typeof newVal==='object'?JSON.stringify(newVal):String(newVal)):'',
+      IPAddress  :ip,
+      MACAddress :'N/A — Not accessible via browser (security restriction)',
+      Hostname   :window.location.hostname||'localhost',
+      Browser    :_keBr_(),
+      Status     :status||'Success'
+    };
+    const url=new URL(KE_LOG_URL);
+    url.searchParams.set('action','appendLog');
+    url.searchParams.set('logData',JSON.stringify(logData));
+    if(window.location.protocol==='file:'){
+      const cb='ke_log_'+Date.now();url.searchParams.set('callback',cb);
+      const s=document.createElement('script');s.src=url.toString();
+      window[cb]=()=>{delete window[cb];document.body.contains(s)&&document.body.removeChild(s);};
+      s.onerror=()=>{delete window[cb];document.body.contains(s)&&document.body.removeChild(s);};
+      document.body.appendChild(s);
+    }else{fetch(url.toString()).catch(()=>{});}
+  }catch(e){console.warn('[keLog]',e);}
+}
+// ══════════════════════════════════════════════════════
+
+const COMP_WEB     = 'https://script.google.com/macros/s/AKfycbzNoK4d2MdtTciXBRHcZ_aE8UIPpIcnWcXIzNBCd8Hxg2EwpEhP1e_Hpu528PHsHs4z/exec';
+const SHEET        = 'Invoices';
+
+// INVOICE_HEADERS — 25 columns
+const INVOICE_HEADERS = [
+  'ID','SNo','Date','InvoiceNumber',
+  'CompanyID','CompanyName',
+  'InvoiceTowards','WorkOrder',
+  'Currency','Amount','AmountINR',
+  'Status','Remarks',
+  'CreditNoteYN','CNNumber','CNAgainst','CNCurrency','CNAmount','CNAmountINR','CNRemarks',
+  'InvFileId','InvFileName','InvFileUrl',
+  'CNFileId','CNFileName','CNFileUrl',
+  'CreatedAt','CreatedBy','UpdatedAt'
+];
+
+// ── STATE ─────────────────────────────────────────
+let invoices=[], companies=[], editingId=null;
+let fileData={inv:{id:'',name:'',url:'',file:null}, cn:{id:'',name:'',url:'',file:null}};
+let comboOpen=false, comboIdx=-1;
+
+// ── HELPERS ───────────────────────────────────────
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
+const e=s=>{const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML;};
+const gv=id=>(document.getElementById(id)?.value||'').trim();
+const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v??'';};
+const ld=m=>{document.getElementById('loader').style.display='flex';if(m)document.getElementById('lmsg').textContent=m;};
+const hd=()=>document.getElementById('loader').style.display='none';
+const fmtCur=(v,cur)=>{if(!v)return'—';const n=parseFloat(v);return isNaN(n)?v:(cur||'')+''+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});};
+const fmtINR=v=>{if(!v)return'—';const n=parseFloat(v);return isNaN(n)?v:'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});};
+
+function toast(m,t='info'){
+  const d=document.createElement('div');d.className='toast '+t;d.textContent=m;
+  document.getElementById('tc').appendChild(d);setTimeout(()=>d.remove(),3800);
+}
+function setConn(st,lbl){
+  const d=document.getElementById('cdot'),l=document.getElementById('clbl');
+  if(d)d.className='conn-dot '+(st==='ok'?'ok':st==='err'?'err':'sync');
+  if(l)l.textContent=lbl;
+}
+function goTab(t){
+  ['list','form','dash'].forEach(x=>{
+    document.getElementById('pane-'+x).classList.toggle('active',x===t);
+    document.getElementById('tab-'+x).classList.toggle('active',x===t);
+  });
+  if(t==='dash') renderDash();
+}
+function clearSearch(){
+  sv('s-q','');sv('s-status','');sv('s-company','');sv('s-from','');sv('s-to','');
+  renderTable();
+}
+function openConf(title,msg,fn){
+  document.getElementById('conf-title').textContent=title;
+  document.getElementById('conf-msg').textContent=msg;
+  document.getElementById('conf-ok').onclick=fn;
+  document.getElementById('conf-mo').classList.add('open');
+}
+
+// ── API ───────────────────────────────────────────
+async function api(p, _unused){
+  const body=new URLSearchParams();
+  Object.entries(p).forEach(([k,v])=>body.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
+  const url=new URL(WEB);
+  ['action','sheet','rowNum'].forEach(k=>{if(p[k]!==undefined)url.searchParams.set(k,String(p[k]));});
+  let r,t,j;
+  try{ r=await fetch(url.toString(),{method:'POST',body}); t=await r.text(); }
+  catch(e){ throw new Error('Network error: '+e.message); }
+  try{ j=JSON.parse(t); }
+  catch(e){ throw new Error('Bad server response: '+t.slice(0,200)); }
+  if(!j.success) throw new Error(j.error||'Server error');
+  return j;
+}
+
+// ── LOAD COMPANIES ────────────────────────────────
+async function loadCompanies(){
+  try{
+    const r=await api({action:'getAll',sheet:'Companies'},COMP_WEB);
+    companies=(r.data||[]).map(x=>({id:x.ID||'',name:x.Name||'',code:x.Code||'',country:x.Country||''})).filter(x=>x.id&&x.name);
+    // Populate company filter
+    const sel=document.getElementById('s-company');
+    if(sel){
+      const prev=sel.value;
+      sel.innerHTML='<option value="">All Companies</option>'+companies.map(c=>`<option value="${e(c.id)}">${e(c.name)}</option>`).join('');
+      if(prev) sel.value=prev;
+    }
+  }catch(err){
+    // fallback: try same WEB endpoint
+    try{
+      const r=await api({action:'getAll',sheet:'Companies'});
+      companies=(r.data||[]).map(x=>({id:x.ID||'',name:x.Name||'',code:x.Code||'',country:x.Country||''})).filter(x=>x.id&&x.name);
+      const sel=document.getElementById('s-company');
+      if(sel) sel.innerHTML='<option value="">All Companies</option>'+companies.map(c=>`<option value="${e(c.id)}">${e(c.name)}</option>`).join('');
+    }catch(e2){toast('Could not load companies: '+err.message,'warn');}
+  }
+}
+
+// ── LOAD INVOICES ─────────────────────────────────
+async function loadInvoices(){
+  setConn('sync','Loading…');
+  try{
+    const r=await api({action:'getAll',sheet:SHEET});
+    invoices=(r.data||[]).map(x=>({
+      _row:x._row, id:x.ID||'', sno:x.SNo||'',
+      date:x.Date||'', invNum:x.InvoiceNumber||'',
+      companyId:x.CompanyID||'', companyName:x.CompanyName||'',
+      towards:x.InvoiceTowards||'', workOrder:x.WorkOrder||'',
+      currency:x.Currency||'INR', amount:x.Amount||'', amountINR:x.AmountINR||'',
+      status:x.Status||'Pending', remarks:x.Remarks||'',
+      cnYN:x.CreditNoteYN||'No',
+      cnNum:x.CNNumber||'', cnAgainst:x.CNAgainst||'',
+      cnCurrency:x.CNCurrency||'INR', cnAmount:x.CNAmount||'', cnAmountINR:x.CNAmountINR||'', cnRemarks:x.CNRemarks||'',
+      invFileId:x.InvFileId||'', invFileName:x.InvFileName||'', invFileUrl:x.InvFileUrl||'',
+      cnFileId:x.CNFileId||'', cnFileName:x.CNFileName||'', cnFileUrl:x.CNFileUrl||'',
+      createdAt:x.CreatedAt||'', createdBy:x.CreatedBy||'', updatedAt:x.UpdatedAt||'',
+    })).filter(x=>x.id);
+    setConn('ok','Connected · '+invoices.length+' invoices');
+    document.getElementById('synctime').textContent='Synced '+new Date().toLocaleTimeString();
+    renderTable();
+  }catch(err){setConn('err','Error');toast('Load failed: '+err.message,'err');}
+}
+
+// ── RENDER TABLE ──────────────────────────────────
+function renderTable(){
+  const q=(gv('s-q')||'').toLowerCase();
+  const fs=gv('s-status'), fc=gv('s-company');
+  const fd=gv('s-from'), ft=gv('s-to');
+  const fil=invoices.filter(inv=>{
+    if(q&&!inv.invNum.toLowerCase().includes(q)&&!inv.companyName.toLowerCase().includes(q))return false;
+    if(fs&&inv.status!==fs)return false;
+    if(fc&&inv.companyId!==fc)return false;
+    if(fd&&inv.date<fd)return false;
+    if(ft&&inv.date>ft)return false;
+    return true;
+  });
+  const tbody=document.getElementById('inv-tbody');
+  if(!fil.length){tbody.innerHTML=`<tr><td colspan="11" class="nodata">${invoices.length?'No invoices match filters.':'No invoices yet. Click ➕ New Invoice.'}</td></tr>`;document.getElementById('tinfo').textContent='';return;}
+  tbody.innerHTML=fil.map((inv,i)=>{
+    const statusCls={Paid:'b-paid',Pending:'b-pending',Overdue:'b-overdue',Partial:'b-partial',Cancelled:'b-cancelled'}[inv.status]||'b-pending';
+    const hasCN=inv.cnYN==='Yes';
+    return`<tr>
+      <td style="font-weight:700;color:var(--bb)">${inv.sno||i+1}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700">${e(inv.invNum)}</td>
+      <td>${inv.date||'—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${e(inv.companyName)}">${e(inv.companyName||'—')}</td>
+      <td>${e(inv.workOrder||'—')}</td>
+      <td><span style="font-weight:600">${inv.currency}</span></td>
+      <td style="font-weight:600">${fmtCur(inv.amount,inv.currency==='INR'?'₹':'')}</td>
+      <td>${fmtINR(inv.amountINR)}</td>
+      <td><span class="badge ${statusCls}">${inv.status}</span></td>
+      <td>${hasCN?`<span class="badge" style="background:#fff3cd;color:#856404">CN: ${e(inv.cnNum||'Yes')}</span>`:'—'}</td>
+      <td style="white-space:nowrap;display:flex;gap:3px">
+        <button class="btn btno bsm" onclick="viewInvoice('${inv.id}')">👁</button>
+        <button class="btn btnp bsm" onclick="editInvoice('${inv.id}')">✏️</button>
+        <button class="btn btnd bsm" onclick="deleteInvoice('${inv.id}','${e(inv.invNum).replace(/'/g,"\\'")}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tinfo').textContent=`Showing ${fil.length} of ${invoices.length} invoices`;
+}
+
+// ── INVOICE NUMBER BUILDER ────────────────────────
+function buildInvNum(){
+  const fy=gv('inv-fy').trim();
+  const ser=gv('inv-serial').trim().padStart(3,'0');
+  const preview=document.getElementById('inv-preview');
+  if(fy&&ser){
+    const num=`KANNAN/VSP/${fy}/FR/${ser}`;
+    preview.textContent=num;preview.style.display='block';
+    sv('f-invnum',num);
+  } else {
+    preview.style.display='none';sv('f-invnum','');
+  }
+}
+
+// ── COMPANY COMBO ─────────────────────────────────
+function filterCombo(){
+  const q=(gv('f-company-search')||'').toLowerCase();
+  const dd=document.getElementById('company-dd');
+  const filtered=q?companies.filter(c=>c.name.toLowerCase().includes(q)||c.code.toLowerCase().includes(q)):companies;
+  if(!filtered.length){dd.innerHTML='<div class="combo-empty">No companies found</div>';}
+  else{dd.innerHTML=filtered.slice(0,20).map((c,i)=>`<div class="combo-item" data-id="${e(c.id)}" data-name="${e(c.name)}" data-idx="${i}" onclick="pickCompany('${c.id}','${c.name.replace(/'/g,"\\'")}')"><div class="ci-name">${e(c.name)}</div><div class="ci-code">${e(c.code||'')} ${e(c.country?'· '+c.country:'')}</div></div>`).join('');}
+  comboIdx=-1;
+  dd.classList.add('open');comboOpen=true;
+}
+function openCombo(){
+  if(!companies.length)return;
+  const q=(gv('f-company-search')||'').toLowerCase();
+  filterCombo();
+}
+function pickCompany(id,name){
+  sv('f-company-id',id);sv('f-company-name',name);
+  sv('f-company-search',name);
+  document.getElementById('company-dd').classList.remove('open');comboOpen=false;
+}
+function clearCompany(){sv('f-company-id','');sv('f-company-name','');sv('f-company-search','');document.getElementById('company-dd').classList.remove('open');}
+function comboKeydown(ev){
+  const dd=document.getElementById('company-dd');
+  const items=dd.querySelectorAll('.combo-item');
+  if(ev.key==='ArrowDown'){ev.preventDefault();comboIdx=Math.min(comboIdx+1,items.length-1);items.forEach((el,i)=>el.style.background=i===comboIdx?'var(--hbg)':'');}
+  else if(ev.key==='ArrowUp'){ev.preventDefault();comboIdx=Math.max(comboIdx-1,0);items.forEach((el,i)=>el.style.background=i===comboIdx?'var(--hbg)':'');}
+  else if(ev.key==='Enter'&&comboIdx>=0&&items[comboIdx]){ev.preventDefault();items[comboIdx].click();}
+  else if(ev.key==='Escape'){dd.classList.remove('open');comboOpen=false;}
+}
+document.addEventListener('click',ev=>{
+  if(!ev.target.closest('.combo-wrap'))document.querySelectorAll('.combo-dd').forEach(d=>d.classList.remove('open'));
+});
+
+// ── CURRENCY CALC ─────────────────────────────────
+function onCurrencyChange(){
+  const cur=gv('f-currency');
+  document.getElementById('exrate-wrap').style.display=cur==='INR'?'none':'block';
+  calcINR();
+}
+function calcINR(){
+  const cur=gv('f-currency'),amt=parseFloat(gv('f-amount'));
+  if(isNaN(amt))return;
+  if(cur==='INR'){sv('f-amount-inr',amt.toFixed(2));return;}
+  const rate=parseFloat(gv('f-exrate'));
+  if(!isNaN(rate)&&rate>0)sv('f-amount-inr',(amt*rate).toFixed(2));
+}
+function calcCNINR(){
+  const cur=gv('f-cn-currency'),amt=parseFloat(gv('f-cn-amount'));
+  document.getElementById('cn-exrate-wrap').style.display=cur==='INR'?'none':'block';
+  if(isNaN(amt))return;
+  if(cur==='INR'){sv('f-cn-amount-inr',amt.toFixed(2));return;}
+  const rate=parseFloat(gv('f-cn-exrate'));
+  if(!isNaN(rate)&&rate>0)sv('f-cn-amount-inr',(amt*rate).toFixed(2));
+}
+
+// ── CREDIT NOTE TOGGLE ────────────────────────────
+function toggleCN(){
+  const chk=document.getElementById('f-cn-yn').checked;
+  document.getElementById('cn-panel').classList.toggle('show',chk);
+}
+
+// ── FILE HANDLING ─────────────────────────────────
+function handleFile(type,inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  if(f.size>10*1024*1024){toast('File too large (max 10MB)','err');inp.value='';return;}
+  fileData[type].file=f;fileData[type].name=f.name;fileData[type].id='';fileData[type].url='';
+  const uz=document.getElementById('uz-'+type);
+  uz.classList.add('has-file');
+  const nm=document.getElementById('uz-'+type+'-name');
+  nm.textContent='📎 '+f.name;nm.style.display='block';
+  document.getElementById('fa-'+type).style.display='flex';
+  toast(f.name+' selected — will upload on save','info');
+}
+function removeFile(type){
+  fileData[type]={id:'',name:'',url:'',file:null};
+  const uz=document.getElementById('uz-'+type);uz.classList.remove('has-file');
+  document.getElementById('uz-'+type+'-name').style.display='none';
+  document.getElementById('fa-'+type).style.display='none';
+  document.getElementById('file-'+type).value='';
+}
+function downloadFile(type){
+  const url=fileData[type].url;
+  if(!url){toast('No file URL available','warn');return;}
+  window.open(url,'_blank');
+}
+
+// ── UPLOAD FILE TO GOOGLE DRIVE ───────────────────
+// NOTE: the Apps Script backend only accepts files via a chunked
+// protocol (action:'uploadChunk' x N, then action:'uploadFile' with
+// the same uploadId) -- it does NOT accept a raw fileData field.
+// Sending the whole base64 in one 'uploadFile' call, as this used
+// to do, makes the backend throw "Missing uploadId" every time, so
+// the file never actually reached Drive even though the form looked
+// like the upload had gone through.
+async function uploadFileToDrive(type){
+  const fd=fileData[type];
+  if(!fd.file) return {id:fd.id||'',name:fd.name||'',url:fd.url||''};
+  // Show progress
+  const prog=document.getElementById(type+'-upload-progress');
+  const bar=document.getElementById(type+'-prog-bar');
+  const txt=document.getElementById(type+'-prog-text');
+  if(prog)prog.style.display='block';
+  if(bar)bar.style.width='5%';
+  if(txt)txt.textContent='Reading file…';
+  // Convert to base64
+  let b64;
+  try{
+    b64=await new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=()=>res(r.result.split(',')[1]);
+      r.onerror=()=>rej(new Error('File read failed'));
+      r.readAsDataURL(fd.file);
+    });
+  }catch(err){
+    if(bar)bar.style.width='0%';if(txt)txt.textContent='Upload failed';
+    toast('Upload failed: '+err.message,'err');
+    return {id:'',name:'',url:''};
+  }
+  // Split into chunks -- Apps Script CacheService caps each cached
+  // value at 100KB, so keep chunks well under that limit.
+  const CHUNK_SIZE=90000;
+  const totalChunks=Math.max(1,Math.ceil(b64.length/CHUNK_SIZE));
+  const uploadId='up_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+  try{
+    for(let i=0;i<totalChunks;i++){
+      const chunk=b64.slice(i*CHUNK_SIZE,(i+1)*CHUNK_SIZE);
+      await api({action:'uploadChunk',uploadId,chunkIndex:i,totalChunks,chunk});
+      const pct=5+Math.round((i+1)/totalChunks*70);
+      if(bar)bar.style.width=pct+'%';
+      if(txt)txt.textContent=`Uploading to Google Drive... (${i+1}/${totalChunks})`;
+    }
+    if(txt)txt.textContent='Finalizing...';
+    const result=await api({
+      action:'uploadFile',
+      uploadId,
+      fileName:fd.name,
+      mimeType:fd.file.type||'application/octet-stream',
+      folder:'Invoices'
+    });
+    if(bar)bar.style.width='100%';if(txt)txt.textContent='Uploaded: '+fd.name;
+    setTimeout(()=>{if(prog)prog.style.display='none';},2000);
+    return {id:result.fileId||'',name:fd.name,url:result.fileUrl||''};
+  }catch(err){
+    if(bar)bar.style.width='0%';if(txt)txt.textContent='Upload failed';
+    toast('Upload failed: '+err.message,'err');
+    // Don't record a filename with no real file behind it -- that's
+    // exactly what made attachments look saved but show blank on edit.
+    return {id:'',name:'',url:''};
+  }
+}
+
+// ── SAVE INVOICE ──────────────────────────────────
+async function saveInvoice(){
+  const date=gv('f-date');
+  const invNum=gv('f-invnum');
+  const compId=gv('f-company-id');
+  const compName=gv('f-company-name');
+  const amount=gv('f-amount');
+  const eid=gv('f-eid');
+
+  if(!date){toast('Date of Invoice is required','err');return;}
+  if(!invNum){toast('Invoice Number is required — fill Financial Year and Serial No','err');return;}
+  if(!compId&&!compName){toast('Invoiced Company is required','err');return;}
+  if(!amount){toast('Invoice Amount is required','err');return;}
+
+  // Check duplicate invoice number
+  const dup=invoices.find(inv=>inv.invNum===invNum&&inv.id!==eid);
+  if(dup){toast(`Invoice number "${invNum}" already exists`,'err');return;}
+
+  const cnYN=document.getElementById('f-cn-yn').checked?'Yes':'No';
+  const now=new Date().toISOString();
+  const existing=eid?invoices.find(x=>x.id===eid):null;
+
+  // Auto S.No
+  const nextSno=eid?(existing?.sno||invoices.length+1):invoices.length+1;
+
+  ld('Saving invoice…');
+
+  // Upload files
+  let invFile={id:fileData.inv.id,name:fileData.inv.name,url:fileData.inv.url};
+  let cnFile={id:fileData.cn.id,name:fileData.cn.name,url:fileData.cn.url};
+
+  if(fileData.inv.file) invFile=await uploadFileToDrive('inv');
+  if(fileData.cn.file)  cnFile=await uploadFileToDrive('cn');
+
+  const row=[
+    eid||uid(), String(nextSno), date, invNum,
+    compId, compName||gv('f-company-search'),
+    gv('f-towards'), gv('f-workorder'),
+    gv('f-currency'), amount, gv('f-amount-inr'),
+    gv('f-status'), gv('f-remarks'),
+    cnYN,
+    gv('f-cn-num'), gv('f-cn-against'), gv('f-cn-currency'), gv('f-cn-amount'), gv('f-cn-amount-inr'), gv('f-cn-remarks'),
+    invFile.id, invFile.name, invFile.url,
+    cnFile.id, cnFile.name, cnFile.url,
+    existing?.createdAt||now,
+    existing?.createdBy||(sessionStorage.getItem('ke_portal_session')?JSON.parse(sessionStorage.getItem('ke_portal_session')).name:''),
+    now
+  ];
+
+  const _isEditI=!!(eid&&existing);
+  const _befI=_isEditI?{invNum:existing.invNum,compName:existing.compName,amount:existing.amount,status:existing.status}:null;
+  const _aftI={invNum,compName:compName||gv('f-company-search'),amount,status:gv('f-status')};
+  try{
+    if(eid&&existing) await api({action:'update',sheet:SHEET,rowNum:existing._row,row});
+    else await api({action:'append',sheet:SHEET,row});
+    toast(eid?'✅ Invoice updated!':'✅ Invoice saved!','ok');
+    keLog(_isEditI?'UPDATE':'ADD',eid||row[0],invNum,`Invoice ${_isEditI?'updated':'created'}: ${invNum} | Company: ${compName||gv('f-company-search')} | Amount: ${amount} | Status: ${gv('f-status')}`,_befI,_aftI,'Success');
+    resetForm();await loadInvoices();goTab('list');
+  }catch(err){
+    toast('Save failed: '+err.message,'err');
+    keLog(_isEditI?'UPDATE':'ADD',eid||'',invNum,`Save FAILED: ${err.message}`,_befI,_aftI,'Failed');
+  }
+  finally{hd();}
+}
+
+// ── VIEW INVOICE ──────────────────────────────────
+function viewInvoice(id){
+  const inv=invoices.find(x=>x.id===id);if(!inv)return;
+  document.getElementById('view-title').textContent='🧾 '+inv.invNum;
+  const statusCls={Paid:'b-paid',Pending:'b-pending',Overdue:'b-overdue',Partial:'b-partial',Cancelled:'b-cancelled'}[inv.status]||'b-pending';
+  const row=(l,v)=>`<tr><td style="padding:6px 10px;font-weight:600;color:var(--bb);white-space:nowrap;width:35%;font-size:12px;background:#f8fbff;border:1px solid #eee">${l}</td><td style="padding:6px 10px;font-size:12px;border:1px solid #eee">${v}</td></tr>`;
+  let html=`<table style="width:100%;border-collapse:collapse;margin-bottom:14px">
+    ${row('Invoice Number','<span style="font-family:Space Mono,monospace;font-weight:700;color:var(--bb)">' +e(inv.invNum)+'</span>')}
+    ${row('Date',inv.date||'—')}
+    ${row('Company','<strong>'+e(inv.companyName)+'</strong>')}
+    ${row('Invoice Towards',e(inv.towards||'—'))}
+    ${row('Work Order',e(inv.workOrder||'—'))}
+    ${row('Currency',e(inv.currency))}
+    ${row('Amount',fmtCur(inv.amount,inv.currency==='INR'?'₹':''))}
+    ${row('Amount (INR)',fmtINR(inv.amountINR))}
+    ${row('Status','<span class="badge '+statusCls+'">'+inv.status+'</span>')}
+    ${row('Remarks',e(inv.remarks||'—'))}
+  </table>`;
+  if(inv.cnYN==='Yes'){
+    html+=`<div style="background:#fff8f0;border:1px solid #f59e0b;border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;margin-bottom:8px">⚠️ Credit Note Details</div>
+      <table style="width:100%;border-collapse:collapse">
+        ${row('CN Number',e(inv.cnNum||'—'))}
+        ${row('Against Invoice',e(inv.cnAgainst||'—'))}
+        ${row('CN Amount',fmtCur(inv.cnAmount,inv.cnCurrency==='INR'?'₹':''))}
+        ${row('CN Amount (INR)',fmtINR(inv.cnAmountINR))}
+        ${row('CN Remarks',e(inv.cnRemarks||'—'))}
+      </table>
+    </div>`;
+  }
+  // File links
+  if(inv.invFileName){
+    html+=`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <a href="${e(inv.invFileUrl)}" target="_blank" class="btn btng bsm" style="text-decoration:none">⬇️ Download Invoice: ${e(inv.invFileName)}</a>
+    </div>`;
+  }
+  if(inv.cnFileName){
+    html+=`<div style="margin-top:6px">
+      <a href="${e(inv.cnFileUrl)}" target="_blank" class="btn btnw bsm" style="text-decoration:none">⬇️ Download Credit Note: ${e(inv.cnFileName)}</a>
+    </div>`;
+  }
+  document.getElementById('view-body').innerHTML=html;
+  document.getElementById('view-edit-btn').onclick=()=>{document.getElementById('view-mo').classList.remove('open');editInvoice(id);};
+  document.getElementById('view-mo').classList.add('open');
+}
+
+// ── EDIT INVOICE ──────────────────────────────────
+function editInvoice(id){
+  const inv=invoices.find(x=>x.id===id);if(!inv)return;
+  editingId=id;
+  sv('f-eid',id);sv('f-row',inv._row);
+  sv('f-date',inv.date);sv('f-invnum',inv.invNum);
+  sv('f-towards',inv.towards);sv('f-workorder',inv.workOrder);
+  sv('f-currency',inv.currency);sv('f-amount',inv.amount);sv('f-amount-inr',inv.amountINR);
+  sv('f-status',inv.status);sv('f-remarks',inv.remarks);
+  // Invoice number parts
+  const parts=inv.invNum.split('/');
+  if(parts.length>=5){sv('inv-fy',parts[2]);sv('inv-serial',parts[4]);}
+  const preview=document.getElementById('inv-preview');
+  preview.textContent=inv.invNum;preview.style.display='block';
+  // Company
+  sv('f-company-id',inv.companyId);sv('f-company-name',inv.companyName);sv('f-company-search',inv.companyName);
+  // Currency
+  onCurrencyChange();
+  // Credit note
+  const hasCN=inv.cnYN==='Yes';
+  document.getElementById('f-cn-yn').checked=hasCN;
+  document.getElementById('cn-panel').classList.toggle('show',hasCN);
+  if(hasCN){
+    sv('f-cn-num',inv.cnNum);sv('f-cn-against',inv.cnAgainst);
+    sv('f-cn-currency',inv.cnCurrency);sv('f-cn-amount',inv.cnAmount);sv('f-cn-amount-inr',inv.cnAmountINR);
+    sv('f-cn-remarks',inv.cnRemarks);calcCNINR();
+  }
+  // Files
+  if(inv.invFileName){
+    fileData.inv={id:inv.invFileId,name:inv.invFileName,url:inv.invFileUrl,file:null};
+    document.getElementById('uz-inv').classList.add('has-file');
+    const n=document.getElementById('uz-inv-name');n.textContent='📎 '+inv.invFileName;n.style.display='block';
+    document.getElementById('fa-inv').style.display='flex';
+  }
+  if(inv.cnFileName){
+    fileData.cn={id:inv.cnFileId,name:inv.cnFileName,url:inv.cnFileUrl,file:null};
+    document.getElementById('uz-cn').classList.add('has-file');
+    const n=document.getElementById('uz-cn-name');n.textContent='📎 '+inv.cnFileName;n.style.display='block';
+    document.getElementById('fa-cn').style.display='flex';
+  }
+  document.getElementById('form-title').textContent='✏️ Edit Invoice: '+inv.invNum;
+  goTab('form');window.scrollTo({top:0,behavior:'smooth'});
+  toast('Loaded for editing: '+inv.invNum,'info');
+}
+
+// ── DELETE INVOICE ────────────────────────────────
+function deleteInvoice(id,invNum){
+  openConf('🗑️ Delete Invoice',`Delete invoice "${invNum}"? This cannot be undone.`,async()=>{
+    document.getElementById('conf-mo').classList.remove('open');
+    const inv=invoices.find(x=>x.id===id);if(!inv)return;
+    const _delI={invNum:inv.invNum,compName:inv.compName,amount:inv.amount,status:inv.status,date:inv.date};
+    ld('Deleting…');
+    try{
+      await api({action:'delete',sheet:SHEET,rowNum:inv._row});
+      toast('Invoice deleted','info');
+      keLog('DELETE',inv.id,inv.invNum,`Invoice deleted: ${inv.invNum} | Company: ${inv.compName} | Amount: ${inv.amount} | Date: ${inv.date}`,_delI,null,'Success');
+      await loadInvoices();
+    }
+    catch(err){
+      toast('Delete failed: '+err.message,'err');
+      keLog('DELETE',id,invNum,`Delete FAILED: ${err.message}`,_delI,null,'Failed');
+    }finally{hd();}
+  });
+}
+
+// ── RESET FORM ────────────────────────────────────
+function resetForm(){
+  editingId=null;
+  ['f-date','f-invnum','f-towards','f-workorder','f-amount','f-amount-inr','f-exrate',
+   'f-remarks','f-cn-num','f-cn-against','f-cn-amount','f-cn-amount-inr','f-cn-exrate','f-cn-remarks',
+   'f-eid','f-row','f-company-id','f-company-name','f-company-search','inv-fy','inv-serial'].forEach(id=>sv(id,''));
+  sv('f-currency','INR');sv('f-status','Pending');sv('f-cn-currency','INR');
+  document.getElementById('f-cn-yn').checked=false;
+  document.getElementById('cn-panel').classList.remove('show');
+  document.getElementById('exrate-wrap').style.display='none';
+  document.getElementById('cn-exrate-wrap').style.display='none';
+  document.getElementById('inv-preview').style.display='none';
+  document.getElementById('form-title').textContent='➕ New Invoice';
+  ['inv','cn'].forEach(t=>removeFile(t));
+  fileData={inv:{id:'',name:'',url:'',file:null},cn:{id:'',name:'',url:'',file:null}};
+  // Set today's date
+  sv('f-date',new Date().toISOString().split('T')[0]);
+}
+
+// ── DASHBOARD ─────────────────────────────────────
+function renderDash(){
+  const total=invoices.length;
+  const paid=invoices.filter(x=>x.status==='Paid').length;
+  const pending=invoices.filter(x=>x.status==='Pending').length;
+  const overdue=invoices.filter(x=>x.status==='Overdue').length;
+  const totalINR=invoices.reduce((s,x)=>{const v=parseFloat(x.amountINR||0);return s+(isNaN(v)?0:v);},0);
+  const paidINR=invoices.filter(x=>x.status==='Paid').reduce((s,x)=>{const v=parseFloat(x.amountINR||0);return s+(isNaN(v)?0:v);},0);
+  const withCN=invoices.filter(x=>x.cnYN==='Yes').length;
+
+  // Stat cards — each clickable for drill-down
+  const stats=[
+    {l:'Total Invoices',    v:total,  c:'#1d4ed8', rows:invoices,                                       label:'All Invoices'},
+    {l:'Paid',              v:paid,   c:'#059669', rows:invoices.filter(x=>x.status==='Paid'),           label:'Paid Invoices'},
+    {l:'Pending',           v:pending,c:'#d97706', rows:invoices.filter(x=>x.status==='Pending'),        label:'Pending Invoices'},
+    {l:'Overdue',           v:overdue,c:'#dc2626', rows:invoices.filter(x=>x.status==='Overdue'),        label:'Overdue Invoices'},
+    {l:'With Credit Note',  v:withCN, c:'#7c3aed', rows:invoices.filter(x=>x.cnYN==='Yes'),             label:'Invoices with Credit Note'},
+    {l:'Total Value (INR)', v:'₹'+totalINR.toLocaleString('en-IN',{maximumFractionDigits:0}), c:'#0049B7', rows:invoices, label:'All Invoices — Total Value'},
+    {l:'Paid Value (INR)',  v:'₹'+paidINR.toLocaleString('en-IN',{maximumFractionDigits:0}),  c:'#059669', rows:invoices.filter(x=>x.status==='Paid'), label:'Paid Invoices — Paid Value'},
+  ];
+  // Store rows on window for onclick access
+  window._invDashStats=stats;
+  document.getElementById('dash-stats').innerHTML=stats.map((s,i)=>`
+    <div class="stat" onclick="invDrill(window._invDashStats[${i}].rows,window._invDashStats[${i}].label,'${s.c}')"
+      style="cursor:pointer;transition:box-shadow .15s,transform .15s"
+      onmouseenter="this.style.boxShadow='0 4px 20px rgba(0,73,183,.18)';this.style.transform='translateY(-2px)'"
+      onmouseleave="this.style.boxShadow='';this.style.transform=''">
+      <div class="sv" style="color:${s.c};font-size:${typeof s.v==='string'&&s.v.length>8?'16px':'24px'}">${s.v}</div>
+      <div class="sl">${s.l}</div>
+      <div style="font-size:9px;color:#94a3b8;margin-top:4px">Click to view ▸</div>
+    </div>`).join('');
+
+  // By company — each row clickable
+  const byComp={};
+  invoices.forEach(inv=>{
+    const cn=inv.companyName||'Unknown';
+    if(!byComp[cn])byComp[cn]={count:0,totalINR:0,paid:0,pending:0,overdue:0,cancelled:0,partial:0,rows:[]};
+    byComp[cn].count++;
+    byComp[cn].totalINR+=(parseFloat(inv.amountINR||0)||0);
+    if(inv.status==='Paid')     byComp[cn].paid++;
+    if(inv.status==='Pending')  byComp[cn].pending++;
+    if(inv.status==='Overdue')  byComp[cn].overdue++;
+    if(inv.status==='Cancelled')byComp[cn].cancelled++;
+    if(inv.status==='Partial')  byComp[cn].partial++;
+    byComp[cn].rows.push(inv);
+  });
+  window._invByComp=byComp;
+  const _compEntries=Object.entries(byComp).sort((a,b)=>b[1].totalINR-a[1].totalINR);
+  window._invCompEntries=_compEntries;
+
+  function compDrillCell(i,status,label,count,bg,cl){
+    if(!count) return `<td style="padding:7px 8px;text-align:center" onclick="event.stopPropagation()"><span style="display:inline-block;min-width:26px;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700;background:#f1f5f9;color:#94a3b8;cursor:default">0</span></td>`;
+    return `<td style="padding:7px 8px;text-align:center">
+      <span onclick="event.stopPropagation();invDrill(window._invCompEntries[${i}][1].rows.filter(function(r){return r.status==='${status}'}),'${label}: '+window._invCompEntries[${i}][0],'${bg}')"
+        style="display:inline-block;min-width:26px;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700;background:${bg};color:${cl};cursor:pointer"
+        title="Click to drill down ${label}">${count}</span></td>`;
+  }
+
+  const compRows=_compEntries.map(([cn,d],i)=>`
+    <tr onclick="invDrill(window._invCompEntries[${i}][1].rows,'Company: '+window._invCompEntries[${i}][0],'#0049B7')"
+      style="cursor:pointer" onmouseenter="this.style.background='#f0f5ff'" onmouseleave="this.style.background=''">
+      <td style="padding:7px 12px;font-weight:600">${e(cn)}</td>
+      <td style="padding:7px 8px;text-align:center;color:#0049B7;font-weight:700;text-decoration:underline" title="Click to drill down all">${d.count}</td>
+      ${compDrillCell(i,'Paid','Paid',d.paid,'#059669','#ffffff')}
+      ${compDrillCell(i,'Pending','Pending',d.pending,'#d97706','#ffffff')}
+      ${compDrillCell(i,'Overdue','Overdue',d.overdue,'#dc2626','#ffffff')}
+      ${compDrillCell(i,'Cancelled','Cancelled',d.cancelled,'#6b7280','#ffffff')}
+      ${compDrillCell(i,'Partial','Partial',d.partial,'#1d4ed8','#ffffff')}
+      <td style="padding:7px 12px;text-align:right;font-weight:700;color:var(--bb)">&#8377;${d.totalINR.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+    </tr>`).join('');
+
+  document.getElementById('dash-content').innerHTML=`
+    <div class="card">
+      <div class="card-hdr"><h3>📊 Company-wise Summary</h3><span style="font-size:11px;color:var(--muted)">Click row or any status count to drill down</span></div>
+      <div class="card-body" style="padding:0">
+        <div class="twrap"><table>
+          <thead><tr>
+            <th>Company</th>
+            <th style="text-align:center">Total</th>
+            <th style="text-align:center">Paid</th>
+            <th style="text-align:center">Pending</th>
+            <th style="text-align:center">Overdue</th>
+            <th style="text-align:center">Cancelled</th>
+            <th style="text-align:center">Partial</th>
+            <th style="text-align:right">Total (INR)</th>
+          </tr></thead>
+          <tbody>${compRows||'<tr><td colspan="8" class="nodata">No data</td></tr>'}</tbody>
+        </table></div>
+      </div>
+    </div>`;
+}
+
+// ── EXPORT CSV ────────────────────────────────────
+function exportCSV(){
+  if(!invoices.length){toast('No invoices to export','warn');return;}
+  const cols=['ID','SNo','Date','InvoiceNumber','CompanyName','InvoiceTowards','WorkOrder','Currency','Amount','AmountINR','Status','Remarks','CreditNote','CNNumber','CNAgainst','CNCurrency','CNAmount','CNAmountINR','CNRemarks','InvFileName','InvFileUrl','CNFileName','CNFileUrl','CreatedAt'];
+  const keys=['id','sno','date','invNum','companyName','towards','workOrder','currency','amount','amountINR','status','remarks','cnYN','cnNum','cnAgainst','cnCurrency','cnAmount','cnAmountINR','cnRemarks','invFileName','invFileUrl','cnFileName','cnFileUrl','createdAt'];
+  const esc=v=>{const s=(v||'').toString().replace(/"/g,'""');return s.includes(',')||s.includes('"')?`"${s}"`:s;};
+  const csv=[cols.join(','),...invoices.map(r=>keys.map(k=>esc(r[k])).join(','))].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='Invoices_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  toast('Exported '+invoices.length+' invoices','ok');
+}
+
+// ── INIT ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',async()=>{
+  resetForm();
+  ld('Loading data…');
+  try{
+    await Promise.all([loadCompanies(),loadInvoices()]);
+  }catch(e){toast('Init error: '+e.message,'err');}
+  finally{hd();}
+});
+
+// ══ INVOICE DRILL-DOWN ══════════════════════════════════════════
+const INV_DCOLS=[
+  {k:'date',        l:'Date of Invoice'},
+  {k:'invNum',      l:'Invoice Number'},
+  {k:'companyName', l:'Company'},
+  {k:'towards',     l:'Invoice Towards'},
+  {k:'workOrder',   l:'Work Order'},
+  {k:'currency',    l:'Currency'},
+  {k:'amount',      l:'Amount'},
+  {k:'amountINR',   l:'Amount (INR)'},
+  {k:'cnNum',       l:'Credit Note No'},
+  {k:'cnAgainst',   l:'CN Against Invoice'},
+  {k:'cnCurrency',  l:'CN Currency'},
+  {k:'cnAmount',    l:'CN Amount'},
+  {k:'cnAmountINR', l:'CN Amount (INR)'},
+  {k:'cnRemarks',   l:'CN Remarks'},
+  {k:'status',      l:'Status'},
+  {k:'remarks',     l:'Remarks'},
+];
+
+let _invDrillRows=[], _invDrillTitle='';
+
+function invDrill(rows, title, color){
+  _invDrillRows = rows;
+  _invDrillTitle = title;
+  document.getElementById('inv-drill-title').textContent = title;
+  document.getElementById('inv-drill-hdr').style.background = color||'#0049B7';
+  document.getElementById('inv-drill-search').value = '';
+  invDrillFilter('');
+  document.getElementById('inv-drill-overlay').classList.add('open');
+}
+
+function invDrillClose(){
+  document.getElementById('inv-drill-overlay').classList.remove('open');
+}
+
+function invDrillFilter(q){
+  const ql=q.toLowerCase();
+  const rows=ql
+    ?_invDrillRows.filter(r=>INV_DCOLS.some(c=>(r[c.k]||'').toString().toLowerCase().includes(ql)))
+    :_invDrillRows;
+  document.getElementById('inv-drill-count').textContent=rows.length+' record'+(rows.length!==1?'s':'');
+  document.getElementById('inv-drill-sub').textContent=_invDrillTitle+' · '+rows.length+' records';
+
+  const SB={Paid:['#059669','#ffffff'],Pending:['#d97706','#ffffff'],Overdue:['#dc2626','#ffffff'],Partial:['#1d4ed8','#ffffff'],Cancelled:['#6b7280','#ffffff']};
+  function cell(v,k){
+    if(k==='status'){const p=SB[v]||['#f3f4f6','#374151'];return '<span style="background:'+p[0]+';color:'+p[1]+';padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700">'+e(v||'—')+'</span>';}
+    if(k==='amount'||k==='amountINR'||k==='cnAmount'||k==='cnAmountINR'){const n=parseFloat(v);return '<span style="font-weight:600;color:#0049B7">'+(isNaN(n)?e(v||'—'):n.toLocaleString('en-IN',{maximumFractionDigits:2}))+'</span>';}
+    return '<span title="'+e(v||'')+'">'+e(v||'—')+'</span>';
+  }
+
+  document.getElementById('inv-drill-thead').innerHTML=
+    '<tr>'+INV_DCOLS.map(c=>'<th>'+e(c.l)+'</th>').join('')+'</tr>';
+  if(!rows.length){
+    document.getElementById('inv-drill-tbody').innerHTML='<tr><td colspan="'+INV_DCOLS.length+'" style="text-align:center;padding:32px;color:#aaa">No records found</td></tr>';
+    return;
+  }
+  const totAmount=rows.reduce((s,r)=>{const v=parseFloat(r.amount||0);return s+(isNaN(v)?0:v);},0);
+  const totAmountINR=rows.reduce((s,r)=>{const v=parseFloat(r.amountINR||0);return s+(isNaN(v)?0:v);},0);
+  const totCNAmount=rows.reduce((s,r)=>{const v=parseFloat(r.cnAmount||0);return s+(isNaN(v)?0:v);},0);
+  const totCNAmountINR=rows.reduce((s,r)=>{const v=parseFloat(r.cnAmountINR||0);return s+(isNaN(v)?0:v);},0);
+  const totMap={amount:totAmount,amountINR:totAmountINR,cnAmount:totCNAmount,cnAmountINR:totCNAmountINR};
+  const AMT_KEYS=['amount','amountINR','cnAmount','cnAmountINR'];
+  const totRow='<tr style="background:#e0e7ff;font-weight:700;border-top:2px solid #6366f1">'+
+    INV_DCOLS.map((c,i)=>{
+      if(i===0) return '<td style="color:#3730a3;font-weight:700;padding:6px 8px">TOTAL</td>';
+      if(AMT_KEYS.includes(c.k)) return '<td style="color:#0049B7;font-weight:700;text-align:right;padding:6px 8px">'+totMap[c.k].toLocaleString('en-IN',{maximumFractionDigits:2})+'</td>';
+      return '<td></td>';
+    }).join('')+'</tr>';
+  document.getElementById('inv-drill-tbody').innerHTML=
+    rows.map(r=>'<tr>'+INV_DCOLS.map(c=>'<td title="'+e(r[c.k]||'')+'">'+cell(r[c.k]||'',c.k)+'</td>').join('')+'</tr>').join('')
+    +totRow;
+}
+
+function invDrillExport(){
+  const q=document.getElementById('inv-drill-search').value;
+  const ql=q.toLowerCase();
+  const rows=ql
+    ?_invDrillRows.filter(r=>INV_DCOLS.some(c=>(r[c.k]||'').toString().toLowerCase().includes(ql)))
+    :_invDrillRows;
+  if(!rows.length){toast('No records to export','warn');return;}
+
+  function buildXlsx(){
+    const X=window.XLSXStyle;
+    function rgb(h){return'FF'+(h||'#ffffff').replace('#','').toUpperCase().padEnd(6,'0');}
+    function cs(bg,cl,bold,sz,ha){
+      return{fill:{fgColor:{rgb:rgb(bg)}},font:{color:{rgb:rgb(cl)},bold:!!bold,sz:sz||10,name:'Calibri'},
+        alignment:{horizontal:ha||'left',vertical:'center',wrapText:false},
+        border:{bottom:{style:'thin',color:{rgb:'FFE8EDF8'}},right:{style:'thin',color:{rgb:'FFE8EDF8'}}}};
+    }
+    const wb=X.utils.book_new();
+    const ws={};const merges=[];let ri=0;
+    const nc=INV_DCOLS.length;
+    function sc(r,c,v,s){ws[X.utils.encode_cell({r,c})]={v:String(v||''),t:'s',s};}
+
+    const title=_invDrillTitle||'Invoices';
+    const now=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+
+    // Row 0: Title bar
+    const ts=cs('#0049B7','#ffffff',true,12,'left');
+    for(let c=0;c<nc;c++) sc(ri,c,c===0?title+' | '+rows.length+' records | '+now:'',ts);
+    merges.push({s:{r:ri,c:0},e:{r:ri,c:nc-1}});ri++;
+
+    // Row 1: Column headers
+    const STATUS_HDRS={date:'#e0f2fe',invNum:'#e0f2fe',companyName:'#fef9c3',towards:'#fef9c3',
+      workOrder:'#fef9c3',currency:'#f0fdf4',amount:'#f0fdf4',amountINR:'#f0fdf4',
+      cnNum:'#fdf4ff',cnAgainst:'#fdf4ff',cnCurrency:'#fdf4ff',cnAmount:'#fdf4ff',cnAmountINR:'#fdf4ff',cnRemarks:'#fdf4ff',
+      status:'#fff7ed',remarks:'#f3f4f6'};
+    const STATUS_CLRS={date:'#0369a1',invNum:'#0369a1',companyName:'#854d0e',towards:'#854d0e',
+      workOrder:'#854d0e',currency:'#15803d',amount:'#15803d',amountINR:'#15803d',
+      cnNum:'#7e22ce',cnAgainst:'#7e22ce',cnCurrency:'#7e22ce',cnAmount:'#7e22ce',cnAmountINR:'#7e22ce',cnRemarks:'#7e22ce',
+      status:'#c2410c',remarks:'#374151'};
+    INV_DCOLS.forEach((c,i)=>sc(ri,i,c.l,cs(STATUS_HDRS[c.k]||'#f0f5ff',STATUS_CLRS[c.k]||'#0049B7',true,9,'left')));
+    ri++;
+
+    // Status badge colours for data rows
+    const SB={Paid:['#059669','#ffffff'],Pending:['#d97706','#ffffff'],
+      Overdue:['#dc2626','#ffffff'],Partial:['#1d4ed8','#ffffff'],Cancelled:['#6b7280','#ffffff']};
+    const AMT=['amount','amountINR','cnAmount','cnAmountINR'];
+
+    // Data rows
+    rows.forEach((r,idx)=>{
+      const rbg=idx%2===0?'#ffffff':'#f0f4ff';
+      INV_DCOLS.forEach((c,ci)=>{
+        const v=r[c.k]||'';
+        if(c.k==='status'&&SB[v]){sc(ri,ci,v,cs(SB[v][0],SB[v][1],true,10,'center'));}
+        else if(AMT.includes(c.k)){
+          const n=parseFloat(v);
+          sc(ri,ci,isNaN(n)?v:n.toLocaleString('en-IN',{maximumFractionDigits:2}),cs(rbg,'#0049B7',true,10,'right'));
+        } else {sc(ri,ci,v,cs(rbg,'#1e293b',false,10,'left'));}
+      });ri++;
+    });
+
+    // Totals row
+    const AMT_KEYS=['amount','amountINR','cnAmount','cnAmountINR'];
+    const totMap={};
+    AMT_KEYS.forEach(k=>{totMap[k]=rows.reduce((s,r)=>{const v=parseFloat(r[k]||0);return s+(isNaN(v)?0:v);},0);});
+    const tsBg=cs('#e0e7ff','#3730a3',true,10,'left');
+    const tsNum=cs('#e0e7ff','#0049B7',true,10,'right');
+    INV_DCOLS.forEach((c,ci)=>{
+      if(ci===0) sc(ri,ci,'TOTAL',tsBg);
+      else if(AMT_KEYS.includes(c.k)) sc(ri,ci,totMap[c.k].toLocaleString('en-IN',{maximumFractionDigits:2}),tsNum);
+      else sc(ri,ci,'',tsBg);
+    });ri++;
+
+    ws['!ref']=X.utils.encode_range({s:{r:0,c:0},e:{r:ri-1,c:nc-1}});
+    ws['!merges']=merges;
+    ws['!cols']=INV_DCOLS.map(c=>({wch:Math.min(Math.max(c.l.length+4,12),32)}));
+    ws['!rows']=[{hpt:22},{hpt:18}];
+    X.utils.book_append_sheet(wb,ws,'Invoices');
+    X.writeFile(wb,(title.replace(/[^a-z0-9]/gi,'_')||'Invoices')+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+    toast('Exported '+rows.length+' records as .xlsx','ok');
+  }
+
+  if(typeof window.XLSXStyle!=='undefined'){
+    buildXlsx();
+  } else {
+    toast('Loading Excel library…','info');
+    const s=document.createElement('script');
+    s.src='https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
+    s.onload=()=>{window.XLSXStyle=window.XLSXStyle||window.XLSX;buildXlsx();};
+    s.onerror=()=>toast('Could not load Excel library','err');
+    document.head.appendChild(s);
+  }
+}
+
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape')invDrillClose();});
+
+</script>
+
+<!-- ══ INVOICE DRILL-DOWN POPUP ══ -->
+<div id="inv-drill-overlay" onclick="if(event.target===this)invDrillClose()">
+  <div id="inv-drill-box">
+    <div class="idd-hdr" id="inv-drill-hdr" style="background:#0049B7">
+      <div>
+        <h3 id="inv-drill-title">Invoices</h3>
+        <div class="idd-sub" id="inv-drill-sub"></div>
+      </div>
+      <div class="idd-hdr-right">
+        <button class="idd-btn" style="background:rgba(255,255,255,.2);color:#fff" onclick="invDrillExport()">⬇ Export CSV</button>
+        <button class="idd-btn" style="background:rgba(255,255,255,.15);color:#fff" onclick="invDrillClose()">✕ Close</button>
+      </div>
+    </div>
+    <div class="idd-search-bar">
+      <input type="text" id="inv-drill-search" placeholder="Search…" oninput="invDrillFilter(this.value)">
+      <span class="idd-count" id="inv-drill-count"></span>
+    </div>
+    <div class="idd-scroll">
+      <table class="idd-table">
+        <thead id="inv-drill-thead"></thead>
+        <tbody id="inv-drill-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
