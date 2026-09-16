@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --yass-queen:#ff1d58;--blue-light:#00DDFF;
+  --brutal-blue:#0049B7;--mint:#7EE787;--lavender:#B39DDB;
+  --bg:#f6f8ff;--panel:#ffffff;--panel-2:#f2f5ff;--muted:#526187;
+  --text:#0d1b2a;--text-muted:#3a4a6a;--border:#c9d1e6;--chip:#edf1ff;
+  --radius:10px;--shadow:0 2px 12px rgba(0,73,183,0.08);
+  --header-bg:#f0f5ff;--row-hover:#f8fbff;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+
+.app-header{background:var(--brutal-blue);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;position:sticky;top:0;z-index:200;box-shadow:0 2px 10px rgba(0,73,183,0.25);}
+.app-header h1{font-family:'Space Mono',monospace;font-size:15px;letter-spacing:1px;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.conn-badge{display:flex;align-items:center;gap:6px;font-size:11px;background:rgba(255,255,255,0.12);padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;transition:background .3s;}
+.conn-dot.connected{background:var(--mint);box-shadow:0 0 6px rgba(126,231,135,0.8);}
+.conn-dot.syncing{background:#f59e0b;animation:blink .8s infinite;}
+.conn-dot.error{background:var(--yass-queen);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hdr-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;transition:background .2s;}
+.hdr-btn:hover{background:rgba(255,255,255,0.28);}
+
+.main-content{padding:20px 24px;max-width:1300px;margin:0 auto;}
+
+.sync-bar{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:9px 16px;margin-bottom:16px;font-size:12px;color:var(--text-muted);flex-wrap:wrap;}
+.sync-bar button{margin-left:auto;}
+.sync-bar input[type=search]{flex:1;min-width:180px;max-width:320px;padding:7px 12px;border:1px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+.sync-bar input[type=search]:focus{border-color:var(--brutal-blue);}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:18px;box-shadow:var(--shadow);overflow:hidden;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--header-bg);border-bottom:1px solid var(--border);}
+.card-header h3{font-size:13px;font-weight:700;color:var(--brutal-blue);letter-spacing:.5px;text-transform:uppercase;}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+thead th{text-align:left;padding:10px 14px;background:var(--header-bg);color:var(--muted);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+tbody tr:hover{background:var(--row-hover);}
+tbody tr.inactive-row{opacity:.55;}
+.uname{font-weight:600;}
+.uuser{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);}
+
+.role-badge,.status-badge{display:inline-block;font-size:9.5px;font-weight:700;padding:2px 9px;border-radius:10px;text-transform:uppercase;letter-spacing:.4px;color:#fff;white-space:nowrap;}
+.status-badge.active{background:var(--mint);color:#0d1b2a;}
+.status-badge.inactive{background:#c9d1e6;color:#3a4a6a;}
+
+.chip-row{display:flex;flex-wrap:wrap;gap:4px;max-width:320px;}
+.chip{background:var(--chip);color:var(--brutal-blue);font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:8px;white-space:nowrap;}
+.chip.chip-all{background:#fff0f3;color:var(--yass-queen);}
+.chip.chip-none{background:var(--panel-2);color:var(--muted);font-style:italic;}
+
+.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:5px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:var(--brutal-blue);color:#fff;}
+.btn-primary:hover:not(:disabled){background:#003a9e;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-muted);}
+.btn-outline:hover:not(:disabled){border-color:var(--brutal-blue);color:var(--brutal-blue);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(13,27,42,.5);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:26px;min-width:300px;max-width:560px;width:92%;max-height:86vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal h3{font-size:15px;margin-bottom:4px;color:var(--text);}
+.modal .modal-sub{font-size:12px;color:var(--muted);margin-bottom:14px;}
+.modal-note{background:#fff8e6;border:1px solid #ffe1a3;color:#8a5a00;font-size:11.5px;padding:9px 12px;border-radius:8px;margin-bottom:14px;line-height:1.5;}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+
+.checkbox-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:7px;max-height:360px;overflow:auto;padding:4px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);}
+.cb-item{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:#fff;cursor:pointer;transition:border .15s;}
+.cb-item:hover{border-color:var(--brutal-blue);}
+.cb-item input{margin-top:2px;flex-shrink:0;}
+.cb-item .cb-label{font-size:12px;line-height:1.4;}
+.cb-item .cb-code{font-family:'Space Mono',monospace;font-weight:700;color:var(--brutal-blue);font-size:11.5px;}
+.cb-item .cb-name{color:var(--text-muted);font-size:11px;display:block;}
+.cb-search{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:7px;font-size:12px;margin-bottom:10px;outline:none;}
+.cb-search:focus{border-color:var(--brutal-blue);}
+.cb-empty{padding:16px;text-align:center;color:var(--muted);font-size:12px;grid-column:1/-1;}
+
+#page-loader{position:fixed;inset:0;background:var(--brutal-blue);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;}
+#page-loader .loader-ring{width:48px;height:48px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#page-loader h2{font-family:'Space Mono',monospace;font-size:18px;letter-spacing:1px;}
+#page-loader p{font-size:13px;opacity:.7;}
+
+#toast-container{position:fixed;bottom:24px;right:20px;z-index:600;display:flex;flex-direction:column;gap:8px;}
+.toast{background:#1a2540;color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:slideIn .3s ease;max-width:320px;}
+.toast.success{border-left:4px solid var(--mint);}
+.toast.error{border-left:4px solid var(--yass-queen);}
+.toast.info{border-left:4px solid var(--blue-light);}
+.toast.warn{border-left:4px solid #f59e0b;}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.empty-state{padding:40px 20px;text-align:center;color:var(--muted);font-size:13px;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+@media(max-width:700px){.main-content{padding:12px;}table{font-size:11.5px;}}
+</style>
+<!-- PORTAL AUTH GUARD -->
+<script>
+(function(){
+  var MOD_ID = "usermanagement";
+  function getPS(){
+    try{
+      var s=sessionStorage.getItem('ke_portal_session')||sessionStorage.getItem('ke_session');
+      if(!s)return null;
+      var o=JSON.parse(s);
+      if(Date.now()-o.loginTime>10*60*60*1000)return null;
+      return o;
+    }catch(e){return null;}
+  }
+  var session=getPS();
+  if(MOD_ID!=='public'){
+    if(!session){
+      if(!confirm('Not logged in. Go to Portal login?')) return;
+      window.location.href='index.html'; return;
+    }
+    var mods=session.modules||[];
+    if(!mods.includes('all')&&!mods.includes(MOD_ID)){
+      alert('Access Denied. You do not have permission for this module.\nRedirecting to Portal.');
+      window.location.href='index.html'; return;
+    }
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    if(!session) return;
+    var bar=document.createElement('div');
+    bar.id='ke-portal-bar';
+    bar.style='background:linear-gradient(90deg,#002d8a,#0049B7);color:#fff;padding:5px 20px;font-size:11px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:DM Sans,sans-serif;position:sticky;top:0;z-index:9999';
+    var rc={superadmin:'#ff1d58',admin:'#f59e0b',manager:'#7EE787',mobilizationplus:'#7c3aed',mobilization:'#0f766e'}[session.role]||'#526187';
+    bar.innerHTML='<a href="index.html" style="color:#fff;text-decoration:none;font-weight:700;font-size:12px">&#8592; Portal</a>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<span style="opacity:.75">Logged in as</span>'
+      +'<strong>'+session.name+'</strong>'
+      +'<span style="background:'+rc+';color:#fff;padding:1px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase">'+session.role+'</span>'
+      +'<button onclick="if(confirm(\'Logout?\')){sessionStorage.clear();window.location.href=\'index.html\';}" '
+      +'style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px">Logout</button>'
+      +'</div>';
+    document.body.insertBefore(bar,document.body.firstChild);
+  });
+})();
+</script>
+</head>
+<body>
+
+<div id="page-loader"><div class="loader-ring"></div><h2>USER MANAGEMENT</h2><p>Connecting to Google Sheets…</p></div>
+
+<div class="app-header">
+  <h1>👥 USER MANAGEMENT</h1>
+  <div class="hdr-right">
+    <div class="conn-badge"><span class="conn-dot" id="conn-dot"></span><span id="conn-label">Connecting…</span></div>
+    <button class="hdr-btn" onclick="refreshAll()">🔄 Refresh</button>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="sync-bar">
+    <span>Assign or unassign the companies each user can see &amp; work with in the Selection Module — no more editing the Sheet by hand.</span>
+    <input type="search" id="search-box" placeholder="Search name or username…" oninput="renderTable()">
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>Users (<span id="user-count">0</span>)</h3></div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Modules</th>
+            <th>Assigned Companies</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+      <div class="empty-state" id="empty-state" style="display:none">No users found in the Users sheet.</div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPANY ASSIGNMENT MODAL -->
+<div class="modal-overlay" id="modal-companies">
+  <div class="modal">
+    <h3>Assign Companies</h3>
+    <div class="modal-sub" id="mc-user-line">—</div>
+    <div class="modal-note" id="mc-role-note" style="display:none">
+      ⚠️ <b>Admin</b> and <b>Superadmin</b> roles always see <b>every</b> company regardless of this list — changes saved here will have no visible effect until the role changes.
+    </div>
+    <input type="text" class="cb-search" id="mc-search" placeholder="Filter companies…" oninput="renderCheckboxGrid()">
+    <div class="checkbox-grid" id="mc-grid"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-companies')">Cancel</button>
+      <button class="btn btn-primary" id="mc-save-btn" onclick="saveCompanies()">💾 Save Assignment</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzNoK4d2MdtTciXBRHcZ_aE8UIPpIcnWcXIzNBCd8Hxg2EwpEhP1e_Hpu528PHsHs4z/exec';
+
+// ══════════════════════════════════════════════
+//  API — retries transient read failures, never retries writes
+// ══════════════════════════════════════════════
+async function api(p){
+  const READ_ACTIONS=['getAll','ping'];
+  const isRead=READ_ACTIONS.includes(p.action||'');
+  const buildGetUrl=()=>{
+    const u=new URL(WEBAPP_URL);
+    Object.entries(p).forEach(([k,v])=>u.searchParams.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
+    return u;
+  };
+  const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+  if(window.location.protocol==='file:'){
+    const MAX_TRIES=isRead?3:1;
+    for(let attempt=1;attempt<=MAX_TRIES;attempt++){
+      try{
+        return await new Promise((resolve,reject)=>{
+          const u=buildGetUrl();
+          const cb='ke_cb_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+          u.searchParams.set('callback',cb);
+          const s=document.createElement('script');
+          s.src=u.toString();
+          const cleanup=()=>{ try{delete window[cb];}catch(e){} if(document.body.contains(s))document.body.removeChild(s); };
+          window[cb]=(data)=>{ cleanup(); (data&&data.success)?resolve(data):reject(new Error((data&&data.error)||'Server error')); };
+          s.onerror=()=>{ cleanup(); reject(new Error('file:// network error — this page was opened directly from disk. Host it on a web server (e.g. GitHub Pages) for reliable saving.')); };
+          document.body.appendChild(s);
+        });
+      }catch(e){
+        if(attempt>=MAX_TRIES) throw e;
+        await sleep(500*attempt);
+      }
+    }
+  }
+  const MAX_TRIES=isRead?3:1;
+  let lastErr;
+  for(let attempt=1;attempt<=MAX_TRIES;attempt++){
+    let res,text,json;
+    try{
+      if(isRead){
+        res=await fetch(buildGetUrl().toString());
+      } else {
+        const body=new URLSearchParams();
+        Object.entries(p).forEach(([k,v])=>body.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
+        res=await fetch(WEBAPP_URL,{method:'POST',body});
+      }
+      text=await res.text();
+    }catch(e){
+      lastErr=new Error('Network error: '+e.message);
+      if(attempt<MAX_TRIES){ await sleep(600*attempt); continue; }
+      throw lastErr;
+    }
+    try{ json=JSON.parse(text); }
+    catch(e){
+      const looksHtml=/^\s*<(!doctype|html)/i.test(text);
+      lastErr=new Error(looksHtml?'Apps Script returned a web page instead of data — this is usually a brief Google-side hiccup (redeploy in progress or too many requests at once). It will auto-retry; if it keeps happening, check the deployment\'s "Who has access" is set to Anyone.':'Bad response: '+text.slice(0,200));
+      if(attempt<MAX_TRIES){ await sleep(700*attempt); continue; }
+      throw lastErr;
+    }
+    if(!json.success){
+      lastErr=new Error(json.error||'Server error');
+      throw lastErr;
+    }
+    return json;
+  }
+  throw lastErr||new Error('Request failed');
+}
+
+// ══════════════════════════════════════════════
+//  KE LOGGER
+// ══════════════════════════════════════════════
+let _keIP_='';
+async function _fetchIP_(){
+  if(_keIP_)return _keIP_;
+  try{const r=await fetch('https://api.ipify.org?format=json',{cache:'force-cache'});const j=await r.json();_keIP_=j.ip||'';}
+  catch(e){_keIP_='Unavailable';}
+  return _keIP_;
+}
+function _keBr_(){
+  const ua=navigator.userAgent;
+  const os=/Windows NT/.test(ua)?'Windows':/Mac OS X/.test(ua)?'macOS':/Linux/.test(ua)?'Linux':/Android/.test(ua)?'Android':/iPhone|iPad/.test(ua)?'iOS':'Unknown OS';
+  const br=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'Browser';
+  return `${br} on ${os} | ${screen.width}x${screen.height}`;
+}
+async function keLog(action,recId,recName,desc,oldVal,newVal,status){
+  try{
+    const ip=await _fetchIP_();
+    const ss=sessionStorage.getItem('ke_portal_session')||sessionStorage.getItem('ke_session');
+    const su=ss?JSON.parse(ss):{};
+    const logData={
+      LogID      :'log_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,5),
+      Timestamp  :new Date().toISOString(),
+      UserName   :su.name||'',
+      Username   :su.username||'',
+      Role       :su.role||'',
+      Module     :'UserManagement',
+      Action     :action||'VIEW',
+      RecordID   :recId||'',
+      RecordName :recName||'',
+      Description:desc||'',
+      OldValue   :oldVal?(typeof oldVal==='object'?JSON.stringify(oldVal):String(oldVal)):'',
+      NewValue   :newVal?(typeof newVal==='object'?JSON.stringify(newVal):String(newVal)):'',
+      IPAddress  :ip,
+      MACAddress :'N/A — Not accessible via browser (security restriction)',
+      Hostname   :window.location.hostname||'localhost',
+      Browser    :_keBr_(),
+      Status     :status||'Success'
+    };
+    await api({action:'appendLog', logData:JSON.stringify(logData)});
+  }catch(e){ /* logging must never block the UI */ }
+}
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let USERS=[];       // raw rows incl. all sheet fields (Password kept in memory only, never rendered)
+let COMPANIES=[];   // {code, name}
+let mcTargetUser=null;
+let mcSelected=new Set();
+
+function setConn(state,label){
+  document.getElementById('conn-dot').className='conn-dot '+state;
+  document.getElementById('conn-label').textContent=label;
+}
+function showToast(msg,type='info'){
+  const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>t.remove(),4000);
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+});
+
+// ══════════════════════════════════════════════
+//  LOAD
+// ══════════════════════════════════════════════
+async function loadUsers(){
+  const r=await api({action:'getAll',sheet:'Users'});
+  USERS=(r.data||[]).map(x=>({
+    _row      : x._row,
+    id        : x.ID||'',
+    name      : x.Name||'',
+    username  : x.Username||'',
+    password  : x.Password||'',   // kept only to round-trip on save — never displayed
+    role      : (x.Role||'').toLowerCase().trim(),
+    status    : x.Status||'Active',
+    modules   : (x.Modules||'').split(',').map(m=>m.trim()).filter(Boolean),
+    phone     : x.Phone||'',
+    email     : x.Email||'',
+    remarks   : x.Remarks||'',
+    createdAt : x.CreatedAt||'',
+    createdBy : x.CreatedBy||'',
+    updatedAt : x.UpdatedAt||'',
+    companies : (x.Companies||'').split('|').map(c=>c.trim()).filter(Boolean),
+  }));
+}
+async function loadCompanies(){
+  const r=await api({action:'getAll',sheet:'Companies'});
+  COMPANIES=(r.data||[]).map(x=>({code:(x.Code||'').trim(),name:(x.Name||'').trim()})).filter(c=>c.code||c.name);
+}
+async function refreshAll(){
+  setConn('syncing','Refreshing…');
+  try{
+    await Promise.all([loadUsers(),loadCompanies()]);
+    renderTable();
+    setConn('connected','Connected · '+USERS.length+' users');
+    showToast('Refreshed from Google Sheets','success');
+  }catch(e){
+    setConn('error','Error');
+    showToast('Refresh failed: '+e.message,'error');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  TABLE
+// ══════════════════════════════════════════════
+const ROLE_COLORS={superadmin:'#ff1d58',admin:'#f59e0b',manager:'#7EE787',mobilizationplus:'#7c3aed',mobilization:'#0f766e'};
+
+function companyLabel(codeOrName){
+  const v=(codeOrName||'').toUpperCase();
+  const match=COMPANIES.find(c=>c.code.toUpperCase()===v||c.name.toUpperCase()===v);
+  return match?(match.code||match.name):codeOrName;
+}
+
+function renderTable(){
+  const q=(document.getElementById('search-box').value||'').toLowerCase().trim();
+  const tbody=document.getElementById('users-tbody');
+  const rows=USERS.filter(u=>!q||u.name.toLowerCase().includes(q)||u.username.toLowerCase().includes(q));
+  document.getElementById('user-count').textContent=USERS.length;
+  document.getElementById('empty-state').style.display=rows.length?'none':'block';
+
+  tbody.innerHTML=rows.map(u=>{
+    const isAdmin=['admin','superadmin'].includes(u.role);
+    const roleColor=ROLE_COLORS[u.role]||'#526187';
+    let compHtml;
+    if(isAdmin){
+      compHtml='<span class="chip chip-all">All Companies</span>';
+    }else if(u.companies.length){
+      compHtml='<div class="chip-row">'+u.companies.map(c=>`<span class="chip">${esc(companyLabel(c))}</span>`).join('')+'</div>';
+    }else{
+      compHtml='<span class="chip chip-none">— none assigned —</span>';
+    }
+    const modHtml='<div class="chip-row">'+(u.modules.length?u.modules.map(m=>`<span class="chip">${esc(m)}</span>`).join(''):'<span class="chip chip-none">none</span>')+'</div>';
+    return `<tr class="${u.status!=='Active'?'inactive-row':''}">
+      <td class="uname">${esc(u.name)}</td>
+      <td class="uuser">@${esc(u.username)}</td>
+      <td><span class="role-badge" style="background:${roleColor}">${esc(u.role)}</span></td>
+      <td><span class="status-badge ${u.status==='Active'?'active':'inactive'}">${esc(u.status)}</span></td>
+      <td>${modHtml}</td>
+      <td>${compHtml}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="openCompanyEditor('${esc(u.id)}')">✏️ Assign</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  ASSIGN / UNASSIGN MODAL
+// ══════════════════════════════════════════════
+function openCompanyEditor(userId){
+  const u=USERS.find(x=>x.id===userId);
+  if(!u){showToast('User not found — try refreshing','error');return;}
+  mcTargetUser=u;
+  mcSelected=new Set(u.companies.map(c=>companyLabel(c).toUpperCase()));
+  document.getElementById('mc-user-line').textContent=`${u.name}  (@${u.username})  —  role: ${u.role}`;
+  document.getElementById('mc-role-note').style.display=['admin','superadmin'].includes(u.role)?'block':'none';
+  document.getElementById('mc-search').value='';
+  renderCheckboxGrid();
+  openModal('modal-companies');
+}
+
+function renderCheckboxGrid(){
+  const q=(document.getElementById('mc-search').value||'').toLowerCase().trim();
+  const grid=document.getElementById('mc-grid');
+  const list=COMPANIES.filter(c=>!q||c.code.toLowerCase().includes(q)||c.name.toLowerCase().includes(q))
+                       .sort((a,b)=>(a.name||a.code).localeCompare(b.name||b.code));
+  if(!list.length){grid.innerHTML='<div class="cb-empty">No companies match.</div>';return;}
+  grid.innerHTML=list.map(c=>{
+    const key=(c.code||c.name).toUpperCase();
+    const checked=mcSelected.has(key);
+    return `<label class="cb-item">
+      <input type="checkbox" data-key="${esc(key)}" ${checked?'checked':''} onchange="toggleCompany(this)">
+      <span class="cb-label"><span class="cb-code">${esc(c.code||'—')}</span><span class="cb-name">${esc(c.name||'')}</span></span>
+    </label>`;
+  }).join('');
+}
+function toggleCompany(el){
+  const key=el.getAttribute('data-key');
+  if(el.checked) mcSelected.add(key); else mcSelected.delete(key);
+}
+
+async function saveCompanies(){
+  if(!mcTargetUser) return;
+  const btn=document.getElementById('mc-save-btn');
+  btn.disabled=true; btn.textContent='Saving…';
+  const u=mcTargetUser;
+  const before=u.companies.slice();
+  // Prefer the Code where we have one, since it's the least ambiguous value to store.
+  const after=Array.from(mcSelected).map(key=>{
+    const m=COMPANIES.find(c=>c.code.toUpperCase()===key||c.name.toUpperCase()===key);
+    return m?(m.code||m.name):key;
+  });
+  const row=[
+    u.id, u.name, u.username, u.password, u.role, u.status,
+    u.modules.join(','), u.phone, u.email, u.remarks,
+    u.createdAt, u.createdBy, new Date().toISOString(),
+    after.join(' | ')
+  ];
+  try{
+    await api({action:'update', sheet:'Users', rowNum:u._row, row});
+    u.companies=after;
+    u.updatedAt=row[12];
+    keLog('UPDATE_COMPANIES', u.id, u.name, `Company assignment changed for ${u.name} (@${u.username})`, before.join(' | '), after.join(' | '), 'Success');
+    showToast(`✅ Companies updated for ${u.name}`,'success');
+    closeModal('modal-companies');
+    renderTable();
+  }catch(e){
+    keLog('UPDATE_COMPANIES', u.id, u.name, `Company assignment save FAILED: ${e.message}`, before.join(' | '), after.join(' | '), 'Failed');
+    showToast('Save failed: '+e.message,'error');
+  }
+  btn.disabled=false; btn.textContent='💾 Save Assignment';
+}
+
+// ══════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════
+async function boot(){
+  try{
+    setConn('syncing','Connecting…');
+    await api({action:'ping'});
+    await Promise.all([loadUsers(),loadCompanies()]);
+    renderTable();
+    setConn('connected','Connected · '+USERS.length+' users');
+  }catch(e){
+    setConn('error','Error');
+    showToast('Failed to load: '+e.message,'error');
+  }
+  document.getElementById('page-loader').style.display='none';
+}
+boot();
+</script>
+</body>
+</html>

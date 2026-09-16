@@ -187,7 +187,7 @@ tbody td{padding:8px 12px;color:var(--tmuted);white-space:nowrap;max-width:200px
   // Only enforce portal login when accessed via http/https (hosted), not local file://
   var isLocal = window.location.protocol === 'file:';
   if(!isLocal && !session){
-    if(confirm('Not logged in. Go to Portal login?')) window.location.href='Index.html';
+    if(confirm('Not logged in. Go to Portal login?')) window.location.href='index.html';
     return;
   }
   document.addEventListener('DOMContentLoaded',function(){
@@ -195,7 +195,7 @@ tbody td{padding:8px 12px;color:var(--tmuted);white-space:nowrap;max-width:200px
     var bar=document.createElement('div');bar.id='ke-portal-bar';
     bar.style='background:linear-gradient(90deg,#002d8a,#0049B7);color:#fff;padding:5px 20px;font-size:11px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:DM Sans,sans-serif;';
     var rc={superadmin:'#ff1d58',admin:'#f59e0b',manager:'#7EE787',mobilizationplus:'#7c3aed',mobilization:'#0f766e'}[session.role]||'#526187';
-    bar.innerHTML='<a href="Index.html" style="color:#fff;text-decoration:none;font-weight:700;font-size:12px">&#8592; Portal</a><div style="display:flex;align-items:center;gap:8px"><span style="opacity:.75">'+session.name+'</span><span style="background:'+rc+';color:#fff;padding:1px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase">'+session.role+'</span><button onclick="sessionStorage.clear();window.location.href=\'Index.html\';" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px">Logout</button></div>';
+    bar.innerHTML='<a href="index.html" style="color:#fff;text-decoration:none;font-weight:700;font-size:12px">&#8592; Portal</a><div style="display:flex;align-items:center;gap:8px"><span style="opacity:.75">'+session.name+'</span><span style="background:'+rc+';color:#fff;padding:1px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase">'+session.role+'</span><button onclick="sessionStorage.clear();window.location.href=\'index.html\';" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px">Logout</button></div>';
     document.body.insertBefore(bar,document.body.firstChild);
   });
 })();

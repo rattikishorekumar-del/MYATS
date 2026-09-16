@@ -196,12 +196,12 @@ tbody td{padding:9px 12px;color:var(--text-muted);white-space:nowrap;max-width:2
   if(MOD_ID!=='public'){
     if(!session){
       if(!confirm('Not logged in. Go to Portal login?')) return;
-      window.location.href='Index.html'; return;
+      window.location.href='index.html'; return;
     }
     var mods=session.modules||[];
     if(!mods.includes('all')&&!mods.includes(MOD_ID)){
       alert('Access Denied. You do not have permission for this module.\nRedirecting to Portal.');
-      window.location.href='Index.html'; return;
+      window.location.href='index.html'; return;
     }
   }
   document.addEventListener('DOMContentLoaded',function(){
@@ -210,12 +210,12 @@ tbody td{padding:9px 12px;color:var(--text-muted);white-space:nowrap;max-width:2
     bar.id='ke-portal-bar';
     bar.style='background:linear-gradient(90deg,#002d8a,#0049B7);color:#fff;padding:5px 20px;font-size:11px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:DM Sans,sans-serif;position:sticky;top:0;z-index:9999';
     var rc={superadmin:'#ff1d58',admin:'#f59e0b',manager:'#7EE787',mobilizationplus:'#7c3aed',mobilization:'#0f766e'}[session.role]||'#526187';
-    bar.innerHTML='<a href="Index.html" style="color:#fff;text-decoration:none;font-weight:700;font-size:12px">&#8592; Portal</a>'
+    bar.innerHTML='<a href="index.html" style="color:#fff;text-decoration:none;font-weight:700;font-size:12px">&#8592; Portal</a>'
       +'<div style="display:flex;align-items:center;gap:8px">'
       +'<span style="opacity:.75">Logged in as</span>'
       +'<strong>'+session.name+'</strong>'
       +'<span style="background:'+rc+';color:#fff;padding:1px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase">'+session.role+'</span>'
-      +'<button onclick="if(confirm(\'Logout?\')){sessionStorage.clear();window.location.href=\'Index.html\';}" '
+      +'<button onclick="if(confirm(\'Logout?\')){sessionStorage.clear();window.location.href=\'index.html\';}" '
       +'style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px">Logout</button>'
       +'</div>';
     document.body.insertBefore(bar,document.body.firstChild);

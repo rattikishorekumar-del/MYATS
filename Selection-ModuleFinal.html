@@ -319,7 +319,7 @@ tbody td{padding:8px 11px;color:var(--tmuted);white-space:nowrap;max-width:180px
 <!-- HEADER -->
 <div class="app-header">
   <h1>✅ SELECTION MODULE</h1>
-  <div class="hdr-right"><a href="Index.html" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 10px;border-radius:5px;font-size:11px;text-decoration:none;font-weight:600">&#8592; Portal</a><div class="auth-info"><span class="auth-name" id="auth-username"></span><span class="auth-role-badge" id="auth-role"></span><button class="logout-btn" onclick="authLogout()">🔓 Logout</button></div>
+  <div class="hdr-right"><a href="index.html" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 10px;border-radius:5px;font-size:11px;text-decoration:none;font-weight:600">&#8592; Portal</a><div class="auth-info"><span class="auth-name" id="auth-username"></span><span class="auth-role-badge" id="auth-role"></span><button class="logout-btn" onclick="authLogout()">🔓 Logout</button></div>
     <div class="cbadge"><span class="cdot sync" id="cdot"></span><span id="clbl">Connecting…</span></div>
     <button class="hbtn" onclick="exportCSV()">📤 Export CSV</button>
     <button class="hbtn" onclick="printProfile()">🖨️ Print</button>
@@ -3603,7 +3603,7 @@ let _currentUser = null;
 
 function authGetSession(){
   try{
-    // Check ke_portal_session (set by portal Index.html) or ke_session
+    // Check ke_portal_session (set by portal index.html) or ke_session
     let s = sessionStorage.getItem('ke_portal_session') || sessionStorage.getItem('ke_session');
     if(!s) return null;
     const obj = JSON.parse(s);
