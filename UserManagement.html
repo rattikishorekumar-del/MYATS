@@ -247,13 +247,7 @@ async function api(p){
   for(let attempt=1;attempt<=MAX_TRIES;attempt++){
     let res,text,json;
     try{
-      if(isRead){
-        res=await fetch(buildGetUrl().toString());
-      } else {
-        const body=new URLSearchParams();
-        Object.entries(p).forEach(([k,v])=>body.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
-        res=await fetch(WEBAPP_URL,{method:'POST',body});
-      }
+      res=await fetch(buildGetUrl().toString());
       text=await res.text();
     }catch(e){
       lastErr=new Error('Network error: '+e.message);

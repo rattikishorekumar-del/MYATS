@@ -391,7 +391,7 @@ async function api(p){
           s.src=u.toString();
           const cleanup=()=>{ try{delete window[cb];}catch(e){} if(document.body.contains(s))document.body.removeChild(s); };
           window[cb]=(data)=>{ cleanup(); (data&&data.success)?resolve(data):reject(new Error((data&&data.error)||'Server error')); };
-          s.onerror=()=>{ cleanup(); reject(new Error('file:// network error \u2014 this page was opened directly from disk. Host it on a web server (e.g. GitHub Pages) for reliable saving.')); };
+          s.onerror=()=>{ cleanup(); reject(new Error('file:// network error — this page was opened directly from disk. Host it on a web server (e.g. GitHub Pages) for reliable saving.')); };
           document.body.appendChild(s);
         });
       }catch(e){
@@ -405,13 +405,7 @@ async function api(p){
   for(let attempt=1;attempt<=MAX_TRIES;attempt++){
     let res,text,json;
     try{
-      if(isRead){
-        res=await fetch(buildGetUrl().toString());
-      } else {
-        const body=new URLSearchParams();
-        Object.entries(p).forEach(([k,v])=>body.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
-        res=await fetch(WEB,{method:'POST',body});
-      }
+      res=await fetch(buildGetUrl().toString());
       text=await res.text();
     }catch(e){
       lastErr=new Error('Network error: '+e.message);
@@ -421,7 +415,7 @@ async function api(p){
     try{ json=JSON.parse(text); }
     catch(e){
       const looksHtml=/^\s*<(!doctype|html)/i.test(text);
-      lastErr=new Error(looksHtml?'Apps Script returned a web page instead of data \u2014 this is usually a brief Google-side hiccup (redeploy in progress or too many requests at once). It will auto-retry; if it keeps happening, check the deployment\'s "Who has access" is set to Anyone.':'Bad response: '+text.slice(0,200));
+      lastErr=new Error(looksHtml?'Apps Script returned a web page instead of data — this is usually a brief Google-side hiccup (redeploy in progress or too many requests at once). It will auto-retry; if it keeps happening, check the deployment\'s "Who has access" is set to Anyone.':'Bad response: '+text.slice(0,200));
       if(attempt<MAX_TRIES){ await sleep(700*attempt); continue; }
       throw lastErr;
     }
