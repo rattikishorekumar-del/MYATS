@@ -262,6 +262,7 @@ async function loadUsers(){
       role    : (x.Role||'').toLowerCase().trim(),
       status  : x.Status||'Active',
       modules : (x.Modules||'').split(',').map(m=>m.trim()).filter(Boolean),
+      companies: (x.Companies||'').split('|').map(c=>c.trim().toUpperCase()).filter(Boolean),
     })).filter(x=>x.id&&x.username&&x.status==='Active');
   }catch(e){ _users=[]; }
 }
@@ -286,9 +287,9 @@ async function doLogin(){
   const user=_users.find(u=>u.username===username&&u.password===password);
   if(!user){ errEl.textContent='❌ Invalid username or password.'; errEl.style.display='block'; return; }
   const mergedMods=getAllowedModuleIds(user);
-  const session={id:user.id,name:user.name,username:user.username,role:user.role,modules:mergedMods,loginTime:Date.now()};
+  const session={id:user.id,name:user.name,username:user.username,role:user.role,modules:mergedMods,companies:user.companies||[],loginTime:Date.now()};
   sessionStorage.setItem('ke_portal_session',JSON.stringify(session));
-  sessionStorage.setItem('ke_session',JSON.stringify({username:user.username,name:user.name,role:user.role,modules:mergedMods,loginTime:Date.now()}));
+  sessionStorage.setItem('ke_session',JSON.stringify({username:user.username,name:user.name,role:user.role,modules:mergedMods,companies:user.companies||[],loginTime:Date.now()}));
   _currentUser=session;
   keLog('LOGIN',user.id,user.name,`Portal Login: ${user.name} (@${user.username}) Role:${user.role} from ${window.location.hostname||'local'}`);
   showApp();
