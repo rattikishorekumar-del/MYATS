@@ -1067,41 +1067,44 @@ const STATES=['Andaman and Nicobar Islands','Andhra Pradesh','Arunachal Pradesh'
 
 // ── API ──
 async function api(p){
-  // READS → GET with URL params (never affected by redirect body loss)
-  // WRITES → POST no-cors: body IS delivered even through GAS redirect, response opaque but write succeeds
-  const WRITE_ACTIONS=['append','update','delete','deleteMultiple','appendLog','saveUser'];
-  const isWrite=WRITE_ACTIONS.includes(p.action||'');
-
-  const body=new URLSearchParams();
-  Object.entries(p).forEach(([k,v])=>body.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
-
-  if(isWrite){
-    const url=new URL(WEB);
-    ['action','sheet','rowNum'].forEach(k=>{if(p[k]!==undefined)url.searchParams.set(k,String(p[k]));});
-    try{await fetch(url.toString(),{method:'POST',body,mode:'no-cors'});}
-    catch(e){throw new Error('Network: '+e.message);}
-    return {success:true,message:'OK'};
+  const READ_ACTIONS=['getAll','ping'];
+  const isRead=READ_ACTIONS.includes(p.action||'');
+  const buildGetUrl=()=>{
+    const u=new URL(WEB);
+    Object.entries(p).forEach(([k,v])=>u.searchParams.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
+    return u;
+  };
+  if(window.location.protocol==='file:'){
+    return new Promise((resolve,reject)=>{
+      const u=buildGetUrl();
+      const cb='ke_cb_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+      u.searchParams.set('callback',cb);
+      const s=document.createElement('script');
+      s.src=u.toString();
+      const cleanup=()=>{ try{delete window[cb];}catch(e){} if(document.body.contains(s))document.body.removeChild(s); };
+      window[cb]=(data)=>{ cleanup(); (data&&data.success)?resolve(data):reject(new Error((data&&data.error)||'Server error')); };
+      s.onerror=()=>{ cleanup(); reject(new Error('file:// network error \u2014 this page was opened directly from disk. Host it on a web server (e.g. GitHub Pages) for reliable saving.')); };
+      document.body.appendChild(s);
+    });
   }
-
-  // File uploads still need response — keep regular POST
-  if(['uploadChunk','uploadFile'].includes(p.action||'')){
-    let r,t,j;
-    try{r=await fetch(WEB,{method:'POST',body});t=await r.text();}
-    catch(e){throw new Error('Network: '+e.message);}
-    try{j=JSON.parse(t);}catch(e){throw new Error('Bad response: '+t.slice(0,180));}
-    if(!j.success)throw new Error(j.error||'Server error');
-    return j;
+  let res,text,json;
+  try{
+    if(isRead){
+      res=await fetch(buildGetUrl().toString());
+    } else {
+      const body=new URLSearchParams();
+      Object.entries(p).forEach(([k,v])=>body.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
+      res=await fetch(WEB,{method:'POST',body});
+    }
+    text=await res.text();
+  }catch(e){ throw new Error('Network error: '+e.message); }
+  try{ json=JSON.parse(text); }
+  catch(e){
+    const looksHtml=/^\s*<(!doctype|html)/i.test(text);
+    throw new Error(looksHtml?'Apps Script returned a web page instead of data \u2014 check the deployment\'s "Who has access" is set to Anyone, or host this file on a web server instead of opening it directly.':'Bad response: '+text.slice(0,200));
   }
-
-  // Read: GET with all params in URL
-  let r,t,j;
-  const url=new URL(WEB);
-  Object.entries(p).forEach(([k,v])=>url.searchParams.set(k,typeof v==='object'?JSON.stringify(v):String(v)));
-  try{r=await fetch(url.toString());t=await r.text();}
-  catch(e){throw new Error('Network: '+e.message);}
-  try{j=JSON.parse(t);}catch(e){throw new Error('Bad response: '+t.slice(0,180));}
-  if(!j.success)throw new Error(j.error||'Server error');
-  return j;
+  if(!json.success) throw new Error(json.error||'Server error');
+  return json;
 }
 function ld(m){document.getElementById('loader').style.display='flex';document.getElementById('loader-msg').textContent=m||'Loading…';}
 function hd(){document.getElementById('loader').style.display='none';}
