@@ -160,6 +160,9 @@ tbody tr.inactive-row{opacity:.55;}
 </div>
 
 <div class="main-content">
+  <div class="modal-note" style="margin-bottom:16px;background:#fff0f3;border-color:#ffb3c6;color:#c0003a">
+    ⚠️ <b>Saving is temporarily disabled.</b> A mismatch was found between this sheet's actual columns and what the backend script expects when writing to the Users sheet, which can corrupt other fields on save. Until the backend script is fixed, please keep editing the <b>Companies</b> column directly in the Users sheet in Google Sheets. This screen still works for browsing/searching.
+  </div>
   <div class="sync-bar">
     <span>Assign or unassign the companies each user can see &amp; work with in the Selection Module — no more editing the Sheet by hand.</span>
     <input type="search" id="search-box" placeholder="Search name or username…" oninput="renderTable()">
@@ -456,6 +459,14 @@ function toggleCompany(el){
 }
 
 async function saveCompanies(){
+  // TEMPORARILY DISABLED — the Apps Script backend's generic "update" action writes
+  // rows into the Users sheet using a column order that does not match the sheet's
+  // actual columns (Email/Remarks are off), which corrupts other fields on save.
+  // This needs a fix on the Google Apps Script (Code.gs) side before this screen can
+  // safely write. Until then, keep assigning/unassigning companies directly in the
+  // Users sheet's "Companies" column.
+  showToast('Saving is temporarily disabled — see the notice above. Edit the Companies column directly in the Users sheet for now.', 'warn');
+  return;
   if(!mcTargetUser) return;
   const btn=document.getElementById('mc-save-btn');
   btn.disabled=true; btn.textContent='Saving…';
